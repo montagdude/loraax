@@ -8,7 +8,7 @@
 
 /******************************************************************************/
 //
-// Quad face class.  Derived class from Face, has 4 nodes/edges.
+// Quad face class.  Derived class from Face, has 4 endpoints.
 //
 /******************************************************************************/
 class QuadFace: public Face {
@@ -29,9 +29,11 @@ class QuadFace: public Face {
 
     QuadFace ();
 
-    // Computes face geometric quantities once four nodes are set
+    // Sets endpoints and computes face geometric quantities
 
-    void setNode ( unsigned int, Node * );
+    void setEndpoints( const std::vector<double> & x,
+                       const std::vector<double> & y,
+                       const std::vector<double> & z );
 
     // Computing source and doublet influence coefficients at a point
 

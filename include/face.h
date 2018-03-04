@@ -7,24 +7,16 @@
 #include <string>
 #include <Eigen/Core>
 
-// Forward declarations
-
-class Node;
-class Edge;
-
 /******************************************************************************/
 //
-// Face class.  Stores references to connected edges and nodes, computes
-// source/doublet influence coefficients at a point, etc.
+// Face class. Computes geometric quantities, source/doublet influence
+// coefficients at a point, etc.
 //
 /******************************************************************************/
 class Face {
 
   protected:
 
-    unsigned int _lbl;             // Face label
-    bool _thinflag;                // Flags for thin surface (0 thickness)
-    bool _TEuflag, _TElflag;       // Flags for upper/lower lifting TE faces
     double _sigma, _mu;            // Source and doublet strength
     double _length;                // A characteristic length
     double _area;                  // Face area
@@ -33,14 +25,10 @@ class Face {
     Eigen::Matrix3d _trans, _invtrans;
                                    // Transform from inertial frame to panel
                                    // frame and vice versa
+    std::vector<double> _x, _y, _z;
+                                   // Panel endpoint coordinates
     std::vector<double> _xtrans, _ytrans;
-                                   // Panel node coordinates in panel frame
-
-    std::vector<Node*> _noderef;   // Vector of connected node pointers
-    std::vector<Edge*> _edgeref;   // Vector of connected edge pointers
-
-    unsigned int _currnodes, _curredges;
-                                   // # of nodes and edges that have been set
+                                   // Panel endpoint coordinates in panel frame
 
   public:
 
@@ -48,22 +36,11 @@ class Face {
 
     Face ();
 
-    // Setting and accessing face label
+    // Initialize geometry with set of endpoints
 
-    void setLabel ( unsigned int );
-    unsigned int label () const;
-
-    // Access to nodes
-
-    unsigned int numNodes () const;
-    virtual void setNode ( unsigned int, Node * );
-    Node & node ( unsigned int ) const;
-
-    // Access to edges
-
-    unsigned int numEdges () const;
-    void setNextEdge ( Edge * );
-    Edge & edge ( unsigned int ) const;
+    virtual void setEndpoints ( const std::vector<double> & x,
+                                const std::vector<double> & y,
+                                const std::vector<double> & z ) = 0;
 
     // Setting and accessing source and doublet strength
 
@@ -78,23 +55,6 @@ class Face {
     const double & area () const;
     const Eigen::Vector3d & centroid () const;
     const Eigen::Vector3d & normal () const;
-
-    // Generic querying functions
-
-    const double & getScalar ( const std::string & ) const;
-    const Eigen::Vector3d & getVector ( const std::string & ) const;
-
-    // Setting and querying thin face flag (zero thickness surfaces)
-
-    void setThin ();
-    bool isThin () const;
-
-    // Setting and querying trailing edge face properties
-
-    void setUpperTrailingEdge ();
-    void setLowerTrailingEdge ();
-    bool isTrailingEdge () const;
-    std::string trailingEdgeType () const;
 
     // Virtual functions implemented in derived classes
     

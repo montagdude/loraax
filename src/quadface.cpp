@@ -6,14 +6,12 @@
 #include "settings.h"
 #include "geometry.h"
 #include "singularities.h"
-#include "node.h"
-#include "edge.h"
 #include "face.h"
 #include "quadface.h"
 
 /******************************************************************************/
 //
-// Quad face class.  Derived class from Face, has 4 nodes/edges.
+// Quad face class.  Derived class from Face, has 4 endpoints.
 // 
 /******************************************************************************/
 
@@ -24,28 +22,42 @@
 /******************************************************************************/
 QuadFace::QuadFace ()
 {
-  _noderef.resize(4);
-  _edgeref.resize(4);
+  _x.resize(4);
+  _y.resize(4);
+  _z.resize(4);
   _xtrans.resize(4);
   _ytrans.resize(4);
 }
 
 /******************************************************************************/
 //
-// Computes face geometric quantities once four nodes are set
+// Sets endpoints and calculates face geometric quantities. Endpoints should
+// be given in a counterclockwise (right-handed) direction.
 //
 /******************************************************************************/
-void QuadFace::setNode ( unsigned int nidx, Node * nodein )
+void QuadFace::setEndpoints ( const std::vector<double> & x,
+                              const std::vector<double> & y,
+                              const std::vector<double> & z )
 {
-  Face::setNode(nidx, nodein);
-  if (_currnodes == 4)
+  unsigned int i;
+
+  if ( (x.size() != 4) || (y.size() != 4) || (z.size() != 4) )
   {
-    computeCharacteristicLength();
-    computeArea();
-    computeNormal();
-    computeCentroid();
-    computeTransform();
+    conditional_stop(1, "QuadFace::setEndpoints",
+                     "x, y, and z must have 4 elements.");
   }
+
+  for ( i = 0; i < 4; i++ )
+  {
+    _x[i] = x[i];
+    _y[i] = y[i];
+    _z[i] = z[i];
+  }
+  computeCharacteristicLength();
+  computeArea();
+  computeNormal();
+  computeCentroid();
+  computeTransform();
 }
 
 /******************************************************************************/
@@ -58,25 +70,15 @@ void QuadFace::computeCharacteristicLength ()
 {
   Eigen::Vector3d diag1, diag2;
 
-#ifndef NDEBUG
-
-  if (_currnodes < 4)
-  {
-    conditional_stop(1, "QuadFace::computeCharacteristicLength",
-                     "Not enough nodes set for quadrilateral face.");
-  }
-
-#endif
-
   // Diagonals
 
-  diag1(0) = node(2).x() - node(0).x();
-  diag1(1) = node(2).y() - node(0).y();
-  diag1(2) = node(2).z() - node(0).z();
+  diag1(0) = _x[2] - _x[0];
+  diag1(1) = _y[2] - _y[0];
+  diag1(2) = _z[2] - _z[0];
 
-  diag2(0) = node(3).x() - node(1).x();
-  diag2(1) = node(3).y() - node(1).y();
-  diag2(2) = node(3).z() - node(1).z();
+  diag2(0) = _x[3] - _x[1];
+  diag2(1) = _y[3] - _y[1];
+  diag2(2) = _z[3] - _z[1];
 
   _length = std::max(diag1.norm(), diag2.norm());
 }
@@ -88,20 +90,10 @@ void QuadFace::computeCharacteristicLength ()
 /******************************************************************************/
 void QuadFace::computeArea ()
 {
-#ifndef NDEBUG
-
-  if (_currnodes < 4)
-  {
-    conditional_stop(1, "QuadFace::computeArea",
-                     "Not enough nodes set for quadrilateral face.");
-  }
-
-#endif
-
-  _area = quad_area(node(0).x(), node(0).y(), node(0).z(),
-                    node(1).x(), node(1).y(), node(1).z(),
-                    node(2).x(), node(2).y(), node(2).z(),
-                    node(3).x(), node(3).y(), node(3).z());
+  _area = quad_area(_x[0], _y[0], _z[0],
+                    _x[1], _y[1], _z[1],
+                    _x[2], _y[2], _z[2],
+                    _x[3], _y[3], _z[3]);
 }
 
 /******************************************************************************/
@@ -111,20 +103,10 @@ void QuadFace::computeArea ()
 /******************************************************************************/
 void QuadFace::computeNormal ()
 {
-#ifndef NDEBUG
-
-  if (_currnodes < 4)
-  {
-    conditional_stop(1, "QuadFace::computeNormal",
-                     "Not enough nodes set for quadrilateral face.");
-  }
-
-#endif
-
-  _norm = quad_normal(node(0).x(), node(0).y(), node(0).z(),
-                      node(1).x(), node(1).y(), node(1).z(),
-                      node(2).x(), node(2).y(), node(2).z(),
-                      node(3).x(), node(3).y(), node(3).z());
+  _norm = quad_normal(_x[0], _y[0], _z[0],
+                      _x[1], _y[1], _z[1],
+                      _x[2], _y[2], _z[2],
+                      _x[3], _y[3], _z[3]);
 }
 
 /******************************************************************************/
@@ -134,20 +116,10 @@ void QuadFace::computeNormal ()
 /******************************************************************************/
 void QuadFace::computeCentroid () 
 {
-#ifndef NDEBUG
-
-  if (_currnodes < 4)
-  {
-    conditional_stop(1, "QuadFace::computeCentroid",
-                     "Not enough nodes set for quadrilateral face.");
-  }
-
-#endif
-
-  _cen = quad_centroid(node(0).x(), node(0).y(), node(0).z(),
-                       node(1).x(), node(1).y(), node(1).z(),
-                       node(2).x(), node(2).y(), node(2).z(),
-                       node(3).x(), node(3).y(), node(3).z());
+  _cen = quad_centroid(_x[0], _y[0], _z[0],
+                       _x[1], _y[1], _z[1],
+                       _x[2], _y[2], _z[2],
+                       _x[3], _y[3], _z[3]);
 }
 
 /******************************************************************************/
@@ -174,9 +146,9 @@ void QuadFace::computeTransform ()
 
   for ( i = 0; i < 4; i++ )
   {
-    vec(0) = node(i).x() - _cen[0];
-    vec(1) = node(i).y() - _cen[1];
-    vec(2) = node(i).z() - _cen[2];
+    vec(0) = _x[i] - _cen[0];
+    vec(1) = _y[i] - _cen[1];
+    vec(2) = _z[i] - _cen[2];
     transvec = _trans*vec;
     _xtrans[i] = transvec(0);
     _ytrans[i] = transvec(1);
@@ -193,16 +165,6 @@ double QuadFace::sourcePhiCoeff ( const double & x, const double & y,
                                   const std::string & side ) const
 {
   Eigen::Vector3d vec, transvec;
-
-#ifndef NDEBUG
-
-  if (_currnodes < 4)
-  {
-    conditional_stop(1, "QuadFace::sourcePhiCoeff",
-                     "Not enough nodes set for quadrilateral face.");
-  }
-
-#endif
 
   // Vector from centroid to point
 
@@ -244,16 +206,6 @@ Eigen::Vector3d QuadFace::sourceVCoeff ( const double & x, const double & y,
                                          const std::string & side ) const
 {
   Eigen::Vector3d vec, transvec, velpf, velif;
-
-#ifndef NDEBUG
-
-  if (_currnodes < 4)
-  {
-    conditional_stop(1, "QuadFace::sourceVCoeff",
-                     "Not enough nodes set for quadrilateral face.");
-  }
-
-#endif
 
   // Vector from centroid to point
 
@@ -302,16 +254,6 @@ double QuadFace::doubletPhiCoeff ( const double & x, const double & y,
 {
   Eigen::Vector3d vec, transvec;
 
-#ifndef NDEBUG
-
-  if (_currnodes < 4)
-  {
-    conditional_stop(1, "QuadFace::doubletPhiCoeff",
-                     "Not enough nodes set for quadrilateral face.");
-  }
-
-#endif
-
   // Transform point to panel frame
 
   vec(0) = x - _cen[0];
@@ -347,16 +289,6 @@ Eigen::Vector3d QuadFace::doubletVCoeff ( const double & x, const double & y,
                                           const std::string & side ) const
 {
   Eigen::Vector3d vec, transvec, velpf, velif;
-
-#ifndef NDEBUG
-
-  if (_currnodes < 4)
-  {
-    conditional_stop(1, "QuadFace::doubletVCoeff",
-                     "Not enough nodes set for quadrilateral face.");
-  }
-
-#endif
 
   // Transform point to panel frame
 

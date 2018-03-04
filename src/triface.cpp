@@ -7,8 +7,6 @@
 #include "settings.h"
 #include "geometry.h"
 #include "singularities.h"
-#include "node.h"
-#include "edge.h"
 #include "face.h"
 #include "triface.h"
 
@@ -25,28 +23,42 @@
 /******************************************************************************/
 TriFace::TriFace ()
 {
-  _noderef.resize(3);
-  _edgeref.resize(3);
+  _x.resize(3);
+  _y.resize(3);
+  _z.resize(3);
   _xtrans.resize(3);
   _ytrans.resize(3);
 }
 
 /******************************************************************************/
 //
-// Computes face geometric quantities once three nodes are set
+// Sets endpoints and calculates face geometric quantities. Endpoints should
+// be given in a counterclockwise (right-handed) direction.
 //
 /******************************************************************************/
-void TriFace::setNode ( unsigned int nidx, Node * nodein )
+void TriFace::setEndpoints ( const std::vector<double> & x,
+                             const std::vector<double> & y,
+                             const std::vector<double> & z )
 {
-  Face::setNode(nidx, nodein);
-  if (_currnodes == 3)
+  unsigned int i;
+
+  if ( (x.size() != 3) || (y.size() != 3) || (z.size() != 3) )
   {
-    computeCharacteristicLength();
-    computeArea();
-    computeNormal();
-    computeCentroid();
-    computeTransform();
+    conditional_stop(1, "TriFace::setEndpoints",
+                     "x, y, and z must have 3 elements.");
   }
+
+  for ( i = 0; i < 3; i++ )
+  {
+    _x[i] = x[i];
+    _y[i] = y[i];
+    _z[i] = z[i];
+  }
+  computeCharacteristicLength();
+  computeArea();
+  computeNormal();
+  computeCentroid();
+  computeTransform();
 }
 
 /******************************************************************************/
@@ -72,19 +84,19 @@ void TriFace::computeCharacteristicLength ()
 
   // Side lengths
 
-  side1(0) = node(1).x() - node(0).x();
-  side1(1) = node(1).y() - node(0).y();
-  side1(2) = node(1).z() - node(0).z();
+  side1(0) = _x[1] - _x[0];
+  side1(1) = _y[1] - _y[0];
+  side1(2) = _z[1] - _z[0];
   len1 = side1.norm();
 
-  side2(0) = node(2).x() - node(1).x();
-  side2(1) = node(2).y() - node(1).y();
-  side2(2) = node(2).z() - node(1).z();
+  side2(0) = _x[2] - _x[1];
+  side2(1) = _y[2] - _y[1];
+  side2(2) = _z[2] - _z[1];
   len2 = side2.norm();
 
-  side3(0) = node(0).x() - node(2).x();
-  side3(1) = node(0).y() - node(2).y();
-  side3(2) = node(0).z() - node(2).z();
+  side3(0) = _x[0] - _x[2];
+  side3(1) = _y[0] - _y[2];
+  side3(2) = _z[0] - _z[2];
   len3 = side3.norm();
 
   _length = std::max(len1, std::max(len2, len3));
@@ -97,19 +109,9 @@ void TriFace::computeCharacteristicLength ()
 /******************************************************************************/
 void TriFace::computeArea ()
 {
-#ifndef NDEBUG
-
-  if (_currnodes < 3)
-  {
-    conditional_stop(1, "TriFace::computeArea",
-                     "Not enough nodes set for triangular face.");
-  }
-
-#endif
-
-  _area = tri_area(node(0).x(), node(0).y(), node(0).z(),
-                   node(1).x(), node(1).y(), node(1).z(),
-                   node(2).x(), node(2).y(), node(2).z());
+  _area = tri_area(_x[0], _y[0], _z[0],
+                   _x[1], _y[1], _z[1],
+                   _x[2], _y[2], _z[2]);
 }
 
 /******************************************************************************/
@@ -119,19 +121,9 @@ void TriFace::computeArea ()
 /******************************************************************************/
 void TriFace::computeNormal ()
 {
-#ifndef NDEBUG
-
-  if (_currnodes < 3)
-  {
-    conditional_stop(1, "TriFace::computeNormal",
-                     "Not enough nodes set for triangular face.");
-  }
-
-#endif
-
-  _norm = tri_normal(node(0).x(), node(0).y(), node(0).z(),
-                     node(1).x(), node(1).y(), node(1).z(),
-                     node(2).x(), node(2).y(), node(2).z());
+  _norm = tri_normal(_x[0], _y[0], _z[0],
+                     _x[1], _y[1], _z[1],
+                     _x[2], _y[2], _z[2]);
 }
 
 /******************************************************************************/
@@ -141,19 +133,9 @@ void TriFace::computeNormal ()
 /******************************************************************************/
 void TriFace::computeCentroid () 
 {
-#ifndef NDEBUG
-
-  if (_currnodes < 3)
-  {
-    conditional_stop(1, "TriFace::computeCentroid",
-                     "Not enough nodes set for triangular face.");
-  }
-
-#endif
-
-  _cen = tri_centroid(node(0).x(), node(0).y(), node(0).z(),
-                      node(1).x(), node(1).y(), node(1).z(),
-                      node(2).x(), node(2).y(), node(2).z());
+  _cen = tri_centroid(_x[0], _y[0], _z[0],
+                      _x[1], _y[1], _z[1],
+                      _x[2], _y[2], _z[2]);
 }
 
 /******************************************************************************/
@@ -180,9 +162,9 @@ void TriFace::computeTransform ()
 
   for ( i = 0; i < 3; i++ )
   {
-    vec(0) = node(i).x() - _cen[0];
-    vec(1) = node(i).y() - _cen[1];
-    vec(2) = node(i).z() - _cen[2];
+    vec(0) = _x[i] - _cen[0];
+    vec(1) = _y[i] - _cen[1];
+    vec(2) = _z[i] - _cen[2];
     transvec = _trans*vec;
     _xtrans[i] = transvec(0);
     _ytrans[i] = transvec(1);
@@ -199,16 +181,6 @@ double TriFace::sourcePhiCoeff ( const double & x, const double & y,
                                  const std::string & side ) const
 {
   Eigen::Vector3d vec, transvec;
-
-#ifndef NDEBUG
-
-  if (_currnodes < 3)
-  {
-    conditional_stop(1, "TriFace::sourcePhiCoeff",
-                     "Not enough nodes set for triangular face.");
-  }
-
-#endif
 
   // Vector from centroid to point
 
@@ -249,16 +221,6 @@ Eigen::Vector3d TriFace::sourceVCoeff ( const double & x, const double & y,
                                         const std::string & side ) const
 {
   Eigen::Vector3d vec, transvec, velpf, velif;
-
-#ifndef NDEBUG
-
-  if (_currnodes < 3)
-  {
-    conditional_stop(1, "TriFace::sourceVCoeff",
-                     "Not enough nodes set for triangular face.");
-  }
-
-#endif
 
   // Vector from centroid to point
 
@@ -306,16 +268,6 @@ double TriFace::doubletPhiCoeff ( const double & x, const double & y,
 {
   Eigen::Vector3d vec, transvec;
 
-#ifndef NDEBUG
-
-  if (_currnodes < 3)
-  {
-    conditional_stop(1, "TriFace::doubletPhiCoeff",
-                     "Not enough nodes set for triangular face.");
-  }
-
-#endif
-
   // Transform point to panel frame
 
   vec(0) = x - _cen[0];
@@ -350,16 +302,6 @@ Eigen::Vector3d TriFace::doubletVCoeff ( const double & x, const double & y,
                                          const std::string & side ) const
 {
   Eigen::Vector3d vec, transvec, velpf, velif;
-
-#ifndef NDEBUG
-
-  if (_currnodes < 3)
-  {
-    conditional_stop(1, "TriFace::doubletVCoeff",
-                     "Not enough nodes set for triangular face.");
-  }
-
-#endif
 
   // Transform point to panel frame
 
@@ -424,4 +366,3 @@ Eigen::Vector3d TriFace::inducedVelocity ( const double & x, const double & y,
 
   return vel;
 }
-
