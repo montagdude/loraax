@@ -31,9 +31,9 @@ class QuadFace: public Face {
 
     // Sets endpoints and computes face geometric quantities
 
-    void setEndpoints( const std::vector<double> & x,
-                       const std::vector<double> & y,
-                       const std::vector<double> & z );
+    void setEndpoints( const std::vector<double> &,
+                       const std::vector<double> &,
+                       const std::vector<double> & );
 
     // Computing source and doublet influence coefficients at a point
 

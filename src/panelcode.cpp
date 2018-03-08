@@ -1,44 +1,33 @@
-#include <fenv.h>
-#include "util.h"
+#include <iostream>
 #include "settings.h"
-#include "body.h"
-#include "wake.h"
-#include "wake_relaxation.h"
-#include "file_io.h"
+#include "airfoil.h"
 
 int main (int argc, char* argv[]) 
 { 
-  Body aircraft;
-  Wake wake;
+  Airfoil foil;
+  int check;
 
-  // Get input file name from command line arguments
-  
-  if (argc < 2)
-  {
-    conditional_stop(1, "main", 
-                     "Input file name required as command line argument.");
-  }
+  ncrit = 9.;
+  xtript = 1.;
+  xtripb = 1.;
+  maxit = 100;
+  vaccel = 0.01;
+  fix_unconverged = true;
+  reinitialize = true;
 
-  // Catch floating point exceptions
+  npan = 160;
+  cvpar = 1.;
+  cterat = 0.15;
+  ctrrat = 0.2;
 
-  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+  farfield_distance_factor = 1000.;
 
-  // Read inputs from file
-
-  read_settings(argv[1]);
-
-  // Read geometry from grid file
-
-  read_grid(grid_format, grid_file, aircraft);
-
-  // Initialize wake
-
-  initialize_wake(aircraft, wake);
-
-  // Write output data to file
-
-  write_solution_output(output_file_format, case_name,
-                        output_variable_list, aircraft, wake);
+  check = foil.readCoordinates("clarky.dat");
+  if (check == 1)
+    std::cout << "Unable to open clarky.dat." << std::endl;
+  else if (check == 2)
+    std::cout << "Format error in clarky.dat." << std::endl;
+  foil.ccOrderCoordinates();
 
   return 0; 
 }

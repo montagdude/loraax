@@ -29,9 +29,11 @@ class TriFace: public Face {
 
     TriFace ();
 
-    // Computes face geometric quantities once four nodes are set
+    // Sets endpoints and computes face geometric quantities
 
-    void setNode ( unsigned int, Node * );
+    void setEndpoints ( const std::vector<double> &,
+                        const std::vector<double> &,
+                        const std::vector<double> & );
 
     // Computing source and doublet influence coefficients at a point
 

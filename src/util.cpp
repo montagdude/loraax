@@ -59,28 +59,34 @@ void go_to_line ( std::ifstream & infile, unsigned int linenum )
 
 /******************************************************************************/
 //
-// Converts string to int
+// Converts string to int. Returns 0 on success, 1 on failure.
 //
 /******************************************************************************/
-int string2int ( const std::string & instr )
+int string2int ( const std::string & instr, int & outval )
 {
   std::stringstream ss(instr);
-  int outval;
   ss >> outval;
-  return outval;
+
+  if (! ss)
+    return 1;
+  else
+    return 0;
 }
 
 /******************************************************************************/
 //
-// Converts string to double
+// Converts string to double. Returns 0 on success, 1 on failure.
 //
 /******************************************************************************/
-double string2double ( const std::string & instr )
+double string2double ( const std::string & instr, double & outval )
 {
   std::stringstream ss(instr);
-  double outval;
   ss >> outval;
-  return outval;
+
+  if (! ss)
+    return 1;
+  else
+    return 0;
 }
 
 /******************************************************************************/
@@ -359,7 +365,7 @@ std::vector<std::string> split_string ( const std::string & instr, char delim )
     {
       // End of item found -> add to output vector
 
-      if (tempstr[i] == delim) 
+      if (tempstr[i] == delim)
       {
         item = false;
         last = i - 1;

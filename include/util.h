@@ -11,8 +11,8 @@
 void conditional_stop ( int, const std::string &, const std::string & );
 void print_warning ( const std::string &, const std::string & );
 void go_to_line ( std::ifstream & , unsigned int );
-int string2int ( const std::string & );
-double string2double ( const std::string & );
+int string2int ( const std::string &, int & );
+int string2double ( const std::string &, double & );
 std::string int2string ( int );
 std::string double2string ( const double & );
 std::string bool2string ( bool );

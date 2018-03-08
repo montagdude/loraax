@@ -72,16 +72,6 @@ void TriFace::computeCharacteristicLength ()
   double len1, len2, len3;
   Eigen::Vector3d side1, side2, side3;
 
-#ifndef NDEBUG
-
-  if (_currnodes < 3)
-  {
-    conditional_stop(1, "TriFace::computeCharacteristicLength",
-                     "Not enough nodes set for triangular face.");
-  }
-
-#endif
-
   // Side lengths
 
   side1(0) = _x[1] - _x[0];
