@@ -13,6 +13,7 @@ OBJ=util.o settings.o transformations.o geometry.o singularities.o face.o trifac
 EXE=panelcode
 SRCDIR=../src
 INCLUDE=-I../include -I/usr/include/eigen3
+LIBS=-lxfoil
 
 ################################################################################
 
@@ -29,7 +30,7 @@ endif
 all: $(EXE)
 
 $(EXE): $(OBJ)
-	$(CXX) $(CXXFLAGS) $(PREPROC) -o $(EXE) $(OBJ)
+	$(CXX) $(CXXFLAGS) $(PREPROC) -o $(EXE) $(OBJ) $(LIBS)
 
 clean: 
 	rm -f *.o
