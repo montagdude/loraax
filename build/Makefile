@@ -9,7 +9,7 @@ CXXFLAGS=$(DEBUGFLAGS)
 
 #### Main program ##############################################################
 
-OBJ=util.o settings.o transformations.o geometry.o singularities.o face.o triface.o quadface.o airfoil.o panelcode.o
+OBJ=util.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o airfoil.o panelcode.o
 EXE=panelcode
 SRCDIR=../src
 INCLUDE=-I../include -I/usr/include/eigen3
@@ -52,6 +52,9 @@ geometry.o: $(SRCDIR)/geometry.cpp
 
 singularities.o: $(SRCDIR)/singularities.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/singularities.cpp
+
+vertex.o: $(SRCDIR)/vertex.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/vertex.cpp
 
 face.o: $(SRCDIR)/face.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/face.cpp

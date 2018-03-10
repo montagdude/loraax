@@ -1,6 +1,7 @@
 #include <vector>
 #include <Eigen/Core>
 #include "util.h"
+#include "vertex.h"
 #include "face.h"
 
 /******************************************************************************/
@@ -17,14 +18,38 @@
 /******************************************************************************/
 Face::Face ()
 {
+  _idx = -1;
   _sigma = 0.0;
   _mu = 0.0;
+  _length = 0.0;
   _area = 0.0;
-  _cen.resize(4);
-  _norm.resize(4);
-  _trans.resize(4,4);
-  _invtrans.resize(4,4);
+  _currverts = 0;
+  _verts.resize(0);
+  _xtrans.resize(0);
 } 
+
+/******************************************************************************/
+//
+// Set/access index
+//
+/******************************************************************************/
+void Face::setIdx ( int idx ) { _idx = idx; }
+int Face::idx () const { return _idx; }
+
+/******************************************************************************/
+//
+// Access vertices
+//
+/******************************************************************************/
+Vertex & Face::vertex ( unsigned int vidx ) const
+{
+  if (vidx >= _currverts)
+  {
+    conditional_stop(1, "Face::vertex", "Index out of range.");
+  }
+
+  return *_verts[vidx];
+}
 
 /******************************************************************************/
 //

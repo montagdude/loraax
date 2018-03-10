@@ -6,6 +6,8 @@
 #include <string>
 #include "face.h"
 
+class Vertex;
+
 /******************************************************************************/
 //
 // Quad face class.  Derived class from Face, has 4 endpoints.
@@ -29,11 +31,9 @@ class QuadFace: public Face {
 
     QuadFace ();
 
-    // Sets endpoints and computes face geometric quantities
+    // Add vertices and compute geometric quantities when 4 are set
 
-    void setEndpoints( const std::vector<double> &,
-                       const std::vector<double> &,
-                       const std::vector<double> & );
+    int addVertex ( Vertex * vert );
 
     // Computing source and doublet influence coefficients at a point
 

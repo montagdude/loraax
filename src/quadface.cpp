@@ -2,10 +2,11 @@
 #include <string>
 #include <cmath>
 #include <Eigen/Core>
-#include "util.h"
 #include "settings.h"
+#include "util.h"
 #include "geometry.h"
 #include "singularities.h"
+#include "vertex.h"
 #include "face.h"
 #include "quadface.h"
 
@@ -22,42 +23,41 @@
 /******************************************************************************/
 QuadFace::QuadFace ()
 {
-  _x.resize(4);
-  _y.resize(4);
-  _z.resize(4);
+  _verts.resize(4);
   _xtrans.resize(4);
   _ytrans.resize(4);
 }
 
 /******************************************************************************/
 //
-// Sets endpoints and calculates face geometric quantities. Endpoints should
-// be given in a counterclockwise (right-handed) direction.
+// Add vertex and compute face geometric quantities when four are set. Vertices
+// should be added in a counterclockwise order.
 //
 /******************************************************************************/
-void QuadFace::setEndpoints ( const std::vector<double> & x,
-                              const std::vector<double> & y,
-                              const std::vector<double> & z )
+int QuadFace::addVertex ( Vertex * vert )
 {
-  unsigned int i;
-
-  if ( (x.size() != 4) || (y.size() != 4) || (z.size() != 4) )
+  if (_currverts == 4)
   {
-    conditional_stop(1, "QuadFace::setEndpoints",
-                     "x, y, and z must have 4 elements.");
+#ifndef NDEBUG
+    print_warning("QuadFace::addVertex", "4 vertices have already been set.");
+#endif
+    return 1;
   }
 
-  for ( i = 0; i < 4; i++ )
+  _verts[_currverts] = vert;
+  _verts[_currverts]->addFace(this);
+  _currverts += 1;
+
+  if (_currverts == 4)
   {
-    _x[i] = x[i];
-    _y[i] = y[i];
-    _z[i] = z[i];
+    computeCharacteristicLength();
+    computeArea();
+    computeNormal();
+    computeCentroid();
+    computeTransform();
   }
-  computeCharacteristicLength();
-  computeArea();
-  computeNormal();
-  computeCentroid();
-  computeTransform();
+
+  return 0;
 }
 
 /******************************************************************************/
@@ -72,13 +72,13 @@ void QuadFace::computeCharacteristicLength ()
 
   // Diagonals
 
-  diag1(0) = _x[2] - _x[0];
-  diag1(1) = _y[2] - _y[0];
-  diag1(2) = _z[2] - _z[0];
+  diag1(0) = _verts[2]->x() - _verts[0]->x();
+  diag1(1) = _verts[2]->y() - _verts[0]->y();
+  diag1(2) = _verts[2]->z() - _verts[0]->z();
 
-  diag2(0) = _x[3] - _x[1];
-  diag2(1) = _y[3] - _y[1];
-  diag2(2) = _z[3] - _z[1];
+  diag2(0) = _verts[3]->x() - _verts[1]->x();
+  diag2(0) = _verts[3]->y() - _verts[1]->y();
+  diag2(0) = _verts[3]->z() - _verts[1]->z();
 
   _length = std::max(diag1.norm(), diag2.norm());
 }
@@ -90,10 +90,10 @@ void QuadFace::computeCharacteristicLength ()
 /******************************************************************************/
 void QuadFace::computeArea ()
 {
-  _area = quad_area(_x[0], _y[0], _z[0],
-                    _x[1], _y[1], _z[1],
-                    _x[2], _y[2], _z[2],
-                    _x[3], _y[3], _z[3]);
+  _area = quad_area(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
+                    _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
+                    _verts[2]->x(), _verts[2]->y(), _verts[2]->z(),
+                    _verts[3]->x(), _verts[3]->y(), _verts[3]->z());
 }
 
 /******************************************************************************/
@@ -103,10 +103,10 @@ void QuadFace::computeArea ()
 /******************************************************************************/
 void QuadFace::computeNormal ()
 {
-  _norm = quad_normal(_x[0], _y[0], _z[0],
-                      _x[1], _y[1], _z[1],
-                      _x[2], _y[2], _z[2],
-                      _x[3], _y[3], _z[3]);
+  _norm = quad_normal(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
+                      _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
+                      _verts[2]->x(), _verts[2]->y(), _verts[2]->z(),
+                      _verts[3]->x(), _verts[3]->y(), _verts[3]->z());
 }
 
 /******************************************************************************/
@@ -116,10 +116,10 @@ void QuadFace::computeNormal ()
 /******************************************************************************/
 void QuadFace::computeCentroid () 
 {
-  _cen = quad_centroid(_x[0], _y[0], _z[0],
-                       _x[1], _y[1], _z[1],
-                       _x[2], _y[2], _z[2],
-                       _x[3], _y[3], _z[3]);
+  _cen = quad_centroid(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
+                       _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
+                       _verts[2]->x(), _verts[2]->y(), _verts[2]->z(),
+                       _verts[3]->x(), _verts[3]->y(), _verts[3]->z());
 }
 
 /******************************************************************************/
@@ -146,9 +146,9 @@ void QuadFace::computeTransform ()
 
   for ( i = 0; i < 4; i++ )
   {
-    vec(0) = _x[i] - _cen[0];
-    vec(1) = _y[i] - _cen[1];
-    vec(2) = _z[i] - _cen[2];
+    vec(0) = _verts[i]->x() - _cen[0];
+    vec(1) = _verts[i]->y() - _cen[1];
+    vec(2) = _verts[i]->z() - _cen[2];
     transvec = _trans*vec;
     _xtrans[i] = transvec(0);
     _ytrans[i] = transvec(1);

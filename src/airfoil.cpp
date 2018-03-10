@@ -26,11 +26,7 @@ Airfoil::Airfoil ()
   _zb.resize(0);
   _x.resize(0);
   _z.resize(0);
-  _unit_scale = false;
-  _chord = 1;
-  _xle = 0.;
-  _zle = 0.;
-  _pitch = 0;
+  _unit_transform = false;
   _cl = 0.;
   _cd = 0.;
   _cm = 0.;
@@ -92,7 +88,7 @@ int Airfoil::readCoordinates ( const std::string & fname )
   }
     
   f.close();
-  _unit_scale = false;
+  _unit_transform = false;
 
   return retval;
 }
@@ -121,7 +117,7 @@ int Airfoil::naca4Coordinates ( const std::string & des, int & npointside )
     _zb[i] = z[i];
   }
 
-  _unit_scale = false;
+  _unit_transform = false;
 
   return 0;
 }
@@ -153,7 +149,7 @@ int Airfoil::naca5Coordinates ( const std::string & des, int & npointside )
     _zb[i] = z[i];
   }
 
-  _unit_scale = false;
+  _unit_transform = false;
 
   return 0;
 }
@@ -173,7 +169,7 @@ int Airfoil::setCoordinates ( const std::vector<double> & x,
   _xb = x;
   _zb = z;
 
-  _unit_scale = false;
+  _unit_transform = false;
 
   return 0;
 }
@@ -224,7 +220,7 @@ int Airfoil::interpCoordinates ( const Airfoil & foil1, const Airfoil & foil2,
     _zb[i] = (1.-interpfrac)*z1[i] + interpfrac*z2[i];
   }
 
-  _unit_scale = false;
+  _unit_transform = false;
 
   return 0;
 }
@@ -326,7 +322,7 @@ int Airfoil::unitTransform ()
     _zb[i] /= chord;
   }
 
-  _unit_scale = true;
+  _unit_transform = true;
 
   return 0;
 }
@@ -353,7 +349,7 @@ int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
     return 1;
   }
 
-  if (! _unit_scale)
+  if (! _unit_transform)
   {
 #ifndef NDEBUG
     print_warning("Airfoil::smoothPaneling", "Must call unitTransform first.");
@@ -382,35 +378,6 @@ int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
 
   return 0;
 }
-
-/******************************************************************************/
-//
-// Set or retrieve scaling information. 
-//
-/******************************************************************************/
-int Airfoil::setScaling ( const double & chord, const double & xle,
-                          const double & zle, const double & pitch )
-{
-  if (! _unit_scale)
-  {
-#ifndef NDEBUG
-    print_warning("Airfoil::setScaling", "Must call unitTransform first.");
-#endif
-    return 1;
-  }
-
-  _chord = chord;
-  _xle = xle;
-  _zle = zle;
-  _pitch = pitch;
-
-  return 0;
-}
-
-const double & Airfoil::chord () const { return _chord; }
-const double & Airfoil::xLE () const { return _xle; }
-const double & Airfoil::zLE () const { return _zle; }
-const double & Airfoil::pitch () const { return _pitch; }
 
 /******************************************************************************/
 //

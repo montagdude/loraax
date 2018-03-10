@@ -6,6 +6,8 @@
 #include <string>
 #include "face.h"
 
+class Vertex;
+
 /******************************************************************************/
 //
 // Tri face class.  Derived class from Face, has 3 nodes/edges.
@@ -29,11 +31,9 @@ class TriFace: public Face {
 
     TriFace ();
 
-    // Sets endpoints and computes face geometric quantities
+    // Add vertices and comput geometric quantities when 4 are set
 
-    void setEndpoints ( const std::vector<double> &,
-                        const std::vector<double> &,
-                        const std::vector<double> & );
+    int addVertex ( Vertex * vert );
 
     // Computing source and doublet influence coefficients at a point
 

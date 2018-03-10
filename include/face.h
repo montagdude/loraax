@@ -7,6 +7,8 @@
 #include <string>
 #include <Eigen/Core>
 
+class Vertex;
+
 /******************************************************************************/
 //
 // Face class. Computes geometric quantities, source/doublet influence
@@ -17,6 +19,7 @@ class Face {
 
   protected:
 
+    int _idx;		   	   // Face identifier index
     double _sigma, _mu;            // Source and doublet strength
     double _length;                // A characteristic length
     double _area;                  // Face area
@@ -25,8 +28,8 @@ class Face {
     Eigen::Matrix3d _trans, _invtrans;
                                    // Transform from inertial frame to panel
                                    // frame and vice versa
-    std::vector<double> _x, _y, _z;
-                                   // Panel endpoint coordinates
+    unsigned int _currverts;
+    std::vector<Vertex *> _verts;  // Panel endpoint vertices
     std::vector<double> _xtrans, _ytrans;
                                    // Panel endpoint coordinates in panel frame
 
@@ -36,11 +39,16 @@ class Face {
 
     Face ();
 
-    // Initialize geometry with set of endpoints
+    // Set / access index
 
-    virtual void setEndpoints ( const std::vector<double> & x,
-                                const std::vector<double> & y,
-                                const std::vector<double> & z ) = 0;
+    void setIdx ( int idx );
+    int idx () const;
+
+    // Set / access vertices
+
+    virtual int addVertex ( Vertex * vert ) = 0;
+    Vertex & vertex ( unsigned int vidx ) const;
+    unsigned int nVertices () const;
 
     // Setting and accessing source and doublet strength
 

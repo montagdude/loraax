@@ -3,10 +3,11 @@
 #include <string>
 #include <cmath>
 #include <Eigen/Core>
-#include "util.h"
 #include "settings.h"
+#include "util.h"
 #include "geometry.h"
 #include "singularities.h"
+#include "vertex.h"
 #include "face.h"
 #include "triface.h"
 
@@ -23,42 +24,41 @@
 /******************************************************************************/
 TriFace::TriFace ()
 {
-  _x.resize(3);
-  _y.resize(3);
-  _z.resize(3);
+  _verts.resize(3);
   _xtrans.resize(3);
   _ytrans.resize(3);
 }
 
 /******************************************************************************/
 //
-// Sets endpoints and calculates face geometric quantities. Endpoints should
-// be given in a counterclockwise (right-handed) direction.
+// Add vertex and compute face geometric quantities when three are set. Vertices
+// should be added in a counterclockwise order.
 //
 /******************************************************************************/
-void TriFace::setEndpoints ( const std::vector<double> & x,
-                             const std::vector<double> & y,
-                             const std::vector<double> & z )
+int TriFace::addVertex ( Vertex * vert )
 {
-  unsigned int i;
-
-  if ( (x.size() != 3) || (y.size() != 3) || (z.size() != 3) )
+  if (_currverts == 3)
   {
-    conditional_stop(1, "TriFace::setEndpoints",
-                     "x, y, and z must have 3 elements.");
+#ifndef NDEBUG
+    print_warning("TriFace::addVertex", "3 vertices have already been set.");
+#endif
+    return 1;
   }
 
-  for ( i = 0; i < 3; i++ )
+  _verts[_currverts] = vert;
+  _verts[_currverts]->addFace(this);
+  _currverts += 1;
+
+  if (_currverts == 3)
   {
-    _x[i] = x[i];
-    _y[i] = y[i];
-    _z[i] = z[i];
+    computeCharacteristicLength();
+    computeArea();
+    computeNormal();
+    computeCentroid();
+    computeTransform();
   }
-  computeCharacteristicLength();
-  computeArea();
-  computeNormal();
-  computeCentroid();
-  computeTransform();
+
+  return 0;
 }
 
 /******************************************************************************/
@@ -74,19 +74,20 @@ void TriFace::computeCharacteristicLength ()
 
   // Side lengths
 
-  side1(0) = _x[1] - _x[0];
-  side1(1) = _y[1] - _y[0];
-  side1(2) = _z[1] - _z[0];
+  side1(0) = _verts[1]->x() - _verts[0]->x();
+  side1(1) = _verts[1]->y() - _verts[0]->y();
+  side1(2) = _verts[1]->z() - _verts[0]->z();
+  
   len1 = side1.norm();
 
-  side2(0) = _x[2] - _x[1];
-  side2(1) = _y[2] - _y[1];
-  side2(2) = _z[2] - _z[1];
+  side2(0) = _verts[2]->x() - _verts[1]->x();
+  side2(1) = _verts[2]->y() - _verts[1]->y();
+  side2(2) = _verts[2]->z() - _verts[1]->z();
   len2 = side2.norm();
 
-  side3(0) = _x[0] - _x[2];
-  side3(1) = _y[0] - _y[2];
-  side3(2) = _z[0] - _z[2];
+  side3(0) = _verts[0]->x() - _verts[2]->x();
+  side3(1) = _verts[0]->y() - _verts[2]->y();
+  side3(2) = _verts[0]->z() - _verts[2]->z();
   len3 = side3.norm();
 
   _length = std::max(len1, std::max(len2, len3));
@@ -99,9 +100,9 @@ void TriFace::computeCharacteristicLength ()
 /******************************************************************************/
 void TriFace::computeArea ()
 {
-  _area = tri_area(_x[0], _y[0], _z[0],
-                   _x[1], _y[1], _z[1],
-                   _x[2], _y[2], _z[2]);
+  _area = tri_area(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
+                   _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
+                   _verts[2]->x(), _verts[2]->y(), _verts[2]->z());
 }
 
 /******************************************************************************/
@@ -111,9 +112,9 @@ void TriFace::computeArea ()
 /******************************************************************************/
 void TriFace::computeNormal ()
 {
-  _norm = tri_normal(_x[0], _y[0], _z[0],
-                     _x[1], _y[1], _z[1],
-                     _x[2], _y[2], _z[2]);
+  _norm = tri_normal(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
+                     _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
+                     _verts[2]->x(), _verts[2]->y(), _verts[2]->z());
 }
 
 /******************************************************************************/
@@ -123,9 +124,9 @@ void TriFace::computeNormal ()
 /******************************************************************************/
 void TriFace::computeCentroid () 
 {
-  _cen = tri_centroid(_x[0], _y[0], _z[0],
-                      _x[1], _y[1], _z[1],
-                      _x[2], _y[2], _z[2]);
+  _cen = tri_centroid(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
+                      _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
+                      _verts[2]->x(), _verts[2]->y(), _verts[2]->z());
 }
 
 /******************************************************************************/
@@ -152,9 +153,9 @@ void TriFace::computeTransform ()
 
   for ( i = 0; i < 3; i++ )
   {
-    vec(0) = _x[i] - _cen[0];
-    vec(1) = _y[i] - _cen[1];
-    vec(2) = _z[i] - _cen[2];
+    vec(0) = _verts[i]->x() - _cen[0];
+    vec(1) = _verts[i]->y() - _cen[1];
+    vec(2) = _verts[i]->z() - _cen[2];
     transvec = _trans*vec;
     _xtrans[i] = transvec(0);
     _ytrans[i] = transvec(1);

@@ -25,10 +25,7 @@ class Airfoil {
     std::vector<double> _xb, _zb;	// Input coordinates
     std::vector<double> _x, _z;		// Smoothed coordinates
 
-    // Geometric scaling/transformation data
-
-    bool _unit_scale;                   // Scaling flag
-    double _chord, _xle, _zle, _pitch;
+    bool _unit_transform;		// Transform flag (call unitTransform)
 
     // Aero data
     
@@ -62,15 +59,6 @@ class Airfoil {
     // Generate smoothed coordinates from buffer coordinates
 
     int smoothPaneling ( const xfoil_geom_options_type & geom_opts );
-
-    // Set / retrieve scaling information
-
-    int setScaling ( const double & chord, const double & xle,
-                     const double & zle, const double & pitch );
-    const double & chord () const;
-    const double & xLE () const;
-    const double & zLE () const;
-    const double & pitch () const;
 
     // Airfoil data
 
