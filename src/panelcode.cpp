@@ -4,11 +4,12 @@ extern "C"
   #include <xfoil_interface.h>
 }
 #include "settings.h"
+#include "section.h"
 #include "airfoil.h"
 
 int main (int argc, char* argv[]) 
 { 
-  Airfoil foil1, foil2, foil3;
+  Section sec1, sec2, sec3;
   int npointside, check;
   xfoil_geom_options_type geom_opts;
 
@@ -36,26 +37,28 @@ int main (int argc, char* argv[])
 
   farfield_distance_factor = 1000.;
 
-  check = foil1.readCoordinates("clarky.dat");
+  check = sec1.airfoil().readCoordinates("clarky.dat");
   if (check == 1)
     std::cout << "Unable to open clarky.dat." << std::endl;
   else if (check == 2)
     std::cout << "Format error in clarky.dat." << std::endl;
-  foil1.ccwOrderCoordinates();
-  foil1.unitTransform();
-  foil1.smoothPaneling(geom_opts);
+  sec1.airfoil().ccwOrderCoordinates();
+  sec1.airfoil().splineFit();
+  sec1.airfoil().unitTransform();
+  sec1.airfoil().smoothPaneling(geom_opts);
 
   npointside = 100;
-  check = foil2.naca5Coordinates("21021", npointside);
-  foil2.ccwOrderCoordinates();
-  foil2.unitTransform();
-  foil2.smoothPaneling(geom_opts);
+  check = sec2.airfoil().naca5Coordinates("21021", npointside);
+  sec2.airfoil().ccwOrderCoordinates();
+  sec2.airfoil().splineFit();
+  sec2.airfoil().unitTransform();
+  sec2.airfoil().smoothPaneling(geom_opts);
 
-  foil3.interpCoordinates(foil1, foil2, 0.5);
-  foil3.unitTransform();
-  foil3.smoothPaneling(geom_opts);
-  std::cout << "Number of buffer points for foil3: " << foil3.nBuffer()
-            << std::endl;
+  sec3.airfoil().interpCoordinates(sec1.airfoil(), sec2.airfoil(), 0.5);
+  sec3.airfoil().splineFit();
+  sec3.airfoil().unitTransform();
+  sec3.airfoil().smoothPaneling(geom_opts);
+  sec3.setVertices(51, 0.2, 0.5);
 
   return 0; 
 }

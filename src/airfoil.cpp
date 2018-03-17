@@ -9,7 +9,8 @@ extern "C"
 
 /******************************************************************************/
 //
-// Airfoil class. Defines wing slice where BL equations are solved.
+// Airfoil class. Stores and manipulates airfoil coordinates and solves BL
+// equations with Xfoil.
 // 
 /******************************************************************************/
 
@@ -26,6 +27,9 @@ Airfoil::Airfoil ()
   _zb.resize(0);
   _x.resize(0);
   _z.resize(0);
+  _s.resize(0);
+  _xs.resize(0);
+  _zs.resize(0);
   _unit_transform = false;
   _cl = 0.;
   _cd = 0.;
@@ -73,8 +77,8 @@ int Airfoil::readCoordinates ( const std::string & fname )
     if (f.eof()) { break; }
 
     xz = split_string(bracket_name(line));
-    if ( (xz.size() != 2) || (string2double(xz[0], x) == 0) ||
-         (string2double(xz[1], z) == 0) )	// Read error
+    if ( (xz.size() != 2) || (string2double(xz[0], x) != 0) ||
+         (string2double(xz[1], z) != 0) )	// Read error
     {
       retval = 2;
       break;
@@ -193,7 +197,7 @@ int Airfoil::interpCoordinates ( const Airfoil & foil1, const Airfoil & foil2,
 
   if ( (foil1.nSmoothed() == 0) || (foil2.nSmoothed() == 0) )
   {
-#ifndef NDEBUG
+#ifdef DEBUG
     print_warning("Airfoil::interpCoordinates",
                   "Smoothed coordinates not present for foil1 or foil2.");
 #endif
@@ -202,7 +206,7 @@ int Airfoil::interpCoordinates ( const Airfoil & foil1, const Airfoil & foil2,
 
   if (foil1.nSmoothed() != foil2.nSmoothed() )
   {
-#ifndef NDEBUG
+#ifdef DEBUG
     print_warning("Airfoil::interpCoordinates",
                   "foil1 and foil2 must have same number of smoothed panels");
 #endif
@@ -238,7 +242,7 @@ void Airfoil::ccwOrderCoordinates ()
   double dx1, dx2, dz1, dz2;
   std::vector<double> xrev(_nb), zrev(_nb);
 
-#ifndef NDEBUG
+#ifdef DEBUG
   if (_nb == 0)
   {
     conditional_stop(1, "Airfoil::ccwOrderCoordinates",
@@ -272,20 +276,74 @@ void Airfoil::ccwOrderCoordinates ()
 
 /******************************************************************************/
 //
-// Scales to unit chord and moves to origin
+// Fits a spline to buffer coordinates
 //
 /******************************************************************************/
-int Airfoil::unitTransform ()
+int Airfoil::splineFit ()
 {
-  double xle, zle, xte, chord;
-  double x[_nb], z[_nb];
+  double x[_nb], z[_nb], s[_nb], xs[_nb], zs[_nb];
   unsigned int i;
   int n;
 
   if (_nb == 0)
   {
-#ifndef NDEBUG
-    print_warning("Airfoil::unitTransform", "Airfoil not yet loaded.");
+#ifdef DEBUG
+    print_warning("Airfoil::splineFit", "Airfoil not yet loaded.");
+#endif
+    return 1;
+  }
+
+  n = _nb;
+  _s.resize(_nb);
+  _xs.resize(_nb);
+  _zs.resize(_nb);
+  for ( i = 0; i < _nb; i++ )
+  {
+    x[i] = _xb[i];
+    z[i] = _zb[i];
+  }
+  xfoil_spline_coordinates(x, z, &n, s, xs, zs);
+
+  for ( i = 0; i < _nb; i++ )
+  {
+    _s[i] = s[i];
+    _xs[i] = xs[i];
+    _zs[i] = zs[i];
+  }
+
+  return 0;  
+}
+
+/******************************************************************************/
+//
+// Retrieve spline information
+//
+/******************************************************************************/
+const double & Airfoil::sLen () const { return _s.back(); }
+const double & Airfoil::sLE () const { return _sle; }
+bool Airfoil::splined () const
+{
+  if (_s.size() > 0)
+    return true;
+  else
+    return false;
+}
+
+/******************************************************************************/
+//
+// Compute coordinate at spline parameter
+//
+/******************************************************************************/
+int Airfoil::splineInterp ( const double & sc, double & xc, double & zc ) const
+{
+  double x[_nb], z[_nb], s[_nb], xs[_nb], zs[_nb];
+  unsigned int i;
+  int n;
+
+  if (! splined())
+  {
+#ifdef DEBUG
+    print_warning("Airfoil::splineInterp", "Must call splineFit first.");
 #endif
     return 1;
   }
@@ -295,8 +353,53 @@ int Airfoil::unitTransform ()
   {
     x[i] = _xb[i];
     z[i] = _zb[i];
+    s[i] = _s[i];
+    xs[i] = _xs[i];
+    zs[i] = _zs[i];
   }
-  xfoil_lefind(x, z, &n, &xle, &zle);
+  xfoil_eval_spline(x, z, s, xs, zs, &n, &sc, &xc, &zc);
+
+  return 0;
+}
+
+/******************************************************************************/
+//
+// Scales to unit chord and moves to origin
+//
+/******************************************************************************/
+int Airfoil::unitTransform ()
+{
+  double xle, zle, xte, chord;
+  double x[_nb], z[_nb], s[_nb], xs[_nb], zs[_nb];
+  unsigned int i;
+  int n;
+
+  if (_nb == 0)
+  {
+#ifdef DEBUG
+    print_warning("Airfoil::unitTransform", "Airfoil not yet loaded.");
+#endif
+    return 1;
+  }
+
+  if (_s.size() == 0)
+  {
+#ifdef DEBUG
+    print_warning("Airfoil::unitTransform", "Must call splineFit first.");
+#endif
+    return 2;
+  }
+
+  n = _nb;
+  for ( i = 0; i < _nb; i++ )
+  {
+    x[i] = _xb[i];
+    z[i] = _zb[i];
+    s[i] = _s[i];
+    xs[i] = _xs[i];
+    zs[i] = _zs[i];
+  }
+  xfoil_lefind(x, z, s, xs, zs, &n, &_sle, &xle, &zle);
 
   xte = -1E+06;
   for ( i = 0; i < _nb; i++ )
@@ -306,10 +409,10 @@ int Airfoil::unitTransform ()
   chord = xte - xle; 
   if (chord <= 0.)
   {
-#ifndef NDEBUG
+#ifdef DEBUG
     print_warning("Airfoil::unitTransform", "Airfoil has chord <= 0.");
 #endif
-    return 2;
+    return 3;
   }
 
   // Move leading edge to origin and scale
@@ -321,6 +424,19 @@ int Airfoil::unitTransform ()
     _xb[i] /= chord;
     _zb[i] /= chord;
   }
+
+  // Refit spline to transformed coordinates
+
+  splineFit();
+  for ( i = 0; i < _nb; i++ )
+  {
+    x[i] = _xb[i];
+    z[i] = _zb[i];
+    s[i] = _s[i];
+    xs[i] = _xs[i];
+    zs[i] = _zs[i];
+  }
+  xfoil_lefind(x, z, s, xs, zs, &n, &_sle, &xle, &zle);
 
   _unit_transform = true;
 
@@ -343,7 +459,7 @@ int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
 
   if (_nb == 0)
   {
-#ifndef NDEBUG
+#ifdef DEBUG
     print_warning("Airfoil::smoothPaneling", "Airfoil not yet loaded.");
 #endif
     return 1;
@@ -351,7 +467,7 @@ int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
 
   if (! _unit_transform)
   {
-#ifndef NDEBUG
+#ifdef DEBUG
     print_warning("Airfoil::smoothPaneling", "Must call unitTransform first.");
 #endif
     return 2;
@@ -389,7 +505,7 @@ unsigned int Airfoil::nSmoothed () const { return _n; }
 void Airfoil::bufferCoordinates ( std::vector<double> & xb,
                                   std::vector<double> & zb ) const
 {
-#ifndef NDEBUG
+#ifdef DEBUG
   if (_nb == 0)
   {
     print_warning("Airfoil::bufferCoordinates",
@@ -404,7 +520,7 @@ void Airfoil::bufferCoordinates ( std::vector<double> & xb,
 void Airfoil::smoothedCoordinates ( std::vector<double> & x,
                                     std::vector<double> & z ) const
 {
-#ifndef NDEBUG
+#ifdef DEBUG
   if (_n == 0)
   {
     print_warning("Airfoil::smoothedCoordinates",

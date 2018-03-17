@@ -54,4 +54,10 @@ Eigen::Matrix3d transform_from_normal ( const double &, const double &,
                                         const double & );
                           // Computes inertial->panel transformation from
                           //   normal vector
+
+// Edge spacing functions
+std::vector<double> uniform_spacing ( const double & slen, unsigned int n );
+std::vector<double> cosine_spacing ( const double & slen, unsigned int n );
+std::vector<double> sine_spacing ( const double & slen, unsigned int n );
+
 #endif

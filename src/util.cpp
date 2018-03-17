@@ -1,11 +1,14 @@
 // Contains basic utility functions
 
+#define _USE_MATH_DEFINES
+
 #include <iostream>
 #include <cstdlib>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <cmath>
 
 /******************************************************************************/
 //
@@ -78,7 +81,7 @@ int string2int ( const std::string & instr, int & outval )
 // Converts string to double. Returns 0 on success, 1 on failure.
 //
 /******************************************************************************/
-double string2double ( const std::string & instr, double & outval )
+int string2double ( const std::string & instr, double & outval )
 {
   std::stringstream ss(instr);
   ss >> outval;
@@ -384,4 +387,25 @@ std::vector<std::string> split_string ( const std::string & instr, char delim )
   }
 
   return outvec;
+}
+
+/******************************************************************************/
+//
+// Gets the minimum value of a std::vector<double>
+//
+/******************************************************************************/
+double vector_min ( const std::vector<double> & vec )
+{
+  unsigned int i, n;
+  double fmin;
+
+  n = vec.size();
+  fmin = 1.E+12;
+  for ( i = 0; i < n; i++ )
+  {
+    if (vec[i] < fmin)
+      fmin = vec[i];
+  }
+
+  return fmin;
 }

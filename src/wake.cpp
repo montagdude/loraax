@@ -80,7 +80,7 @@ void Wake::addWakeLine ( const double & length, unsigned int numfilaments,
 /******************************************************************************/
 WakeLine & Wake::wakeLine ( unsigned int wlidx )
 {
-#ifndef NDEBUG
+#ifdef DEBUG
 
   if (wlidx >= _numlines)
   {

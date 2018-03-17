@@ -12,7 +12,8 @@ extern "C"
 
 /******************************************************************************/
 //
-// Airfoil class. Defines wing slice where BL equations are solved.
+// Airfoil class. Stores and manipulates airfoil coordinates and solves BL
+// equations with Xfoil.
 //
 /******************************************************************************/
 class Airfoil {
@@ -23,6 +24,8 @@ class Airfoil {
 
     unsigned int _nb, _n;		// Number of points (buffer, smoothed)
     std::vector<double> _xb, _zb;	// Input coordinates
+    std::vector<double> _s, _xs, _zs;   // Spline fit of buffer coordinates
+    double _sle;                        // Leading edge spline parameter
     std::vector<double> _x, _z;		// Smoothed coordinates
 
     bool _unit_transform;		// Transform flag (call unitTransform)
@@ -51,6 +54,15 @@ class Airfoil {
     // Puts buffer coordinates in counterclockwise order
 
     void ccwOrderCoordinates ();
+
+    // Spline fit coordinates
+
+    int splineFit ();
+    const double & sLen () const;	// Total arc length
+    const double & sLE () const;	// LE spline coordinate
+    bool splined () const;		// Whether spline fit has been done
+    int splineInterp ( const double & sc, double & xc, double & zc ) const;
+					// Coordinate at spline parameter
 
     // Scale buffer coordinates to unit chord and move to origin
 

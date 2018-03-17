@@ -9,10 +9,12 @@ CXXFLAGS=$(DEBUGFLAGS)
 
 #### Main program ##############################################################
 
-OBJ=util.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o airfoil.o panelcode.o
+OBJ=util.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o airfoil.o section.o panelcode.o
 EXE=panelcode
 SRCDIR=../src
 INCLUDE=-I../include -I/usr/include/eigen3
+#INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3
+LDFLAGS=-L/data/dprosser/locally_installed/lib64
 LIBS=-lxfoil
 
 ################################################################################
@@ -20,9 +22,9 @@ LIBS=-lxfoil
 #### Preprocessor variables ####################################################
 
 ifeq ($(CXXFLAGS), $(DEBUGFLAGS))
-  PREPROC=-UNDEBUG
+  PREPROC=-DDEBUG
 else
-  PREPROC=-DNDEBUG
+  PREPROC=-UDEBUG
 endif
 
 ################################################################################
@@ -30,7 +32,7 @@ endif
 all: $(EXE)
 
 $(EXE): $(OBJ)
-	$(CXX) $(CXXFLAGS) $(PREPROC) -o $(EXE) $(OBJ) $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(EXE) $(OBJ) $(LIBS)
 
 clean: 
 	rm -f *.o
@@ -40,6 +42,9 @@ allclean: clean
 
 util.o: $(SRCDIR)/util.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/util.cpp
+
+algorithms.o: $(SRCDIR)/algorithms.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/algorithms.cpp
 
 settings.o: $(SRCDIR)/settings.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/settings.cpp
@@ -67,6 +72,9 @@ quadface.o: $(SRCDIR)/quadface.cpp
 
 airfoil.o: $(SRCDIR)/airfoil.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/airfoil.cpp
+
+section.o: $(SRCDIR)/section.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/section.cpp
 
 panelcode.o: $(SRCDIR)/panelcode.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/panelcode.cpp

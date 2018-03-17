@@ -1,9 +1,10 @@
 // Contains functions to compute geometric quantities (e.g. area, normal,
-// centroid)
+// centroid, spacing functions)
 
 #define _USE_MATH_DEFINES
 
 #include <cmath>
+#include <vector>
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include "transformations.h"

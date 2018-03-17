@@ -29,7 +29,7 @@ WakeLine::WakeLine ()
 /******************************************************************************/
 void WakeLine::setNumFilaments ( unsigned int numfilaments )
 {
-#ifndef NDEBUG
+#ifdef DEBUG
 
   if (_numfilaments != 0)
   {
@@ -63,7 +63,7 @@ unsigned int WakeLine::numFilaments () const { return _numfilaments; }
 void WakeLine::setEndpoint ( unsigned int idx, const double & x, 
                              const double & y, const double & z )
 {
-#ifndef NDEBUG
+#ifdef DEBUG
 
   if (idx == 0)
   {
@@ -111,7 +111,7 @@ const double & WakeLine::z ( unsigned int idx ) const { return _z[idx]; }
 void WakeLine::setNewEndpoint ( unsigned int idx, const double & x, 
                                 const double & y, const double & z )
 {
-#ifndef NDEBUG
+#ifdef DEBUG
 
   if (idx == 0)
   {

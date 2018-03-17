@@ -39,7 +39,7 @@ int TriFace::addVertex ( Vertex * vert )
 {
   if (_currverts == 3)
   {
-#ifndef NDEBUG
+#ifdef DEBUG
     print_warning("TriFace::addVertex", "3 vertices have already been set.");
 #endif
     return 1;

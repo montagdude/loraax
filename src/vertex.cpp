@@ -56,7 +56,7 @@ int Vertex::addFace ( Face * face )
   {
     if (_faces[i]->idx() == face->idx())
     {
-#ifndef NDEBUG
+#ifdef DEBUG
       print_warning("Vertex::addFace", "Face " + int2string(face->idx()) +
                     std::string(" already in list."));
 #endif

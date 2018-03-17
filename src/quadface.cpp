@@ -38,7 +38,7 @@ int QuadFace::addVertex ( Vertex * vert )
 {
   if (_currverts == 4)
   {
-#ifndef NDEBUG
+#ifdef DEBUG
     print_warning("QuadFace::addVertex", "4 vertices have already been set.");
 #endif
     return 1;
