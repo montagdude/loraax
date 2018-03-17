@@ -1,4 +1,5 @@
 #include <vector>
+#include <Eigen/Core>
 #include "util.h"
 #include "face.h"
 #include "vertex.h"
@@ -40,6 +41,39 @@ void Vertex::setCoordinates ( const double & x, const double & y,
 const double & Vertex::x () const { return _x; }
 const double & Vertex::y () const { return _y; }
 const double & Vertex::z () const { return _z; }
+
+/******************************************************************************/
+//
+// Transformations
+//
+/******************************************************************************/
+void Vertex::scale ( const double & factor )
+{
+  _x *= factor;
+  _y *= factor;
+  _z *= factor;
+}
+
+void Vertex::translate ( const double & dx, const double & dy,
+                         const double & dz )
+{
+  _x += dx;
+  _y += dy;
+  _z += dz;
+}
+
+void Vertex::rotate ( const Eigen::Matrix3d & transform )
+{
+  Eigen::Vector3d point, transpoint;
+
+  point(0) = _x;
+  point(1) = _y;
+  point(2) = _z;
+  transpoint = transform*point;
+  _x = transpoint(0);
+  _y = transpoint(1);
+  _z = transpoint(2);
+}
 
 /******************************************************************************/
 //

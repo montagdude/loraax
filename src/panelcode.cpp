@@ -37,6 +37,7 @@ int main (int argc, char* argv[])
 
   farfield_distance_factor = 1000.;
 
+  sec1.setGeometry(0., 0., 0., 10., 0., 0.);
   check = sec1.airfoil().readCoordinates("clarky.dat");
   if (check == 1)
     std::cout << "Unable to open clarky.dat." << std::endl;
@@ -46,6 +47,7 @@ int main (int argc, char* argv[])
   sec1.airfoil().splineFit();
   sec1.airfoil().unitTransform();
   sec1.airfoil().smoothPaneling(geom_opts);
+  sec1.setVertices(51, 0.2, 0.5);
 
   npointside = 100;
   check = sec2.airfoil().naca5Coordinates("21021", npointside);
@@ -54,6 +56,7 @@ int main (int argc, char* argv[])
   sec2.airfoil().unitTransform();
   sec2.airfoil().smoothPaneling(geom_opts);
 
+  sec3.setGeometry(5., 10., 2., 5., 5., 5.);
   sec3.airfoil().interpCoordinates(sec1.airfoil(), sec2.airfoil(), 0.5);
   sec3.airfoil().splineFit();
   sec3.airfoil().unitTransform();

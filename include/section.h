@@ -36,7 +36,7 @@ class Section {
 
     // Set or access geometry
 
-    void setGeometry ( const double & y, const double & xle, const double & zle,
+    void setGeometry ( const double & xle, const double & y, const double & zle,
                        const double & chord, const double & twist,
                        const double & roll );
     const double & y () const;

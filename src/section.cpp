@@ -1,7 +1,9 @@
 #include <vector>
 #include <string>
+#include <Eigen/Core>
 #include "util.h"
 #include "algorithms.h"
+#include "transformations.h"
 #include "vertex.h"
 #include "airfoil.h"
 #include "section.h"
@@ -34,12 +36,12 @@ Section::Section ()
 // Set or access geometry
 //
 /******************************************************************************/
-void Section::setGeometry ( const double & y, const double & xle,
+void Section::setGeometry ( const double & xle, const double & y,
                             const double & zle, const double & chord,
                             const double & twist, const double & roll )
 {
-  _y = y;
   _xle = xle;
+  _y = y;
   _zle = zle;
   _chord = chord;
   _twist = twist;
@@ -84,6 +86,7 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   std::vector<double> sv;
   std::vector<double> xf, zf;			// Vertices in foil coordinates
   unsigned int i, nverts;
+  Eigen::Matrix3d rotation;
 
 #ifdef DEBUG
   if (_foil.nBuffer() == 0)
@@ -113,6 +116,7 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   // Set spacing vector
 
   nverts = 2*nchord - 1;
+  _verts.resize(nverts);
   sv.resize(nverts);
   sv[0] = 0.;
   for ( i = 1; i < nchord; i++ )
@@ -137,6 +141,16 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
 
   // Transform to section coordinates
 
+  rotation = inverse_euler_rotation(_roll, _twist, 0.0, "123");
+  for ( i = 0; i < nverts; i++ )
+  {
+    _verts[i].setCoordinates(xf[i], 0.0, zf[i]);
+    _verts[i].translate(-0.25, 0., 0.);
+    _verts[i].rotate(rotation);
+    _verts[i].translate(0.25, 0., 0.);
+    _verts[i].scale(_chord);
+    _verts[i].translate(_xle, _y, _zle);
+  } 
 } 
 
 /******************************************************************************/

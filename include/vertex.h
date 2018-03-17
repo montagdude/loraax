@@ -3,6 +3,8 @@
 #ifndef VERTEX_H
 #define VERTEX_H
 
+#include <Eigen/Core>
+
 class Face;
 
 /******************************************************************************/
@@ -32,6 +34,12 @@ class Vertex {
     const double & x () const;
     const double & y () const;
     const double & z () const;
+
+    // Transformations
+
+    void scale ( const double & factor );
+    void translate ( const double & dx, const double & dy, const double & dz );
+    void rotate ( const Eigen::Matrix3d & transform );
 
     // Adding or accessing face references
 
