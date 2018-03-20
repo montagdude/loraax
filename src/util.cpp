@@ -131,6 +131,21 @@ std::string bool2string ( bool inval )
   return outstr;
 }
 
+/*******************************************************************************
+
+Converts a char array to string
+
+*******************************************************************************/
+std::string chararray2string ( const char chararray[] )
+{
+  std::string outstr;
+  std::stringstream ss;
+
+  ss << chararray;
+  ss >> outstr;
+  return outstr;
+}
+
 /******************************************************************************/
 //
 // Converts string to bool

@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<aircraft>
+  <wing name="Main">
+    <sections>
+      <section name="Root">
+        <xle>0.</xle>
+        <y>0.</y>
+        <zle>0.</zle>
+        <chord>10</chord>
+        <twist>0.</twist>
+      </section>
+      <section>
+        <xle>2.0</xle>
+        <y>8.0</y>
+        <zle>0.</zle>
+        <chord>8.0</chord>
+        <twist>0.</twist>
+      </section>
+      <section name="Tip">
+        <xle>4.5</xle>
+        <y>23.5</y>
+        <zle>0.</zle>
+        <chord>5.5</chord>
+        <twist>0.</twist>
+      </section>
+    </sections>
+    <airfoils>
+      <airfoil name="Root">
+        <source>4 digit</source>
+        <designation>0012</designation>
+      </airfoil>
+      <airfoil name="Tip">
+        <source>file</source>
+        <path>clarky.dat</path>
+      </airfoil>
+      <airfoil>
+        <source>5 digit</source>
+        <designation>21021</designation>
+        <y>10</y>
+      </airfoil>
+    </airfoils>
+  </wing>
+  <wing name="Tail">
+    <sections>
+      <section name="Root">
+        <xle>0.</xle>
+        <y>0.</y>
+        <zle>0.</zle>
+        <chord>10</chord>
+        <twist>0.</twist>
+      </section>
+      <section name="Tip">
+        <xle>4.5</xle>
+        <y>23.5</y>
+        <zle>0.</zle>
+        <chord>5.5</chord>
+        <twist>0.</twist>
+      </section>
+    </sections>
+    <airfoils>
+      <airfoil name="Root">
+        <source>4 digit</source>
+        <designation>0005</designation>
+      </airfoil>
+      <airfoil name="Tip">
+        <source>4 digit</source>
+        <path>0005</path>
+      </airfoil>
+    </airfoils>
+  </wing>
+</aircraft>

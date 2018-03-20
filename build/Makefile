@@ -9,13 +9,13 @@ CXXFLAGS=$(DEBUGFLAGS)
 
 #### Main program ##############################################################
 
-OBJ=util.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o airfoil.o section.o panelcode.o
+OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o airfoil.o section.o panelcode.o
 EXE=panelcode
 SRCDIR=../src
 INCLUDE=-I../include -I/usr/include/eigen3
-#INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3
+#INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
 LDFLAGS=-L/data/dprosser/locally_installed/lib64
-LIBS=-lxfoil
+LIBS=-lxfoil -ltinyxml2
 
 ################################################################################
 
@@ -42,6 +42,9 @@ allclean: clean
 
 util.o: $(SRCDIR)/util.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/util.cpp
+
+clo_parser.o: $(SRCDIR)/clo_parser.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/clo_parser.cpp
 
 algorithms.o: $(SRCDIR)/algorithms.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/algorithms.cpp

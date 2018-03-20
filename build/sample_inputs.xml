@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<main>
+<!-- Case name -->
+  <CaseName>sample_aircraft</CaseName>
+
+<!-- Aircraft definition. -->
+  <GeometryFile>sample_aircraft.xml</GeometryFile>
+
+<!-- Freestream reference conditions. Freestream speed must be given in units of
+     length/sec, where length is the length unit inherent in your aircraft
+     geometry. In other words, if your geometry file has units of inches, the
+     freestream speed should be given in inches/sec, NOT mph. The density and
+     viscosity units must also be consistent with this definition. If you don't
+     use consistent units, the computed Reynolds number will be wrong, and the
+     time step you choose may not be appropriate for the freestream speed. For
+     convenience, here are values of density and viscosity at sea level in some
+     common unit systems:
+
+     meters / kilograms / seconds:
+       density = 1.225
+       viscosity = 1.81e-05
+
+     inches / snails / seconds:
+       density = 
+       viscosity = 
+
+     feet / slugs / seconds:
+       density = 
+       viscosity = 
+-->
+  <FreestreamSpeed>21.9</FreestreamSpeed>
+  <FreestreamDensity>1.225</FreestreamDensity>
+  <FreestreamViscosity>1.81e-05</FreestreamViscosity>
+
+<!-- Angle of attack, in degrees. -->
+  <AngleOfAttack>3.0</AngleOfAttack>
+
+<!-- Time step size, in seconds, for wake rollup and iterative viscous -
+     inviscid coupling. -->
+  <TimeStep>0.1</TimeStep>
+
+<!-- The wake extends to infinity, but this length will roll up with the local
+     flow velocity. -->
+  <WakeLength>20</WakeLength>
+
+<!-- Whether to run Xfoil for a coupled viscous solution. -->
+  <Viscous>true</Viscous>
+
+<!-- Tolerance in change in CL between time steps to consider the solution
+     converged and stop doing time steps. -->
+  <StoppingTolerance>1e-06</StoppingTolerance>
+
+<!-- Maximum number of time steps to perform, in case the stopping tolerance
+     is not reached. -->
+  <MaxSteps>50</MaxSteps>
+
+<!-- How often to write visualization files, in number of time steps. 0 = only
+     at the end, < 0 = never. -->
+  <VisualizationFrequency>1</VisualizationFrequency>
+
+<!-- Xfoil run settings. -->
+  <XfoilRunOptions>
+    <ncrit>9.0</ncrit>
+    <xtript>1.0</xtript>
+    <xtripb>1.0</xtripb>
+    <maxit>100</maxit>
+    <vaccel>0.01</vaccel>
+  </XfoilRunOptions>
+
+<!-- Xfoil paneling settings. -->
+  <XfoilPaneling>
+    <npan>160</npan>
+    <cvpar>1.0</cvpar>
+    <cterat>0.15</cterat>
+    <ctrrat>0.2</ctrrat>
+  </XfoilPaneling>
+</main>

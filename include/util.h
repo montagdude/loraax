@@ -16,6 +16,7 @@ int string2double ( const std::string &, double & );
 std::string int2string ( int );
 std::string double2string ( const double & );
 std::string bool2string ( bool );
+std::string chararray2string ( const char chararray[] );
 bool string2bool ( const std::string & );
 bool is_space ( char );
 std::string get_name_end ( const std::string & );
