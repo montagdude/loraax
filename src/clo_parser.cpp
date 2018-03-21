@@ -98,13 +98,13 @@ Prints various information messages
 *******************************************************************************/
 void CLOParser::printUsage() const
 {
-  std::cout << "Usage: panelcode OPTION" << std::endl;
-  std::cout << "Try 'panelcode --help' for more information." << std::endl;
+  std::cout << "Usage: loraax OPTION" << std::endl;
+  std::cout << "Try 'loraax --help' for more information." << std::endl;
 }
 
 void CLOParser::printVersion(const std::string & version) const
 {
-  std::cout << "panelcode " << version << std::endl;
+  std::cout << "loraax " << version << std::endl;
   std::cout << "Copyright (C) 2018 Daniel Prosser" << std::endl;
   std::cout << "License GPLv2: GNU GPL version 2:\n"
             << "<https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>"
@@ -117,7 +117,7 @@ void CLOParser::printVersion(const std::string & version) const
 
 void CLOParser::printHelp() const
 {
-  std::cout << "Usage: panelcode OPTION" << std::endl;
+  std::cout << "Usage: loraax OPTION" << std::endl;
   std::cout << std::endl;
   std::cout << "Options:" << std::endl;
   std::cout << "  -i, --inputfile FILE   Perform analysis specified in input "
@@ -127,7 +127,7 @@ void CLOParser::printHelp() const
   std::cout << "  --version              Display version number and exit"
             << std::endl;
   std::cout << std::endl;
-  std::cout << "panelcode home page: None yet!" << std::endl;
+  std::cout << "loraax home page: None yet!" << std::endl;
 }
 
 /*******************************************************************************

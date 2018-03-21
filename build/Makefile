@@ -9,8 +9,8 @@ CXXFLAGS=$(DEBUGFLAGS)
 
 #### Main program ##############################################################
 
-OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o airfoil.o section.o panelcode.o
-EXE=panelcode
+OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o airfoil.o section.o loraax.o
+EXE=loraax
 SRCDIR=../src
 INCLUDE=-I../include -I/usr/include/eigen3
 #INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
@@ -79,5 +79,5 @@ airfoil.o: $(SRCDIR)/airfoil.cpp
 section.o: $(SRCDIR)/section.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/section.cpp
 
-panelcode.o: $(SRCDIR)/panelcode.cpp
-	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/panelcode.cpp
+loraax.o: $(SRCDIR)/loraax.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/loraax.cpp
