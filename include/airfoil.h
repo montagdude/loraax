@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include "sectional_object.h"
 extern "C"
 {
   #include <xfoil_interface.h>
@@ -16,7 +17,7 @@ extern "C"
 // equations with Xfoil.
 //
 /******************************************************************************/
-class Airfoil {
+class Airfoil: public SectionalObject {
 
   private:
 
@@ -27,8 +28,6 @@ class Airfoil {
     std::vector<double> _s, _xs, _zs;   // Spline fit of buffer coordinates
     double _sle;                        // Leading edge spline parameter
     std::vector<double> _x, _z;		// Smoothed coordinates
-    double _y;				// y coordinate, used for sorting and
-					//   interpolation
 
     bool _unit_transform;		// Transform flag (call unitTransform)
 
@@ -82,11 +81,6 @@ class Airfoil {
                              std::vector<double> & zb ) const;
     void smoothedCoordinates ( std::vector<double> & x,
                                std::vector<double> & z ) const;
-
-    // Set/access y coordinate
-
-    void setY ( const double & y );
-    const double & y () const;
 };
 
 #endif

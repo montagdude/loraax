@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include "sectional_object.h"
 #include "vertex.h"
 #include "airfoil.h"
 
@@ -13,11 +14,10 @@
 // Section class. Defines a wing section.
 //
 /******************************************************************************/
-class Section {
+class Section: public SectionalObject {
 
   private:
 
-    double _y;
     double _xle, _zle;	// Leading edge location
     double _chord;
     double _twist;	// Twist angle, positive leading edge up
@@ -39,7 +39,6 @@ class Section {
     void setGeometry ( const double & xle, const double & y, const double & zle,
                        const double & chord, const double & twist,
                        const double & roll );
-    const double & y () const;
     const double & xle () const;
     const double & zle () const;
     const double & chord () const;

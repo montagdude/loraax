@@ -1,5 +1,6 @@
 #include <fstream>
 #include <vector>
+#include "sectional_object.h"
 extern "C"
 {
   #include <xfoil_interface.h>
@@ -534,11 +535,3 @@ void Airfoil::smoothedCoordinates ( std::vector<double> & x,
   x = _x;
   z = _z;
 }
-
-/******************************************************************************/
-//
-// Set/access y
-//
-/******************************************************************************/
-void Airfoil::setY ( const double & y ) { _y = y; }
-const double & Airfoil::y () const { return _y; }

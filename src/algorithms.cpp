@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>	// min_element
 #include "util.h"
+#include "sectional_object.h"
 #include "algorithms.h"
 
 // Global parameters for tanh spacing objective function
@@ -579,4 +580,17 @@ void simplex_search ( std::vector<double> & xopt, double & fmin,
   {
     print_warning("simplex_search", "Max number of iterations was reached.");
   }
+}
+
+/******************************************************************************/
+//
+// Sorts sections based on y
+//
+/******************************************************************************/
+std::vector<SectionalObject *> sort_sections (
+                               const std::vector<SectionalObject *> & sections )
+{
+  std::vector<SectionalObject *> sorted_sections;
+
+  return sorted_sections;
 }

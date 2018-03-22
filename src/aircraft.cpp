@@ -7,8 +7,6 @@
 #include "wing.h"
 #include "aircraft.h"
 
-#include <iostream>
-
 using namespace tinyxml2;
 
 /******************************************************************************/

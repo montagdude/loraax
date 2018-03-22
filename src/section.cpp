@@ -4,6 +4,7 @@
 #include "util.h"
 #include "algorithms.h"
 #include "transformations.h"
+#include "sectional_object.h"
 #include "vertex.h"
 #include "airfoil.h"
 #include "section.h"
@@ -21,7 +22,6 @@
 /******************************************************************************/
 Section::Section ()
 {
-  _y = 0.;
   _xle = 0.;
   _zle = 0.;
   _chord = 0.;
@@ -41,14 +41,13 @@ void Section::setGeometry ( const double & xle, const double & y,
                             const double & twist, const double & roll )
 {
   _xle = xle;
-  _y = y;
+  setY(y);
   _zle = zle;
   _chord = chord;
   _twist = twist;
   _roll = roll;
 }
 
-const double & Section::y () const { return _y; }
 const double & Section::xle () const { return _xle; }
 const double & Section::zle () const { return _zle; }
 const double & Section::chord () const { return _chord; }
