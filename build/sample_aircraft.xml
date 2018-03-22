@@ -1,70 +1,95 @@
-<aircraft>
-  <wing name="Main">
-    <sections>
-      <section name="Root">
-        <xle>0.</xle>
-        <y>0.</y>
-        <zle>0.</zle>
-        <chord>10</chord>
-        <twist>0.</twist>
-      </section>
-      <section>
-        <xle>2.0</xle>
-        <y>8.0</y>
-        <zle>0.</zle>
-        <chord>8.0</chord>
-        <twist>0.</twist>
-      </section>
-      <section name="Tip">
-        <xle>4.5</xle>
-        <y>23.5</y>
-        <zle>0.</zle>
-        <chord>5.5</chord>
-        <twist>0.</twist>
-      </section>
-    </sections>
-    <airfoils>
-      <airfoil name="Root">
-        <source>4 digit</source>
-        <designation>0012</designation>
-      </airfoil>
-      <airfoil name="Tip">
-        <source>file</source>
-        <path>clarky.dat</path>
-      </airfoil>
-      <airfoil>
-        <source>5 digit</source>
-        <designation>21021</designation>
-        <y>10</y>
-      </airfoil>
-    </airfoils>
-  </wing>
-  <wing name="Tail">
-    <sections>
-      <section name="Root">
-        <xle>0.</xle>
-        <y>0.</y>
-        <zle>0.</zle>
-        <chord>10</chord>
-        <twist>0.</twist>
-      </section>
-      <section name="Tip">
-        <xle>4.5</xle>
-        <y>23.5</y>
-        <zle>0.</zle>
-        <chord>5.5</chord>
-        <twist>0.</twist>
-      </section>
-    </sections>
-    <airfoils>
-      <airfoil name="Root">
-        <source>4 digit</source>
-        <designation>0005</designation>
-      </airfoil>
-      <airfoil name="Tip">
-        <source>4 digit</source>
-        <path>0005</path>
-      </airfoil>
-    </airfoils>
-  </wing>
-</aircraft>
+<Aircraft>
+  <Reference>
+    <RefArea>1.0</RefArea>
+    <RefLength>1.0</RefLength>
+    <MomentCenX>0.0</MomentCenX>
+    <MomentCenY>0.0</MomentCenY>
+    <MomentCenZ>0.0</MomentCenZ>
+  </Reference>
+  <Wing name="Main">
+    <Paneling>
+      <NChord>61</NChord>
+      <NSpan>21</NSpan>
+      <LESpaceRat>0.2</LESpaceRat>
+      <TESpaceRat>0.4</TESpaceRat>
+      <RootSpaceRat>0.75</RootSpaceRat>
+      <TipSpaceRat>0.4</TipSpaceRat>
+    </Paneling>
+    <Sections>
+      <Section name="Root">
+        <!-- Y is not needed for root section -->
+        <XLE>0.</XLE>
+        <ZLE>0.</ZLE>
+        <Chord>10</Chord>
+        <Twist>0.</Twist>
+      </Section>
+      <Section>
+        <XLE>2.0</XLE>
+        <Y>8.0</Y>
+        <ZLE>0.</ZLE>
+        <Chord>8.0</Chord>
+        <Twist>0.</Twist>
+      </Section>
+      <Section>
+        <!-- The tip section is the one with largest Y -->
+        <XLE>4.5</XLE>
+        <Y>23.5</Y>
+        <ZLE>0.</ZLE>
+        <Chord>5.5</Chord>
+        <Twist>0.</Twist>
+      </Section>
+    </Sections>
+    <Airfoils>
+      <Airfoil name="Root">
+        <Source>4 digit</Source>
+        <Designation>0012</Designation>
+      </Airfoil>
+      <Airfoil name="Tip">
+        <Source>file</Source>
+        <Path>clarky.dat</Path>
+      </Airfoil>
+      <Airfoil>
+        <!-- Y is needed for non-root / non-tip airfoils -->
+        <Source>5 digit</Source>
+        <Designation>21021</Designation>
+        <Y>10</Y>
+      </Airfoil>
+    </Airfoils>
+  </Wing>
+  <Wing name="Tail">
+    <Paneling>
+      <NChord>61</NChord>
+      <NSpan>21</NSpan>
+      <LESpaceRat>0.2</LESpaceRat>
+      <TESpaceRat>0.4</TESpaceRat>
+      <RootSpaceRat>0.75</RootSpaceRat>
+      <TipSpaceRat>0.4</TipSpaceRat>
+    </Paneling>
+    <Sections>
+      <Section name="Root">
+        <!-- Y is not needed for root section -->
+        <XLE>0.</XLE>
+        <ZLE>0.</ZLE>
+        <Chord>10</Chord>
+        <Twist>0.</Twist>
+      </Section>
+      <Section>
+        <XLE>4.5</XLE>
+        <Y>23.5</Y>
+        <ZLE>0.</ZLE>
+        <Chord>5.5</Chord>
+        <Twist>0.</Twist>
+      </Section>
+    </Sections>
+    <Airfoils>
+      <Airfoil name="Root">
+        <Source>4 digit</Source>
+        <Designation>0005</Designation>
+      </Airfoil>
+      <Airfoil name="Tip">
+        <Source>4 digit</Source>
+        <Designation>0005</Designation>
+      </Airfoil>
+    </Airfoils>
+  </Wing>
+</Aircraft>

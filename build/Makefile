@@ -9,7 +9,7 @@ CXXFLAGS=$(DEBUGFLAGS)
 
 #### Main program ##############################################################
 
-OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o airfoil.o section.o loraax.o
+OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o airfoil.o section.o wing.o aircraft.o loraax.o
 EXE=loraax
 SRCDIR=../src
 INCLUDE=-I../include -I/usr/include/eigen3
@@ -78,6 +78,12 @@ airfoil.o: $(SRCDIR)/airfoil.cpp
 
 section.o: $(SRCDIR)/section.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/section.cpp
+
+wing.o: $(SRCDIR)/wing.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/wing.cpp
+
+aircraft.o: $(SRCDIR)/aircraft.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/aircraft.cpp
 
 loraax.o: $(SRCDIR)/loraax.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/loraax.cpp

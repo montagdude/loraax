@@ -27,6 +27,8 @@ class Airfoil {
     std::vector<double> _s, _xs, _zs;   // Spline fit of buffer coordinates
     double _sle;                        // Leading edge spline parameter
     std::vector<double> _x, _z;		// Smoothed coordinates
+    double _y;				// y coordinate, used for sorting and
+					//   interpolation
 
     bool _unit_transform;		// Transform flag (call unitTransform)
 
@@ -44,8 +46,8 @@ class Airfoil {
     // Setting airfoil coordinates
 
     int readCoordinates ( const std::string & fname );
-    int naca4Coordinates ( const std::string & des, int & npointside );
-    int naca5Coordinates ( const std::string & des, int & npointside );
+    int naca4Coordinates ( const std::string & des, const int & npointside );
+    int naca5Coordinates ( const std::string & des, const int & npointside );
     int setCoordinates ( const std::vector<double> & x,
                          const std::vector<double> & z );
     int interpCoordinates ( const Airfoil & foil1, const Airfoil & foil2,
@@ -80,6 +82,11 @@ class Airfoil {
                              std::vector<double> & zb ) const;
     void smoothedCoordinates ( std::vector<double> & x,
                                std::vector<double> & z ) const;
+
+    // Set/access y coordinate
+
+    void setY ( const double & y );
+    const double & y () const;
 };
 
 #endif

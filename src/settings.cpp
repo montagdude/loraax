@@ -35,7 +35,7 @@ double farfield_distance_factor;
 // Reads a single setting from XMLElement
 //
 /******************************************************************************/
-int read_setting ( XMLElement *elem, const std::string & setting,
+int read_setting ( const XMLElement *elem, const std::string & setting,
                    std::string & value )
 {
   if (elem->FirstChildElement(setting.c_str()))
@@ -50,7 +50,7 @@ int read_setting ( XMLElement *elem, const std::string & setting,
   return 0;
 }
 
-int read_setting ( XMLElement *elem, const std::string & setting,
+int read_setting ( const XMLElement *elem, const std::string & setting,
                    double & value )
 {
   if (elem->FirstChildElement(setting.c_str()))
@@ -65,7 +65,7 @@ int read_setting ( XMLElement *elem, const std::string & setting,
   return 0;
 }
 
-int read_setting ( XMLElement *elem, const std::string & setting,
+int read_setting ( const XMLElement *elem, const std::string & setting,
                    int & value )
 {
   if (elem->FirstChildElement(setting.c_str()))
@@ -80,7 +80,7 @@ int read_setting ( XMLElement *elem, const std::string & setting,
   return 0;
 }
 
-int read_setting ( XMLElement *elem, const std::string & setting,
+int read_setting ( const XMLElement *elem, const std::string & setting,
                    bool & value )
 {
   if (elem->FirstChildElement(setting.c_str()))
@@ -118,11 +118,11 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
     return 1;
   }
 
-  XMLElement *main = doc.FirstChildElement("main");
+  XMLElement *main = doc.FirstChildElement("Main");
   if (! main)
   {
     conditional_stop(1, "read_settings",
-                     "Expected 'main' element in input file."); 
+                     "Expected 'Main' element in input file."); 
     return 2;
   }
   if (read_setting(main, "CaseName", casename) != 0)

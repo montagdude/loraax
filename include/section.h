@@ -17,7 +17,7 @@ class Section {
 
   private:
 
-    double _y;		// Spanwise location
+    double _y;
     double _xle, _zle;	// Leading edge location
     double _chord;
     double _twist;	// Twist angle, positive leading edge up

@@ -4,10 +4,13 @@
 #define SETTINGS_H
 
 #include <string>
+#include <tinyxml2.h>
 extern "C"
 {
   #include <xfoil_interface.h>
 }
+
+using namespace tinyxml2;
 
 // Case settings
 
@@ -34,6 +37,14 @@ extern double farfield_distance_factor;
 
 // Functions
 
+int read_setting ( const XMLElement *elem, const std::string & setting,
+                   std::string & value );
+int read_setting ( const XMLElement *elem, const std::string & setting,
+                   double & value );
+int read_setting ( const XMLElement *elem, const std::string & setting,
+                   int & value );
+int read_setting ( const XMLElement *elem, const std::string & setting,
+                   bool & value );
 int read_settings ( const std::string & inputfile, std::string & geom_file );
 
 #endif

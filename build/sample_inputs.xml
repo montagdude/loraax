@@ -1,4 +1,4 @@
-<main>
+<Main>
 <!-- Case name -->
   <CaseName>sample_aircraft</CaseName>
 
@@ -73,4 +73,4 @@
     <cterat>0.15</cterat>
     <ctrrat>0.2</ctrrat>
   </XfoilPaneling>
-</main>
+</Main>

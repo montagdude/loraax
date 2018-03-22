@@ -30,6 +30,7 @@ Airfoil::Airfoil ()
   _s.resize(0);
   _xs.resize(0);
   _zs.resize(0);
+  _y = 0.;
   _unit_transform = false;
   _cl = 0.;
   _cd = 0.;
@@ -102,7 +103,8 @@ int Airfoil::readCoordinates ( const std::string & fname )
 // Sets coordinates based on 4-digit NACA designation
 //
 /******************************************************************************/
-int Airfoil::naca4Coordinates ( const std::string & des, int & npointside )
+int Airfoil::naca4Coordinates ( const std::string & des,
+                                const int & npointside )
 {
   double x[2*npointside], z[2*npointside];
   int n;
@@ -131,7 +133,8 @@ int Airfoil::naca4Coordinates ( const std::string & des, int & npointside )
 // Sets coordinates based on 5-digit NACA designation
 //
 /******************************************************************************/
-int Airfoil::naca5Coordinates ( const std::string & des, int & npointside )
+int Airfoil::naca5Coordinates ( const std::string & des,
+                                const int & npointside )
 {
   double x[2*npointside], z[2*npointside];
   int n, stat;
@@ -531,3 +534,11 @@ void Airfoil::smoothedCoordinates ( std::vector<double> & x,
   x = _x;
   z = _z;
 }
+
+/******************************************************************************/
+//
+// Set/access y
+//
+/******************************************************************************/
+void Airfoil::setY ( const double & y ) { _y = y; }
+const double & Airfoil::y () const { return _y; }
