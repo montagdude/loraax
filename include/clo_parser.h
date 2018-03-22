@@ -20,7 +20,7 @@ class CLOParser {
 
     /* Converts CLOs to vector of strings */
 
-    void readCLOs(int argc, char *argv[]);
+    void readCLOs ( int argc, char *argv[] );
 
   public:
 
@@ -30,18 +30,18 @@ class CLOParser {
 
     /* Checks CLOs for errors */
 
-    int checkCLOs(int argc, char *argv[], const std::string & version);
+    int checkCLOs (int argc, char *argv[], const std::string & version );
 
     /* Prints various information messages */
 
-    void printUsage() const;
-    void printVersion(const std::string & version) const;
-    void printHelp() const;
+    void printUsage () const;
+    void printVersion ( const std::string & version ) const;
+    void printHelp () const;
 
-    /* Custom input file information */
+    /* Query inputs */
 
-    bool requestInputFile() const;
-    const std::string & inputFile() const;
+    bool requestInputFile () const;
+    const std::string & inputFile () const;
 };
 
 #endif

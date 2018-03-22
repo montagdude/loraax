@@ -9,7 +9,7 @@
 Reads command line arguments and saves as vector of strings
 
 *******************************************************************************/
-void CLOParser::readCLOs(int argc, char *argv[])
+void CLOParser::readCLOs ( int argc, char *argv[] )
 {
   int i;
 
@@ -25,7 +25,7 @@ void CLOParser::readCLOs(int argc, char *argv[])
 Constructor
 
 *******************************************************************************/
-CLOParser::CLOParser()
+CLOParser::CLOParser ()
 {
   _argv_str.resize(0);
   _input_file = "";
@@ -37,7 +37,7 @@ Checks CLOs for errors. Returns 0 on successful read, 1 if there are errors, or
 -1 if the user asked to print help or version info.
 
 *******************************************************************************/
-int CLOParser::checkCLOs(int argc, char *argv[], const std::string & version)
+int CLOParser::checkCLOs ( int argc, char *argv[], const std::string & version )
 {
   int i;
 
@@ -96,13 +96,13 @@ int CLOParser::checkCLOs(int argc, char *argv[], const std::string & version)
 Prints various information messages
 
 *******************************************************************************/
-void CLOParser::printUsage() const
+void CLOParser::printUsage () const
 {
   std::cout << "Usage: loraax OPTION" << std::endl;
   std::cout << "Try 'loraax --help' for more information." << std::endl;
 }
 
-void CLOParser::printVersion(const std::string & version) const
+void CLOParser::printVersion ( const std::string & version ) const
 {
   std::cout << "loraax " << version << std::endl;
   std::cout << "Copyright (C) 2018 Daniel Prosser" << std::endl;
@@ -115,7 +115,7 @@ void CLOParser::printVersion(const std::string & version) const
             << std::endl;
 }
 
-void CLOParser::printHelp() const
+void CLOParser::printHelp () const
 {
   std::cout << "Usage: loraax OPTION" << std::endl;
   std::cout << std::endl;
@@ -132,13 +132,13 @@ void CLOParser::printHelp() const
 
 /*******************************************************************************
 
-Custom input file information
+Query inputs
 
 *******************************************************************************/
-bool CLOParser::requestInputFile() const
+bool CLOParser::requestInputFile () const
 {
   if (_input_file == "") { return false; }
   else { return true; }
 }
 
-const std::string & CLOParser::inputFile() const { return _input_file; }
+const std::string & CLOParser::inputFile () const { return _input_file; }
