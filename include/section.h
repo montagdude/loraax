@@ -39,6 +39,7 @@ class Section: public SectionalObject {
     void setGeometry ( const double & xle, const double & y, const double & zle,
                        const double & chord, const double & twist,
                        const double & roll );
+    void setRoll ( const double & roll );
     const double & xle () const;
     const double & zle () const;
     const double & chord () const;

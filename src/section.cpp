@@ -48,6 +48,7 @@ void Section::setGeometry ( const double & xle, const double & y,
   _roll = roll;
 }
 
+void Section::setRoll ( const double & roll ) { _roll = roll; }
 const double & Section::xle () const { return _xle; }
 const double & Section::zle () const { return _zle; }
 const double & Section::chord () const { return _chord; }

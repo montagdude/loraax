@@ -587,10 +587,36 @@ void simplex_search ( std::vector<double> & xopt, double & fmin,
 // Sorts sections based on y
 //
 /******************************************************************************/
-std::vector<SectionalObject *> sort_sections (
-                               const std::vector<SectionalObject *> & sections )
+void sort_sections ( SectionalObject *sections[], unsigned int nsecs )
 {
-  std::vector<SectionalObject *> sorted_sections;
+  SectionalObject *tempsections[nsecs];
+  unsigned int i, sortcounter;
+  bool sorted = false;
 
-  return sorted_sections;
+  // Bubble sorting algorithm
+
+  sorted = false;
+  for ( i = 0; i < nsecs; i++ )
+  {
+    tempsections[i] = sections[i];
+  }
+  while (! sorted)
+  {
+    sortcounter = 0;
+    for ( i = 0; i < nsecs-1; i++ )
+    {
+      if (sections[i+1]->y() < sections[i]->y())
+      {
+        // Flip order
+
+        tempsections[i] = sections[i+1];
+        tempsections[i+1] = sections[i];
+        sections[i] = tempsections[i];
+        sections[i+1] = tempsections[i+1];
+        sortcounter += 1;
+      }
+    }
+    if (sortcounter == 0)
+      sorted = true;
+  }
 }

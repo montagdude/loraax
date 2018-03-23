@@ -34,7 +34,7 @@
         <!-- The tip section is the one with largest Y -->
         <XLE>4.5</XLE>
         <Y>23.5</Y>
-        <ZLE>0.</ZLE>
+        <ZLE>3.</ZLE>
         <Chord>5.5</Chord>
         <Twist>0.</Twist>
       </Section>
@@ -68,16 +68,16 @@
     <Sections>
       <Section name="Root">
         <!-- Y is not needed for root section -->
-        <XLE>0.</XLE>
-        <ZLE>0.</ZLE>
-        <Chord>10</Chord>
+        <XLE>20.</XLE>
+        <ZLE>3.</ZLE>
+        <Chord>5.</Chord>
         <Twist>0.</Twist>
       </Section>
       <Section>
-        <XLE>4.5</XLE>
-        <Y>23.5</Y>
-        <ZLE>0.</ZLE>
-        <Chord>5.5</Chord>
+        <XLE>22.</XLE>
+        <Y>10.</Y>
+        <ZLE>3.</ZLE>
+        <Chord>4.</Chord>
         <Twist>0.</Twist>
       </Section>
     </Sections>

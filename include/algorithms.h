@@ -31,7 +31,6 @@ void simplex_search ( std::vector<double> & xopt, double & fmin,
                       double (*objfunc)(const std::vector<double> & x),
                       const std::vector<double> & x0,
                       const simplex_options_type & searchopt );
-std::vector<SectionalObject *> sort_sections (
-                              const std::vector<SectionalObject *> & sections );
+void sort_sections ( SectionalObject *sections[], unsigned int nsecs );
 
 #endif

@@ -248,6 +248,13 @@ int Aircraft::readXML ( const std::string & geom_file )
       newfoil.smoothPaneling(xfoil_geom_opts);
       foils.push_back(newfoil); 
     }
+    if (foils.size() < 1)
+    {
+      conditional_stop(1, "Aircraft::readXML",
+                       "Wings must have at least one airfoil.");
+       return 2;
+    }
+
     newwing.setAirfoils(foils);    
     newwing.setupSections(user_sections);
     addWing(newwing); 

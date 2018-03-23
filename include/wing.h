@@ -52,13 +52,13 @@ class Wing {
     // Set airfoils. Section airfoils are interpolated from these airfoils.
     // Airfoils do not need to be given in sorted order.
 
-    void setAirfoils ( const std::vector<Airfoil> & foils );
+    void setAirfoils ( std::vector<Airfoil> & foils );
 
     // Set sections based on user section inputs and spacing. User sections
     // define the planform shape, and the _sections variables defines the final
     // discretization. Sections do not need to be given in sorted order.
 
-    int setupSections ( const std::vector<Section> & user_sections );
+    int setupSections ( std::vector<Section> & user_sections );
 };
 
 #endif
