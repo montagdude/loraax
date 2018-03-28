@@ -178,14 +178,12 @@ void opt_tanh_spacing ( unsigned int n, const double & slen, const double & sp0,
   std::vector<double> optcoef, coef0;
   double maxstretch;
   unsigned int steps, fevals;
-  conjgrad_options_type searchopt;
+  simplex_options_type searchopt;
   double (*objfunc)(const std::vector<double> & x);
 
   // Conjugate gradient search options
 
   searchopt.tol = 1.E-12;
-  searchopt.h = 1.E-10;
-  searchopt.dxmax = 1.;
   searchopt.maxit = 2000;
 #ifdef DEBUG
   searchopt.display_progress = true;
@@ -207,8 +205,8 @@ void opt_tanh_spacing ( unsigned int n, const double & slen, const double & sp0,
   coef0[0] = 0.;
   coef0[1] = 0.;
   objfunc = &tanh_stretching;
-  conjgrad_search(optcoef, maxstretch, steps, fevals, objfunc, coef0,
-                  searchopt);
+  simplex_search(optcoef, maxstretch, steps, fevals, objfunc, coef0,
+                 searchopt);
   a4 = optcoef[0];
   a5 = optcoef[1];
 }  
