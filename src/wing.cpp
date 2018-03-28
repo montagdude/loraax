@@ -11,12 +11,230 @@
 #include "wing.h"
 
 #include <iostream>
+#include <iomanip>
+
+// Data for optimizing spanwise spacing
+
+std::vector<double> nom_stations, new_stations, s_wing;
+std::vector<int> fixed_stations;
 
 /******************************************************************************/
 //
 // Wing class. Contains sections, airfoils, paneling info, faces, a wake, etc.
 // 
 /******************************************************************************/
+
+/******************************************************************************/
+//
+// Evaluates a possible combination of fixed stations and returns the sum of
+// squared distance moved from the nominal spacing distribution
+//
+/******************************************************************************/
+double evaluate_combination ( std::vector<int> & comb, unsigned int nfixed )
+{
+  double dist2;
+  unsigned int i;
+
+#ifdef DEBUG
+  if (comb.size() != fixed_stations.size())
+    conditional_stop(1, "evaluate_combination", "Vector size mismatch.");
+#endif
+
+  dist2 = 0;
+  for ( i = 0; i < nfixed; i++ )
+  {
+    dist2 += pow(s_wing[i+1]-nom_stations[comb[i]], 2.);
+  }
+
+  return dist2;
+}
+
+/******************************************************************************/
+//
+// Evaluates all possible combinations of sections that could be fixed to user
+// specified locations and saves the best one.
+//
+// Warning: this function may blow up the stack depending on the number of
+// user fixed sections and spanwise stations, if not compiled with -O2 or -Os.
+// If compiled with those optimizations, g++ should make this not really
+// recursive "under the hood." This can be checked by compiling with the -S
+// flag, opening with a text editor, and observing that this function does not
+// call itself in the optimized code.
+//
+/******************************************************************************/
+void optimize_fixed_stations ( std::vector<int> & comb, unsigned int nfixed,
+                               unsigned int nsta, std::vector<int> & bestcomb,
+                               double & bestval, unsigned int & evals )
+{
+  int i;
+  double val;
+
+  // Create initial combination
+
+  if (comb.size() == 0)
+  {
+    for ( i = 0; i < int(nfixed); i++ )
+    {
+      comb.push_back(i+1);
+    }
+    comb[nfixed-1] = nfixed-1;
+    bestcomb = comb;
+    bestval = 1.E+06;
+    evals = 0;
+  }
+
+  // Scan backwards through the list of possible combinations
+
+  for ( i = nfixed-1; i >= 0; i-- )
+  {
+    if (comb[i] < int(nsta-2-(nfixed-(i+1))))
+    {
+      comb[i] += 1;
+      if (i == int(nfixed-1))
+      {
+        val = evaluate_combination(comb, nfixed);
+        evals += 1;
+        if (val < bestval)
+        {
+          bestcomb = comb;
+          bestval = val;
+        }
+      }
+      optimize_fixed_stations(comb, nfixed, nsta, bestcomb, bestval, evals);
+      // Return here lets g++ perform tail-recursion optimization
+      return;
+    }
+    else
+    {
+      if (i > 0)
+        comb[i] = comb[i-1] + 1;
+    }
+  }
+} 
+
+/******************************************************************************/
+//
+// Objective function to optimize spacing after setting fixed stations
+//
+/******************************************************************************/
+double smooth_nonfixed_stations ( const std::vector<double> & ds_sta )
+{
+  unsigned int nsecs, nsta, i, j;
+  double space, nom_space, objval;
+  
+  nsta = nom_stations.size();
+  nsecs = s_wing.size();
+
+  // Construct stations from deltas and fixed stations
+
+  new_stations[0] = 0.;
+  new_stations[nsta-1] = s_wing[nsecs-1];
+  j = 0;
+  for ( i = 1; i < nsta-1; i++ )
+  {
+    new_stations[i] = nom_stations[i] + ds_sta[i-1-j];
+    if (j < fixed_stations.size())
+    {
+      if (int(i) == fixed_stations[j])
+      {
+        new_stations[i] = s_wing[j+1];
+        j += 1;
+      }
+    }
+  }
+
+  // Penalize differences in spacing compared to nominal
+
+  objval = 0.;
+  for ( i = 1; i < nsta; i++ )
+  {
+    nom_space = nom_stations[i] - nom_stations[i-1];
+    space = new_stations[i] - new_stations[i-1];
+    if (space < 0.)
+      objval += 5.*pow((space-nom_space)/nom_space, 2.);
+    else
+      objval += pow((space-nom_space)/nom_space, 2.);
+  }
+
+  return objval;
+}
+
+/******************************************************************************/
+//
+// Optimize spanwise spacing to put sections where the user asked while
+// remaining as close as possible to the nominal distribution
+//
+/******************************************************************************/
+std::vector<double> Wing::adjustSpacing (
+                                const std::vector<double> & nom_stations ) const
+{
+  unsigned int i, j, nsta, nsecs;
+  int nadjust, nfixed;
+  std::vector<double> ds_sta0, ds_sta_opt;
+  std::vector<int> comb;
+  double span, fmin;
+  unsigned int nsteps, fevals;
+  conjgrad_options_type conjopt;
+  double (*objfunc)(const std::vector<double> & x);
+
+  // Initialize data
+
+  nsecs = s_wing.size();
+  span = s_wing[nsecs-1];
+  nsta = nom_stations.size();
+
+  // Optimize placement of fixed stations
+
+  nfixed = nsecs-2;
+  optimize_fixed_stations(comb, nfixed, nsta, fixed_stations, fmin, fevals);
+
+  // Optimize placement of non-fixed stations
+
+  conjopt.tol = 1.E-08;
+  conjopt.h = 1e-10;
+  conjopt.dxmax = span/double(nsta-1);
+  conjopt.maxit = 2000;
+#ifdef DEBUG
+  conjopt.display_progress = true;
+#else
+  conjopt.display_progress = false;
+#endif
+
+  nadjust = nsta-2 - (nsecs-2);
+  if (nadjust < 1)
+    conditional_stop(1, "Wing::adjustSpacing", "Not enough spanwise points.");
+  ds_sta0.resize(nadjust); 
+  ds_sta_opt.resize(nadjust);
+  new_stations.resize(nsta);
+  objfunc = &smooth_nonfixed_stations;
+  fevals = 0;
+  for ( i = 0; int(i) < nadjust; i++ )
+  {
+    ds_sta0[i] = 0.;
+  }
+  conjgrad_search(ds_sta_opt, fmin, nsteps, fevals, objfunc, ds_sta0,
+                  conjopt);
+
+  // Populate new_stations vector
+
+  new_stations[0] = nom_stations[0];
+  new_stations[nsta-1] = nom_stations[nsta-1];
+  j = 0;
+  for ( i = 1; i < nsta-1; i++ )
+  {
+    new_stations[i] = nom_stations[i] + ds_sta_opt[i-1-j];
+    if (j < fixed_stations.size())
+    {
+      if (int(i) == fixed_stations[j])
+      {
+        new_stations[i] = s_wing[j+1];
+        j += 1;
+      }
+    }
+  }
+
+  return new_stations;
+}
 
 /******************************************************************************/
 //
@@ -116,9 +334,9 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
   SectionalObject *sorted_sections[user_sections.size()];
   std::vector<Section> sorted_user_sections;
   unsigned int i, j, nsecs;
-  std::vector<double> sw, nom_stations;
   Eigen::Vector2d secvec;
-  double a4, a5, rootsp, tipsp;
+  double a4, a5, rootsp, tipsp, space;
+  std::vector<double> final_stations;
 
   if (_foils.size() < 1)
   {
@@ -157,37 +375,42 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 
   // Compute wing length and roll angles
 
-  sw.resize(nsecs);
-  sw[0] = 0.;
+  s_wing.resize(nsecs);
+  s_wing[0] = 0.;
   for ( i = 1; i < nsecs; i++ )
   {
-    secvec[0] = user_sections[i].y() - user_sections[i-1].y();
-    secvec[1] = user_sections[i].zle() - user_sections[i-1].zle();
-    sw[i] = sw[i-1] + secvec.norm();
-    if (sw[i] == sw[i-1])
+    secvec[0] = sorted_user_sections[i].y() - sorted_user_sections[i-1].y();
+    secvec[1] = sorted_user_sections[i].zle() - sorted_user_sections[i-1].zle();
+    s_wing[i] = s_wing[i-1] + secvec.norm();
+    if (s_wing[i] == s_wing[i-1])
     {
       conditional_stop(1, "Wing::setupSections",
                        "Wing has duplicate Y sections.");
       return 2;
     }
-    user_sections[i].setRoll(tan(secvec[1]/secvec[0])*180./M_PI);
+    sorted_user_sections[i].setRoll(tan(secvec[1]/secvec[0])*180./M_PI);
   }
 
   // Compute nominal discretized section locations (stations) from spacing
 
-  rootsp = _rootsprat * sw[nsecs-1] / double(_nspan-1);
-  tipsp = _tipsprat * sw[nsecs-1] / double(_nspan-1);
-  opt_tanh_spacing(_nspan, sw[nsecs-1], rootsp, tipsp, a4, a5);
+  rootsp = _rootsprat * s_wing[nsecs-1] / double(_nspan-1);
+  tipsp = _tipsprat * s_wing[nsecs-1] / double(_nspan-1);
+  opt_tanh_spacing(_nspan, s_wing[nsecs-1], rootsp, tipsp, a4, a5);
   nom_stations.resize(_nspan);
   nom_stations[0] = 0.; 
   for ( i = 1; i < _nspan; i++ )
   {
-    nom_stations[i] = nom_stations[i-1] +
-      tanh_spacing(i-1, a4, a5, _nspan, sw[nsecs-1], rootsp, tipsp);
+    space = tanh_spacing(i-1, a4, a5, _nspan, s_wing[nsecs-1], rootsp, tipsp);
+    nom_stations[i] = nom_stations[i-1] + space;
   }
 
   // Optimize stations to be as close as possible to nominal but lining up with
   // user sections
+
+  if (nsecs > 2)
+    final_stations = adjustSpacing(nom_stations);
+  else
+    final_stations = nom_stations;
 
   return 0; 
 }

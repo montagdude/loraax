@@ -31,6 +31,9 @@ class Wing {
 					//   root & tip spacing rations
     std::vector<Airfoil> _foils;  	// User-specified airfoils
 
+    std::vector<double> adjustSpacing ( 
+                               const std::vector<double> & nom_stations ) const;
+
   public:
 
     // Constructor

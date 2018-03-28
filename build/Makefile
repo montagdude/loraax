@@ -14,7 +14,7 @@ EXE=loraax
 SRCDIR=../src
 INCLUDE=-I../include -I/usr/include/eigen3
 #INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
-LDFLAGS=-L/data/dprosser/locally_installed/lib64
+#LDFLAGS=-L/data/dprosser/locally_installed/lib64
 LIBS=-lxfoil -ltinyxml2
 
 ################################################################################

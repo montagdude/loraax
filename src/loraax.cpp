@@ -30,7 +30,7 @@ int main (int argc, char* argv[])
     
   // Read geometry
 
-  std::cout << "Reading geometry ..." << std::endl;
+  std::cout << "Reading and discretizing geometry ..." << std::endl;
   if (ac.readXML(geom_file) != 0)
     return 3;
 

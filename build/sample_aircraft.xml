@@ -16,6 +16,7 @@
       <TipSpaceRat>0.4</TipSpaceRat>
     </Paneling>
     <Sections>
+      <!-- Note that sections do not need to be given in order -->
       <Section name="Root">
         <!-- Y is not needed for root section -->
         <XLE>0.</XLE>
@@ -24,10 +25,31 @@
         <Twist>0.</Twist>
       </Section>
       <Section>
+        <XLE>3.0</XLE>
+        <Y>16.0</Y>
+        <ZLE>1.5</ZLE>
+        <Chord>7.0</Chord>
+        <Twist>0.</Twist>
+      </Section>
+      <Section>
         <XLE>2.0</XLE>
         <Y>8.0</Y>
-        <ZLE>0.</ZLE>
+        <ZLE>0.0</ZLE>
         <Chord>8.0</Chord>
+        <Twist>0.</Twist>
+      </Section>
+      <Section>
+        <XLE>4.3</XLE>
+        <Y>23.0</Y>
+        <ZLE>2.8</ZLE>
+        <Chord>5.7</Chord>
+        <Twist>0.</Twist>
+      </Section>
+      <Section>
+        <XLE>4.0</XLE>
+        <Y>22.7</Y>
+        <ZLE>2.4</ZLE>
+        <Chord>6.0</Chord>
         <Twist>0.</Twist>
       </Section>
       <Section>

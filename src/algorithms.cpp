@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include <algorithm>	// min_element
+#include <algorithm>	// min_element, max
 #include "util.h"
 #include "sectional_object.h"
 #include "algorithms.h"
@@ -14,6 +14,12 @@
 
 unsigned int tanh_N;
 double tanh_slen, tanh_sp0, tanh_sp1;
+
+// Global parameters for conjugate gradient method
+
+double (*_conjgrad_obj_func)(const std::vector<double> & x);
+std::vector<double> _conjgrad_xn;
+std::vector<double> _conjgrad_sn;
 
 /******************************************************************************/
 //
@@ -172,13 +178,15 @@ void opt_tanh_spacing ( unsigned int n, const double & slen, const double & sp0,
   std::vector<double> optcoef, coef0;
   double maxstretch;
   unsigned int steps, fevals;
-  simplex_options_type searchopt;
+  conjgrad_options_type searchopt;
   double (*objfunc)(const std::vector<double> & x);
 
-  // Simplex search options
+  // Conjugate gradient search options
 
   searchopt.tol = 1.E-12;
-  searchopt.maxit = 1000;
+  searchopt.h = 1.E-10;
+  searchopt.dxmax = 1.;
+  searchopt.maxit = 2000;
 #ifdef DEBUG
   searchopt.display_progress = true;
 #else
@@ -199,7 +207,8 @@ void opt_tanh_spacing ( unsigned int n, const double & slen, const double & sp0,
   coef0[0] = 0.;
   coef0[1] = 0.;
   objfunc = &tanh_stretching;
-  simplex_search(optcoef, maxstretch, steps, fevals, objfunc, coef0, searchopt);
+  conjgrad_search(optcoef, maxstretch, steps, fevals, objfunc, coef0,
+                  searchopt);
   a4 = optcoef[0];
   a5 = optcoef[1];
 }  
@@ -577,9 +586,7 @@ void simplex_search ( std::vector<double> & xopt, double & fmin,
   // Display warning if max iterations are reached
 
   if ( (nsteps == searchopt.maxit) && (diam >= searchopt.tol) )
-  {
     print_warning("simplex_search", "Max number of iterations was reached.");
-  }
 }
 
 /******************************************************************************/
@@ -619,4 +626,251 @@ void sort_sections ( SectionalObject *sections[], unsigned int nsecs )
     if (sortcounter == 0)
       sorted = true;
   }
+}
+
+/******************************************************************************/
+//
+// Golden section search: 1-D line search algorithm. Note: fevals is expected
+// to be initialized prior to this function.
+//
+/******************************************************************************/
+void golden_search ( double & xmin, double & fmin, const double bounds[2],
+                     unsigned int & fevals, const double & tol,
+                     const unsigned int itmax,
+                     double (*objfunc)(const double & x) )
+{
+  double T, dist;
+  double xval[4] = {bounds[0], 0.0, 0.0, bounds[1]};
+  double fval[4];
+  unsigned int i, it;
+
+  // Initialize search
+
+  dist = bounds[1] - bounds[0];
+  T = 1.5 - sqrt(1.25);
+  xval[1] = (1.-T)*xval[0] + T*xval[3];
+  xval[2] = T*xval[0] + (1.-T)*xval[3];
+  fmin = 1.e+06;
+  for ( i = 0; i < 4; i++ )
+  {
+    fval[i] = objfunc(xval[i]);
+    if (fval[i] < fmin)
+    {
+      fmin = fval[i];
+      xmin = xval[i];
+    }
+    fevals += 1;
+  }
+
+  // Iterate
+
+  it = 2;
+  while ( (it <= itmax) && (dist > tol) )
+  {
+    // Eliminate the appropriate region
+
+    if (fval[1] > fval[2])
+    {
+      xmin = xval[2];
+      fmin = fval[2];
+      xval[0] = xval[1];
+      xval[1] = xval[2];
+      fval[0] = fval[1];
+      fval[1] = fval[2];
+      xval[2] = T*xval[0] + (1.-T)*xval[3];
+      fval[2] = objfunc(xval[2]);
+      fevals += 1;
+    }
+    else
+    {
+      xmin = xval[1];
+      fmin = fval[1];
+      xval[3] = xval[2];
+      xval[2] = xval[1];
+      fval[3] = fval[2];
+      fval[2] = fval[1];
+      xval[1] = (1.-T)*xval[0] + T*xval[3];
+      fval[1] = objfunc(xval[1]);
+      fevals += 1;
+    }
+    dist = xval[3] - xval[0];
+
+#ifdef DEBUG
+    if ( (it == itmax) && (dist > tol) )    
+      print_warning("golden_search", "Max number of iterations was reached.");
+#endif
+
+    it += 1;
+  }
+}
+
+/******************************************************************************/
+//
+// Estimation of the gradient of a function at x using numerical derivatives
+//
+/******************************************************************************/
+void gradient ( const std::vector<double> & x, std::vector<double> & grad,
+                double (*func)(const std::vector<double> & x),
+                const double & h )        
+{
+  unsigned int i, n;
+  std::vector<double> x1, x2;
+
+  n = x.size();
+
+#ifdef DEBUG
+  if (grad.size() != n)
+    conditional_stop(1, "gradient", "Mismatch in size of x and grad.");
+#endif
+
+  x1 = x;
+  x2 = x;
+  for ( i = 0; i < n; i++ )
+  {
+    x1[i] -= 0.5*h; 
+    x2[i] += 0.5*h;
+    grad[i] = (func(x2) - func(x1)) / h;
+    x1[i] += 0.5*h;
+    x2[i] -= 0.5*h;
+  }
+}
+
+/******************************************************************************/
+//
+// Line search function for conjugate gradient. Because it must be a function
+// of alpha only, relies on _conjgrad_obj_func, _conjgrad_xn, and _conjgrad_sn
+// (global vars) being set.
+//
+/******************************************************************************/
+double conjgrad_line_search ( const double & alpha )
+{
+  unsigned int i, n;
+  std::vector<double> xeval;
+
+  n = _conjgrad_xn.size();
+  xeval.resize(n);
+
+#ifdef DEBUG
+  if (_conjgrad_sn.size() != n)
+    conditional_stop(1, "conjgrad_line_search",
+                     "Mismatch in size of xn and sn.");
+#endif
+
+  for ( i = 0; i < n; i++ )
+  {
+    xeval[i] = _conjgrad_xn[i] + alpha*_conjgrad_sn[i];
+  }
+
+  return _conjgrad_obj_func(xeval);
+}
+
+/******************************************************************************/
+//
+// Conjugate gradient search with Fletcher-Reeves udpate
+//
+/******************************************************************************/
+void conjgrad_search ( std::vector<double> & xopt, double & fmin,
+                       unsigned int & nsteps, unsigned int & fevals,
+                       double (*objfunc)(const std::vector<double> & x),
+                       const std::vector<double> & x0,
+                       const conjgrad_options_type & searchopt )
+{
+  std::vector<double> x, grad, prevgrad, sn, prevsn;
+  unsigned int n, i, updatecount;
+  double alpha, beta, dx, newfmin, dfmin, maxdx;
+  double bounds[2];
+
+  // Initialize
+
+  n = x0.size();
+  grad.resize(n);
+  prevgrad.resize(n);
+  sn.resize(n);
+  x = x0;
+  fmin = objfunc(x);
+  maxdx = 1.E+06;
+  fevals = 1;
+  nsteps = 1;
+  bounds[0] = 0.;
+  bounds[1] = searchopt.dxmax;
+  _conjgrad_obj_func = objfunc;
+  updatecount = 1;
+
+  if (searchopt.display_progress)
+    std::cout << "Conjugate gradient optimization progress:" << std::endl;
+  while ( (nsteps <= searchopt.maxit) && (maxdx > searchopt.tol) )
+  {
+    // Compute gradient at x
+
+    gradient(x, grad, objfunc, searchopt.h);
+    fevals += 2*n;
+
+    // Update conjugate gradient direction
+
+    if (updatecount > 1)
+    {
+      beta = 0.;
+      for ( i = 0; i < n; i++ )
+      { 
+        if (std::abs(prevgrad[i]) > 1.e-12)
+          beta += grad[i]*grad[i] / (prevgrad[i]*prevgrad[i]);
+      }
+      for ( i = 0; i < n; i++ )
+      {
+        sn[i] = -grad[i] + beta*prevsn[i];
+      }
+    }
+    else
+    {
+      for ( i = 0; i < n; i++ )
+      {
+        sn[i] = -grad[i];
+      }
+    }
+
+    // Determine optimal step size with golden search
+
+    _conjgrad_xn = x;
+    _conjgrad_sn = sn;
+    golden_search(alpha, newfmin, bounds, fevals, searchopt.tol, 100,
+                  &conjgrad_line_search);
+
+    // Update x, counters, memory
+
+    maxdx = 0.;
+    for ( i = 0; i < n; i++ )
+    {
+      dx = alpha*sn[i];
+      x[i] += dx;
+      if (std::abs(dx) > maxdx)
+        maxdx = std::abs(dx);
+    }
+    dfmin = newfmin - fmin;
+    fmin = newfmin;
+    if (searchopt.display_progress)
+      std::cout << "  Iteration: " << nsteps << " min objfunc value: " << fmin
+                << std::endl;
+    prevgrad = grad;
+    prevsn = sn;  
+    nsteps += 1;
+
+    // Reset conjugate gradient every n iterations or if progress stalls
+
+    if (dfmin > 0.)
+    {
+      updatecount = 1;
+      maxdx = 1.E+06;	// Prevent kicking out of the loop
+    }
+    else if (updatecount == n)
+      updatecount = 1;
+    else
+      updatecount += 1;
+
+    // Warning when hitting max iterations
+
+    if ( (nsteps > searchopt.maxit) && (maxdx > searchopt.tol) )
+      print_warning("conjgrad_search", "Max number of iterations was reached.");
+
+  }
+  xopt = x;
 }
