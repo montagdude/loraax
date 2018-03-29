@@ -206,7 +206,7 @@ void opt_tanh_spacing ( unsigned int n, const double & slen, const double & sp0,
   coef0[1] = 0.;
   objfunc = &tanh_stretching;
   simplex_search(optcoef, maxstretch, steps, fevals, objfunc, coef0,
-                 searchopt);
+                  searchopt);
   a4 = optcoef[0];
   a5 = optcoef[1];
 }  
@@ -858,11 +858,18 @@ void conjgrad_search ( std::vector<double> & xopt, double & fmin,
     {
       updatecount = 1;
       maxdx = 1.E+06;	// Prevent kicking out of the loop
+      bounds[1] = searchopt.dxmax;
     }
     else if (updatecount == n)
+    {
       updatecount = 1;
+      bounds[1] = searchopt.dxmax;
+    }
     else
+    {
       updatecount += 1;
+      bounds[1] *= 0.5;
+    }
 
     // Warning when hitting max iterations
 
