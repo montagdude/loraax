@@ -33,7 +33,7 @@ Section::Section ()
 
 /******************************************************************************/
 //
-// Set or access geometry
+// Set or access position, orientation, and scale
 //
 /******************************************************************************/
 void Section::setGeometry ( const double & xle, const double & y,

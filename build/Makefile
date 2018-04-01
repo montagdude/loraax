@@ -4,6 +4,7 @@ CXX=g++
 DEBUGFLAGS=-g -Wall
 GPPFLAGS=-O3 -flto -funroll-loops -fopenmp
 CXXFLAGS=$(DEBUGFLAGS)
+#CXXFLAGS=$(GPPFLAGS)
 
 ################################################################################
 

@@ -62,11 +62,14 @@
       </Section>
     </Sections>
     <Airfoils>
-      <Airfoil name="Root">
+      <Airfoil>
         <Source>4 digit</Source>
         <Designation>0012</Designation>
+        <Y>0.</Y>
       </Airfoil>
       <Airfoil name="Tip">
+        <!-- Note: since we named this airfoil "Tip", we do not need to provide
+             a Y value. The same applies with "Root". -->
         <Source>file</Source>
         <Path>clarky.dat</Path>
       </Airfoil>
@@ -104,11 +107,8 @@
       </Section>
     </Sections>
     <Airfoils>
+      <!-- If airfoil is constant, only need to supply root or tip -->
       <Airfoil name="Root">
-        <Source>4 digit</Source>
-        <Designation>0005</Designation>
-      </Airfoil>
-      <Airfoil name="Tip">
         <Source>4 digit</Source>
         <Designation>0005</Designation>
       </Airfoil>

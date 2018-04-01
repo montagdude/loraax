@@ -197,6 +197,12 @@ int Aircraft::readXML ( const std::string & geom_file )
         if (read_setting(foilelem, "Y", y) != 0)
           return 2;
       }
+      if (y < 0)
+      {
+        conditional_stop(1, "Aircraft::readXML",
+            "Y must be >= 0 for all airfoils. Mirroring occurs automatically.");
+        return 2;
+      }
       newfoil.setY(y);
       if (read_setting(foilelem, "Source", source) != 0)
         return 2;
