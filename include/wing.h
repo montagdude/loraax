@@ -7,6 +7,10 @@
 #include <string>
 #include "section.h"
 #include "airfoil.h"
+#include "quadface.h"
+#include "triface.h"
+
+class Vertex;
 
 /******************************************************************************/
 //
@@ -30,6 +34,9 @@ class Wing {
 					//   calculations, set by _nspan and
 					//   root & tip spacing rations
     std::vector<Airfoil> _foils;  	// User-specified airfoils
+    std::vector<Vertex *> _verts;	// Pointers to vertices on wing and wake
+    std::vector<QuadFace> _quads;	// Quad faces (panels)
+    std::vector<TriFace> _tris;		// Tri faces (panels) at tip 
 
     std::vector<double> adjustSpacing ( 
                                const std::vector<double> & nom_stations ) const;
@@ -62,6 +69,19 @@ class Wing {
     // discretization. Sections do not need to be given in sorted order.
 
     int setupSections ( std::vector<Section> & user_sections );
+
+    // Creates panels and surface vertex pointers
+
+    void createPanels ( int & next_global_vertidx, int & next_global_faceid );
+
+    // Access to verts, panels, and wake elements
+
+    unsigned int nVerts () const;
+    unsigned int nQuads () const;
+    unsigned int nTris () const;
+    Vertex * vert ( unsigned int vidx );
+    QuadFace * quadFace ( unsigned int qidx );
+    TriFace * triFace ( unsigned int tidx );
 };
 
 #endif

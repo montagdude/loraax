@@ -34,5 +34,7 @@ int main (int argc, char* argv[])
   if (ac.readXML(geom_file) != 0)
     return 3;
 
+  ac.writeViz(casename + ".vtk");
+
   return 0; 
 }

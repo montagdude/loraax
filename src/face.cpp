@@ -50,6 +50,7 @@ Vertex & Face::vertex ( unsigned int vidx ) const
 
   return *_verts[vidx];
 }
+unsigned int Face::nVertices () const { return _currverts; }
 
 /******************************************************************************/
 //

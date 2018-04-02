@@ -9,7 +9,7 @@
   <Wing name="Main">
     <Paneling>
       <NChord>61</NChord>
-      <NSpan>21</NSpan>
+      <NSpan>31</NSpan>
       <LESpaceRat>0.2</LESpaceRat>
       <TESpaceRat>0.4</TESpaceRat>
       <RootSpaceRat>0.75</RootSpaceRat>
@@ -43,14 +43,14 @@
         <Y>23.0</Y>
         <ZLE>2.8</ZLE>
         <Chord>5.7</Chord>
-        <Twist>0.</Twist>
+        <Twist>-5.</Twist>
       </Section>
       <Section>
         <XLE>4.0</XLE>
         <Y>22.7</Y>
-        <ZLE>2.4</ZLE>
+        <ZLE>2.6</ZLE>
         <Chord>6.0</Chord>
-        <Twist>0.</Twist>
+        <Twist>-5.</Twist>
       </Section>
       <Section>
         <!-- The tip section is the one with largest Y -->
@@ -58,7 +58,7 @@
         <Y>23.5</Y>
         <ZLE>3.</ZLE>
         <Chord>5.5</Chord>
-        <Twist>0.</Twist>
+        <Twist>-5.</Twist>
       </Section>
     </Sections>
     <Airfoils>
@@ -83,7 +83,7 @@
   </Wing>
   <Wing name="Tail">
     <Paneling>
-      <NChord>61</NChord>
+      <NChord>31</NChord>
       <NSpan>21</NSpan>
       <LESpaceRat>0.2</LESpaceRat>
       <TESpaceRat>0.4</TESpaceRat>
@@ -101,8 +101,8 @@
       <Section>
         <XLE>22.</XLE>
         <Y>10.</Y>
-        <ZLE>3.</ZLE>
-        <Chord>4.</Chord>
+        <ZLE>4.</ZLE>
+        <Chord>3.</Chord>
         <Twist>0.</Twist>
       </Section>
     </Sections>

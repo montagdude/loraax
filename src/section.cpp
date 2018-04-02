@@ -85,7 +85,7 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   double a4top, a5top, a4bot, a5bot;
   std::vector<double> sv;
   std::vector<double> xf, zf;			// Vertices in foil coordinates
-  unsigned int i, nverts;
+  unsigned int i;
   Eigen::Matrix3d rotation;
 
 #ifdef DEBUG
@@ -115,9 +115,9 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
 
   // Set spacing vector
 
-  nverts = 2*nchord - 1;
-  _verts.resize(nverts);
-  sv.resize(nverts);
+  _nverts = 2*nchord - 1;
+  _verts.resize(_nverts);
+  sv.resize(_nverts);
   sv[0] = 0.;
   for ( i = 1; i < nchord; i++ )
   {
@@ -132,9 +132,9 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
 
   // Get vertices in foil coordinate system (unit chord, 0 <= x <= 1)
 
-  xf.resize(nverts);
-  zf.resize(nverts);
-  for ( i = 0; i < nverts; i++ )
+  xf.resize(_nverts);
+  zf.resize(_nverts);
+  for ( i = 0; i < _nverts; i++ )
   {
     _foil.splineInterp(sv[i], xf[i], zf[i]);
   }
@@ -142,7 +142,7 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   // Transform to section coordinates
 
   rotation = inverse_euler_rotation(_roll, _twist, 0.0, "123");
-  for ( i = 0; i < nverts; i++ )
+  for ( i = 0; i < _nverts; i++ )
   {
     _verts[i].setCoordinates(xf[i], 0.0, zf[i]);
     _verts[i].translate(-0.25, 0., 0.);

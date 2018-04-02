@@ -17,6 +17,7 @@ class Vertex {
 
   private:
 
+    int _idx;
     double _x, _y, _z;
     std::vector<Face *> _faces;		// Neighboring faces
     unsigned int _nfaces;
@@ -26,6 +27,11 @@ class Vertex {
     // Constructor
 
     Vertex ();
+
+    // Set or access index
+
+    void setIdx ( int idx );
+    int idx () const;
 
     // Setting or accessing coordinates
 

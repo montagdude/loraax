@@ -9,10 +9,8 @@
 #include "sectional_object.h"
 #include "airfoil.h"
 #include "section.h"
+#include "vertex.h"
 #include "wing.h"
-
-#include <iostream>
-#include <iomanip>
 
 // Data for optimizing spanwise spacing
 
@@ -44,7 +42,7 @@ double evaluate_combination ( std::vector<int> & comb, unsigned int nfixed )
   dist2 = 0;
   for ( i = 0; i < nfixed; i++ )
   {
-    dist2 += pow(s_wing[i+1]-nom_stations[comb[i]], 2.);
+    dist2 += std::pow(s_wing[i+1]-nom_stations[comb[i]], 2.);
   }
 
   return dist2;
@@ -152,9 +150,9 @@ double smooth_nonfixed_stations ( const std::vector<double> & ds_sta )
     nom_space = nom_stations[i] - nom_stations[i-1];
     space = new_stations[i] - new_stations[i-1];
     if (space < 0.)
-      objval += 5.*pow((space-nom_space)/nom_space, 2.);
+      objval += 5.*std::pow((space-nom_space)/nom_space, 2.);
     else
-      objval += pow((space-nom_space)/nom_space, 2.);
+      objval += std::pow((space-nom_space)/nom_space, 2.);
   }
 
   return objval;
@@ -253,6 +251,9 @@ Wing::Wing ()
   _tipsprat = 1.;
   _sections.resize(0);
   _foils.resize(0);
+  _verts.resize(0);
+  _quads.resize(0);
+  _tris.resize(0);
 }
 
 /******************************************************************************/
@@ -381,7 +382,7 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
                        "Wing has duplicate Y sections.");
       return 1;
     }
-    sorted_user_sections[i].setRoll(tan(secvec[1]/secvec[0])*180./M_PI);
+    sorted_user_sections[i].setRoll(atan(secvec[1]/secvec[0])*180./M_PI);
   }
 
   // Compute nominal discretized section locations (stations) from spacing
@@ -519,7 +520,7 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
         y = sorted_user_sections[j].y();
         chord = sorted_user_sections[j].chord();
         twist = sorted_user_sections[j].twist();
-        roll = sorted_user_sections[j+1].roll();
+        roll = sorted_user_sections[j].roll();
         break;
       }
       else if ( (final_stations[i] > s_wing[j]) &&
@@ -566,4 +567,140 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
   }
 
   return 0; 
+}
+
+/******************************************************************************/
+//
+// Creates panels and surface vertex pointers. Increments next_global_vertidx
+// and next_global_faceidx
+//
+/******************************************************************************/
+void Wing::createPanels ( int & next_global_vertidx, int & next_global_faceidx )
+{
+  unsigned int i, j, vcounter, qcounter, tcounter, nsta, ntri, nquad;
+  double dx, dy, dz, tegap;
+
+  // Set vertex pointers on surface
+
+  _verts.resize(_nspan*(2*_nchord-1));
+  vcounter = 0;
+  for ( i = 0; i < _nspan; i++ )
+  {
+    for ( j = 0; j < 2*_nchord-1; j++ )
+    {
+      _sections[i].vert(j).setIdx(next_global_vertidx);
+      _verts[vcounter] = &_sections[i].vert(j);
+      vcounter += 1;
+      next_global_vertidx += 1;
+    }
+  }
+
+  // Determine number of quad and tri panels on surface
+
+  nsta = _sections.size();
+  dx = _sections[nsta-1].vert(0).x() - _sections[nsta-1].vert(2*_nchord-2).x();
+  dy = _sections[nsta-1].vert(0).y() - _sections[nsta-1].vert(2*_nchord-2).y();
+  dz = _sections[nsta-1].vert(0).z() - _sections[nsta-1].vert(2*_nchord-2).z();
+  tegap = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
+  if (tegap > 1E-12)
+    ntri = 1;
+  else
+    ntri = 2;
+  nquad = (_nspan-1)*(2*_nchord-2) + _nchord-1 - ntri;
+
+  // Create quad panels on wing surface
+
+  _quads.resize(nquad);
+  qcounter = 0;
+  for ( i = 0; i < _nspan-1; i++ )
+  {
+    for ( j = 0; j < 2*_nchord-2; j++ )
+    {
+      _quads[qcounter].setIdx(next_global_faceidx);
+      _quads[qcounter].addVertex(&_sections[i].vert(j));
+      _quads[qcounter].addVertex(&_sections[i+1].vert(j));
+      _quads[qcounter].addVertex(&_sections[i+1].vert(j+1));
+      _quads[qcounter].addVertex(&_sections[i].vert(j+1));
+      qcounter += 1;
+      next_global_faceidx += 1;
+    }
+  }
+
+  // Create quad and tri panels on wingtip
+
+  _tris.resize(ntri);
+  tcounter = 0;
+  if (ntri == 2)
+  {
+    _tris[tcounter].setIdx(next_global_faceidx);
+    _tris[tcounter].addVertex(&_sections[nsta-1].vert(0));
+    _tris[tcounter].addVertex(&_sections[nsta-1].vert(2*_nchord-3));
+    _tris[tcounter].addVertex(&_sections[nsta-1].vert(1));
+    tcounter += 1;
+    next_global_faceidx += 1;
+  }
+  else
+  {
+    _quads[qcounter].setIdx(next_global_faceidx);
+    _quads[qcounter].addVertex(&_sections[nsta-1].vert(2*_nchord-2));
+    _quads[qcounter].addVertex(&_sections[nsta-1].vert(2*_nchord-3));
+    _quads[qcounter].addVertex(&_sections[nsta-1].vert(1));
+    _quads[qcounter].addVertex(&_sections[nsta-1].vert(0));
+    qcounter += 1;
+    next_global_faceidx += 1;
+  }
+  for ( i = 1; i < _nchord-2; i++ ) 
+  {
+    _quads[qcounter].setIdx(next_global_faceidx);
+    _quads[qcounter].addVertex(&_sections[nsta-1].vert(2*_nchord-2-i));
+    _quads[qcounter].addVertex(&_sections[nsta-1].vert(2*_nchord-3-i));
+    _quads[qcounter].addVertex(&_sections[nsta-1].vert(i+1));
+    _quads[qcounter].addVertex(&_sections[nsta-1].vert(i));
+    qcounter += 1;
+    next_global_faceidx += 1;
+  }
+  _tris[tcounter].setIdx(next_global_faceidx);
+  _tris[tcounter].addVertex(&_sections[nsta-1].vert(_nchord));
+  _tris[tcounter].addVertex(&_sections[nsta-1].vert(_nchord-1));
+  _tris[tcounter].addVertex(&_sections[nsta-1].vert(_nchord-2));
+  next_global_faceidx += 1;
+  
+}
+
+/******************************************************************************/
+//
+// Access to verts, panels, wake elements
+//
+/******************************************************************************/
+unsigned int Wing::nVerts () const { return _verts.size(); }
+unsigned int Wing::nQuads () const { return _quads.size(); }
+unsigned int Wing::nTris () const { return _tris.size(); }
+Vertex * Wing::vert ( unsigned int vidx )
+{
+#ifdef DEBUG
+  if (vidx >= _verts.size())
+    conditional_stop(1, "Wing::vert", "Index out of range.");
+#endif
+
+  return _verts[vidx];
+}
+
+QuadFace * Wing::quadFace ( unsigned int qidx )
+{
+#ifdef DEBUG
+  if (qidx >= _quads.size())
+    conditional_stop(1, "Wing::quadFace", "Index out of range.");
+#endif
+
+  return &_quads[qidx];
+}
+
+TriFace * Wing::triFace ( unsigned int tidx )
+{
+#ifdef DEBUG
+  if (tidx >= _tris.size())
+    conditional_stop(1, "Wing::triFace", "Index out of range.");
+#endif
+
+  return &_tris[tidx];
 }

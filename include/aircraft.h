@@ -5,8 +5,10 @@
 
 #include <vector>
 #include <string>
-#include <Eigen/Core>
 #include "wing.h"
+
+class Vertex;
+class Face;
 
 /******************************************************************************/
 //
@@ -17,12 +19,18 @@ class Aircraft {
 
   private:
 
-    unsigned int _nwings;		// Number of wings
     std::vector<Wing> _wings;		// Wings
 
     double _sref;			// Reference area
     double _lref;			// Pitching moment reference length
     Eigen::Vector3d _momcen;		// Pitching moment reference point
+
+    std::vector<Vertex *> _verts;	// Pointers to vertices
+    std::vector<Face *> _panels;	// Pointers to panels 
+
+    // Set up pointers to vertices, panels, and wake elements
+
+    void setGeometryPointers ();
 
   public:
 
@@ -34,9 +42,9 @@ class Aircraft {
 
     int readXML ( const std::string & geom_file );
 
-    // Add wing
+    // Write VTK viz
 
-    void addWing ( const Wing & wing );
+    int writeViz ( const std::string & fname ) const;
 };
 
 #endif

@@ -130,7 +130,7 @@ double tanh_stretching ( const std::vector<double> & coef )
   {
     a1sum += 1.;
     a2sum += double(i);
-    a3sum += pow(double(i),2.);
+    a3sum += std::pow(double(i),2.);
     a4sum += phi4(i,N);
     a5sum += phi5(i,N);
   }
@@ -139,7 +139,7 @@ double tanh_stretching ( const std::vector<double> & coef )
   rhs[1] = slen - a1*a1sum - a4*a4sum - a5*a5sum;
   dbleN = double(N);
   a3 = (rhs[1] - a2sum*rhs[0]/dbleN ) / (a3sum - a2sum*dbleN);
-  a2 = (rhs[0] - a3*pow(dbleN,2.)) / dbleN;
+  a2 = (rhs[0] - a3*std::pow(dbleN,2.)) / dbleN;
 
   // Compute max stretching and add penalty for any panels with length <= 0
 
@@ -147,9 +147,10 @@ double tanh_stretching ( const std::vector<double> & coef )
   penaltyval = 0.;
   for ( i = 1; i <= N; i++ )
   {
-    dm = a1 + a2*double(i-1) + a3*pow(double(i-1),2.) + a4*phi4(i-1,N)
+    dm = a1 + a2*double(i-1) + a3*std::pow(double(i-1),2.) + a4*phi4(i-1,N)
        + a5*phi5(i-1,N);
-    dp = a1 + a2*double(i) + a3*pow(double(i),2.) + a4*phi4(i,N) + a5*phi5(i,N);
+    dp = a1 + a2*double(i) + a3*std::pow(double(i),2.) + a4*phi4(i,N) +
+         a5*phi5(i,N);
     if (dm > dp)
       stretch = (dm - dp)/dp;
     else
@@ -185,11 +186,7 @@ void opt_tanh_spacing ( unsigned int n, const double & slen, const double & sp0,
 
   searchopt.tol = 1.E-12;
   searchopt.maxit = 2000;
-#ifdef DEBUG
-  searchopt.display_progress = true;
-#else
   searchopt.display_progress = false;
-#endif
 
   // Global parameters for tanh spacing
 
@@ -248,7 +245,7 @@ double tanh_spacing ( unsigned int i, const double & a4, const double & a5,
   {
     a1sum += 1.;
     a2sum += double(j);
-    a3sum += pow(double(j),2.);
+    a3sum += std::pow(double(j),2.);
     a4sum += phi4(j,N);
     a5sum += phi5(j,N);
   }
@@ -257,9 +254,10 @@ double tanh_spacing ( unsigned int i, const double & a4, const double & a5,
   rhs[1] = slen - a1*a1sum - a4*a4sum - a5*a5sum;
   dbleN = double(N);
   a3 = (rhs[1] - a2sum*rhs[0]/dbleN ) / (a3sum - a2sum*dbleN);
-  a2 = (rhs[0] - a3*pow(dbleN,2.)) / dbleN;
+  a2 = (rhs[0] - a3*std::pow(dbleN,2.)) / dbleN;
 
-  return a1 + a2*double(i) + a3*pow(double(i),2.) + a4*phi4(i,N) + a5*phi5(i,N);
+  return a1 + a2*double(i) + a3*std::pow(double(i),2.) + a4*phi4(i,N) +
+         a5*phi5(i,N);
 }
 
 /******************************************************************************/
@@ -429,7 +427,7 @@ void simplex_search ( std::vector<double> & xopt, double & fmin,
       dist = 0.;
       for ( k = 0; k < nvars; k++ )
       {
-        dist += pow(dv[0][k]-dv[j][k], 2.);
+        dist += std::pow(dv[0][k]-dv[j][k], 2.);
       }
       dist = sqrt(dist);
       if (dist > diam)
@@ -574,7 +572,7 @@ void simplex_search ( std::vector<double> & xopt, double & fmin,
     dist = 0.;
     for ( k = 0; k < nvars; k++ )
     {
-      dist += pow(dv[0][k]-dv[j][k], 2.);
+      dist += std::pow(dv[0][k]-dv[j][k], 2.);
     }
     dist = sqrt(dist);
     if (dist > diam)

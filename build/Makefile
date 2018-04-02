@@ -2,7 +2,7 @@
 
 CXX=g++
 DEBUGFLAGS=-g -Wall
-GPPFLAGS=-O3 -flto -funroll-loops -fopenmp
+GPPFLAGS=-O2 -fopenmp
 CXXFLAGS=$(DEBUGFLAGS)
 #CXXFLAGS=$(GPPFLAGS)
 
@@ -13,9 +13,9 @@ CXXFLAGS=$(DEBUGFLAGS)
 OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o sectional_object.o airfoil.o section.o wing.o aircraft.o loraax.o
 EXE=loraax
 SRCDIR=../src
-INCLUDE=-I../include -I/usr/include/eigen3
-#INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
-#LDFLAGS=-L/data/dprosser/locally_installed/lib64
+#INCLUDE=-I../include -I/usr/include/eigen3
+INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
+LDFLAGS=-L/data/dprosser/locally_installed/lib64
 LIBS=-lxfoil -ltinyxml2
 
 ################################################################################
