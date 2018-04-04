@@ -4,28 +4,20 @@
 #define WAKE_H
 
 #include <vector>
-#include <Eigen/Core>
-#include "wakeline.h"
-
-// Forward declarations
-
-class Node;
+#include "vertex.h"
+#include "vortex_ring.h"
 
 /******************************************************************************/
 //
-// Wake class. Stores wake lines and horseshoe vortices and facilitates their
-// setup and connections with each other and the trailing edges of the aircraft
+// Wake class. 
 //
 /******************************************************************************/
 class Wake {
 
   private:
 
-    unsigned int _numlines;      // Number of wake lines
-    unsigned int _numhorseshoes; // Number of horseshoe vortices
-
-    std::vector<WakeLine> _wakelines;
-                                 // Vector of wake lines
+    std::vector<Vertex> _verts;		// Vertices
+    std::vector<VortexRing> _vrings;	// Vortex rings
 
   public:
 
@@ -33,19 +25,17 @@ class Wake {
 
     Wake ();
 
-    // Returns number of wake lines
+    // Initialize with a vector of vertices along a wing trailing edge
 
-    unsigned int numWakeLines () const;
+    void initialize ( const std::vector<Vertex> & teverts,
+                      int & next_wake_vertidx, int & next_wake_ringidx );
 
-    // Creates a wake line with given length and number of filaments, aligned
-    // with the freestream
+    // Access vertices, vortex rings
 
-    void addWakeLine ( const double &, unsigned int, const Eigen::Vector3d &,
-                       Node * ); 
-
-    // Returns a reference to a wake line
-
-    WakeLine & wakeLine ( unsigned int );
+    unsigned int nVerts () const;
+    unsigned int nVRings () const;
+    Vertex * vert ( unsigned int vidx );
+    VortexRing * vRing ( unsigned int vridx );
 };
 
 #endif

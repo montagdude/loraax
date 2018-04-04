@@ -1,9 +1,9 @@
 <Main>
 <!-- Case name -->
-  <CaseName>sample_aircraft</CaseName>
+  <CaseName>wonky_aircraft</CaseName>
 
 <!-- Aircraft definition. -->
-  <GeometryFile>sample_aircraft.xml</GeometryFile>
+  <GeometryFile>wonky_aircraft.xml</GeometryFile>
 
 <!-- Freestream reference conditions. Freestream speed must be given in units of
      length/sec, where length is the length unit inherent in your aircraft
@@ -32,7 +32,7 @@
   <FreestreamViscosity>1.81e-05</FreestreamViscosity>
 
 <!-- Angle of attack, in degrees. -->
-  <AngleOfAttack>3.0</AngleOfAttack>
+  <AngleOfAttack>5.0</AngleOfAttack>
 
 <!-- Time step size, in seconds, for wake rollup and iterative viscous -
      inviscid coupling. -->
@@ -40,7 +40,7 @@
 
 <!-- The wake extends to infinity, but this length will roll up with the local
      flow velocity. -->
-  <WakeLength>20</WakeLength>
+  <WakeLength>30</WakeLength>
 
 <!-- Whether to run Xfoil for a coupled viscous solution. -->
   <Viscous>true</Viscous>

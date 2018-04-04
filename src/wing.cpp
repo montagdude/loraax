@@ -12,6 +12,8 @@
 #include "vertex.h"
 #include "wing.h"
 
+#include <iostream>
+
 // Data for optimizing spanwise spacing
 
 std::vector<double> nom_stations, new_stations, s_wing;
@@ -577,7 +579,7 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 /******************************************************************************/
 void Wing::createPanels ( int & next_global_vertidx, int & next_global_faceidx )
 {
-  unsigned int i, j, vcounter, qcounter, tcounter, nsta, ntri, nquad;
+  unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad;
   double dx, dy, dz, tegap;
 
   // Set vertex pointers on surface
@@ -597,10 +599,12 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_faceidx )
 
   // Determine number of quad and tri panels on surface
 
-  nsta = _sections.size();
-  dx = _sections[nsta-1].vert(0).x() - _sections[nsta-1].vert(2*_nchord-2).x();
-  dy = _sections[nsta-1].vert(0).y() - _sections[nsta-1].vert(2*_nchord-2).y();
-  dz = _sections[nsta-1].vert(0).z() - _sections[nsta-1].vert(2*_nchord-2).z();
+  dx = _sections[_nspan-1].vert(0).x() -
+       _sections[_nspan-1].vert(2*_nchord-2).x();
+  dy = _sections[_nspan-1].vert(0).y() -
+       _sections[_nspan-1].vert(2*_nchord-2).y();
+  dz = _sections[_nspan-1].vert(0).z() -
+       _sections[_nspan-1].vert(2*_nchord-2).z();
   tegap = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
   if (tegap > 1E-12)
     ntri = 1;
@@ -633,43 +637,120 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_faceidx )
   if (ntri == 2)
   {
     _tris[tcounter].setIdx(next_global_faceidx);
-    _tris[tcounter].addVertex(&_sections[nsta-1].vert(0));
-    _tris[tcounter].addVertex(&_sections[nsta-1].vert(2*_nchord-3));
-    _tris[tcounter].addVertex(&_sections[nsta-1].vert(1));
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
     tcounter += 1;
     next_global_faceidx += 1;
   }
   else
   {
     _quads[qcounter].setIdx(next_global_faceidx);
-    _quads[qcounter].addVertex(&_sections[nsta-1].vert(2*_nchord-2));
-    _quads[qcounter].addVertex(&_sections[nsta-1].vert(2*_nchord-3));
-    _quads[qcounter].addVertex(&_sections[nsta-1].vert(1));
-    _quads[qcounter].addVertex(&_sections[nsta-1].vert(0));
+    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
+    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(1));
+    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(0));
     qcounter += 1;
     next_global_faceidx += 1;
   }
   for ( i = 1; i < _nchord-2; i++ ) 
   {
     _quads[qcounter].setIdx(next_global_faceidx);
-    _quads[qcounter].addVertex(&_sections[nsta-1].vert(2*_nchord-2-i));
-    _quads[qcounter].addVertex(&_sections[nsta-1].vert(2*_nchord-3-i));
-    _quads[qcounter].addVertex(&_sections[nsta-1].vert(i+1));
-    _quads[qcounter].addVertex(&_sections[nsta-1].vert(i));
+    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2-i));
+    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3-i));
+    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i+1));
+    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i));
     qcounter += 1;
     next_global_faceidx += 1;
   }
   _tris[tcounter].setIdx(next_global_faceidx);
-  _tris[tcounter].addVertex(&_sections[nsta-1].vert(_nchord));
-  _tris[tcounter].addVertex(&_sections[nsta-1].vert(_nchord-1));
-  _tris[tcounter].addVertex(&_sections[nsta-1].vert(_nchord-2));
+  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord));
+  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
+  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2));
   next_global_faceidx += 1;
-  
 }
 
 /******************************************************************************/
 //
-// Access to verts, panels, wake elements
+// Sets up wake
+//
+/******************************************************************************/
+void Wing::setupWake ( int & next_wake_vertidx, int & next_wake_ringidx )
+{
+  unsigned int i, tlquad, blquad, trquad, brquad, tiptri, tipquad;
+  std::vector<Vertex> teverts;
+  double xt, yt, zt, xb, yb, zb, xm, ym, zm, dx, dy, dz, tegap;
+
+  // Create vertices along trailing edge
+
+  teverts.resize(_nspan);
+  for ( i = 0; i < _nspan; i++ )
+  {
+    xt = _sections[i].vert(0).x();
+    yt = _sections[i].vert(0).y();
+    zt = _sections[i].vert(0).z(); 
+    xb = _sections[i].vert(2*_nchord-2).x();
+    yb = _sections[i].vert(2*_nchord-2).y();
+    zb = _sections[i].vert(2*_nchord-2).z(); 
+    xm = 0.5*(xt+xb);
+    ym = 0.5*(yt+yb);
+    zm = 0.5*(zt+zb);
+    dx = xt - xb;
+    dy = yt - yb;
+    dz = zt - zb;
+    tegap = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
+    teverts[i].setCoordinates(xm, ym, zm);
+
+    // Identify whether it is on trailing edge faces
+
+    if (tegap < 1E-12)
+    {
+      if (i == 0)
+      {
+        trquad = 0;
+        brquad = 2*_nchord-3;
+        teverts[i].addFace(&_quads[trquad]);
+        teverts[i].addFace(&_quads[brquad]);
+      }
+      else if (i == _nspan-1)
+      {
+        tlquad = (_nspan-2)*(2*_nchord-2);
+        blquad = (_nspan-1)*(2*_nchord-2) - 1;
+        tiptri = 0; 
+        teverts[i].addFace(&_quads[tlquad]);
+        teverts[i].addFace(&_quads[blquad]);
+        teverts[i].addFace(&_tris[tiptri]);
+      }
+      else
+      {
+        tlquad = (i-1)*(2*_nchord-2);
+        blquad = i*(2*_nchord-2) - 1;
+        trquad = i*(2*_nchord-2);
+        brquad = (i+1)*(2*_nchord-2) - 1;
+        teverts[i].addFace(&_quads[tlquad]);
+        teverts[i].addFace(&_quads[blquad]);
+        teverts[i].addFace(&_quads[trquad]);
+        teverts[i].addFace(&_quads[brquad]);
+      }
+    }
+    else
+    {
+      if (i == _nspan-1)
+      {
+        tipquad = (_nspan-1)*(2*_nchord-2);
+        teverts[i].addFace(&_quads[tipquad]);
+      }
+    }
+  }
+
+  // Initialize wake
+
+  _wake.initialize(teverts, next_wake_vertidx, next_wake_ringidx);
+}
+
+/******************************************************************************/
+//
+// Access to verts and panels
 //
 /******************************************************************************/
 unsigned int Wing::nVerts () const { return _verts.size(); }
@@ -704,3 +785,10 @@ TriFace * Wing::triFace ( unsigned int tidx )
 
   return &_tris[tidx];
 }
+
+/******************************************************************************/
+//
+// Access to wake
+//
+/******************************************************************************/
+Wake & Wing::wake () { return _wake; }

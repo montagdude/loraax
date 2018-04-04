@@ -38,9 +38,8 @@ int QuadFace::addVertex ( Vertex * vert )
 {
   if (_currverts == 4)
   {
-#ifdef DEBUG
-    print_warning("QuadFace::addVertex", "4 vertices have already been set.");
-#endif
+    conditional_stop(1, "QuadFace::addVertex",
+                     "4 vertices have already been set.");
     return 1;
   }
 
@@ -355,4 +354,3 @@ Eigen::Vector3d QuadFace::inducedVelocity (
 
   return vel;
 }
-

@@ -9,6 +9,7 @@
 
 class Vertex;
 class Face;
+class VortexRing;
 
 /******************************************************************************/
 //
@@ -27,10 +28,17 @@ class Aircraft {
 
     std::vector<Vertex *> _verts;	// Pointers to vertices
     std::vector<Face *> _panels;	// Pointers to panels 
+    std::vector<Vertex *> _wakeverts;   // Pointers to wake vertices
+    std::vector<VortexRing *> _vrings;	// Pointers to vortex rings
 
     // Set up pointers to vertices, panels, and wake elements
 
     void setGeometryPointers ();
+
+    // Write VTK viz
+
+    int writeSurfaceViz ( const std::string & prefix ) const;
+    int writeWakeViz ( const std::string & prefix ) const;
 
   public:
 
@@ -44,7 +52,7 @@ class Aircraft {
 
     // Write VTK viz
 
-    int writeViz ( const std::string & fname ) const;
+    int writeViz ( const std::string & prefix ) const;
 };
 
 #endif

@@ -21,62 +21,62 @@
         <!-- Y is not needed for root section -->
         <XLE>0.</XLE>
         <ZLE>0.</ZLE>
-        <Chord>10</Chord>
+        <Chord>9</Chord>
         <Twist>0.</Twist>
       </Section>
       <Section>
         <XLE>3.0</XLE>
         <Y>16.0</Y>
         <ZLE>1.5</ZLE>
-        <Chord>7.0</Chord>
-        <Twist>0.</Twist>
+        <Chord>6.0</Chord>
+        <Twist>-2.581</Twist>
       </Section>
       <Section>
         <XLE>2.0</XLE>
         <Y>8.0</Y>
         <ZLE>0.0</ZLE>
-        <Chord>8.0</Chord>
+        <Chord>7.0</Chord>
         <Twist>0.</Twist>
       </Section>
       <Section>
-        <XLE>4.3</XLE>
-        <Y>23.0</Y>
-        <ZLE>2.8</ZLE>
-        <Chord>5.7</Chord>
-        <Twist>-5.</Twist>
+        <XLE>4.2</XLE>
+        <Y>23.2</Y>
+        <ZLE>2.85</ZLE>
+        <Chord>4.8</Chord>
+        <Twist>-4.903</Twist>
       </Section>
       <Section>
         <XLE>4.0</XLE>
         <Y>22.7</Y>
-        <ZLE>2.6</ZLE>
-        <Chord>6.0</Chord>
-        <Twist>-5.</Twist>
+        <ZLE>2.756</ZLE>
+        <Chord>5.0</Chord>
+        <Twist>-4.742</Twist>
       </Section>
       <Section>
         <!-- The tip section is the one with largest Y -->
-        <XLE>4.5</XLE>
+        <XLE>4.8</XLE>
         <Y>23.5</Y>
-        <ZLE>3.</ZLE>
-        <Chord>5.5</Chord>
+        <ZLE>2.90625</ZLE>
+        <Chord>4.2</Chord>
         <Twist>-5.</Twist>
       </Section>
     </Sections>
     <Airfoils>
       <Airfoil>
-        <Source>4 digit</Source>
-        <Designation>0012</Designation>
+        <Source>5 digit</Source>
+        <Designation>21008</Designation>
         <Y>0.</Y>
       </Airfoil>
       <Airfoil name="Tip">
         <!-- Note: since we named this airfoil "Tip", we do not need to provide
              a Y value. The same applies with "Root". -->
-        <Source>file</Source>
-        <Path>clarky.dat</Path>
+        <Source>4 digit</Source>
+        <Designation>0006</Designation>
       </Airfoil>
       <Airfoil>
         <!-- Y is needed for non-root / non-tip airfoils -->
-        <Source>5 digit</Source>
-        <Designation>21021</Designation>
+        <Source>file</Source>
+        <Path>clarky.dat</Path>
         <Y>10</Y>
       </Airfoil>
     </Airfoils>
@@ -93,15 +93,15 @@
     <Sections>
       <Section name="Root">
         <!-- Y is not needed for root section -->
-        <XLE>20.</XLE>
-        <ZLE>3.</ZLE>
-        <Chord>5.</Chord>
+        <XLE>22.</XLE>
+        <ZLE>-3.</ZLE>
+        <Chord>4.</Chord>
         <Twist>0.</Twist>
       </Section>
       <Section>
-        <XLE>22.</XLE>
-        <Y>10.</Y>
-        <ZLE>4.</ZLE>
+        <XLE>24.</XLE>
+        <Y>6.</Y>
+        <ZLE>-3.</ZLE>
         <Chord>3.</Chord>
         <Twist>0.</Twist>
       </Section>

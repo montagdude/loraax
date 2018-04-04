@@ -10,12 +10,12 @@ CXXFLAGS=$(DEBUGFLAGS)
 
 #### Main program ##############################################################
 
-OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o sectional_object.o airfoil.o section.o wing.o aircraft.o loraax.o
+OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o sectional_object.o airfoil.o section.o vortex_ring.o wake.o wing.o aircraft.o loraax.o
 EXE=loraax
 SRCDIR=../src
-#INCLUDE=-I../include -I/usr/include/eigen3
-INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
-LDFLAGS=-L/data/dprosser/locally_installed/lib64
+INCLUDE=-I../include -I/usr/include/eigen3
+#INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
+#LDFLAGS=-L/data/dprosser/locally_installed/lib64
 LIBS=-lxfoil -ltinyxml2
 
 ################################################################################
@@ -82,6 +82,12 @@ airfoil.o: $(SRCDIR)/airfoil.cpp
 
 section.o: $(SRCDIR)/section.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/section.cpp
+
+vortex_ring.o: $(SRCDIR)/vortex_ring.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/vortex_ring.cpp
+
+wake.o: $(SRCDIR)/wake.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/wake.cpp
 
 wing.o: $(SRCDIR)/wing.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/wing.cpp

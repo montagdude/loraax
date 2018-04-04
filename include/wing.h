@@ -9,6 +9,7 @@
 #include "airfoil.h"
 #include "quadface.h"
 #include "triface.h"
+#include "wake.h"
 
 class Vertex;
 
@@ -37,6 +38,7 @@ class Wing {
     std::vector<Vertex *> _verts;	// Pointers to vertices on wing and wake
     std::vector<QuadFace> _quads;	// Quad faces (panels)
     std::vector<TriFace> _tris;		// Tri faces (panels) at tip 
+    Wake _wake;				// Wake
 
     std::vector<double> adjustSpacing ( 
                                const std::vector<double> & nom_stations ) const;
@@ -74,7 +76,11 @@ class Wing {
 
     void createPanels ( int & next_global_vertidx, int & next_global_faceid );
 
-    // Access to verts, panels, and wake elements
+    // Set up wake
+
+    void setupWake ( int & next_wake_vertidx, int & next_wake_ringidx );
+
+    // Access to verts and panels
 
     unsigned int nVerts () const;
     unsigned int nQuads () const;
@@ -82,6 +88,10 @@ class Wing {
     Vertex * vert ( unsigned int vidx );
     QuadFace * quadFace ( unsigned int qidx );
     TriFace * triFace ( unsigned int tidx );
+
+    // Access to wake
+
+    Wake & wake ();
 };
 
 #endif

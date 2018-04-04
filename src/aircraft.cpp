@@ -27,6 +27,8 @@ void Aircraft::setGeometryPointers ()
 {
   unsigned int nwings, nverts_total, nquads_total, ntris_total;
   unsigned int i, j, nverts, nquads, ntris, vcounter, pcounter;
+  unsigned int nverts_wake_total, nverts_wake, vwcounter;
+  unsigned int nvrings_total, nvrings, vrcounter;
 
   // Get sizes first (don't use push_back, because it invalidates pointers)
 
@@ -34,19 +36,27 @@ void Aircraft::setGeometryPointers ()
   nverts_total = 0;
   nquads_total = 0;
   ntris_total = 0;
+  nverts_wake_total = 0;
+  nvrings_total = 0;
   for ( i = 0; i < nwings; i++ )
   {
     nverts_total += _wings[i].nVerts();
     nquads_total += _wings[i].nQuads();
     ntris_total += _wings[i].nTris();
+    nverts_wake_total += _wings[i].wake().nVerts();
+    nvrings_total += _wings[i].wake().nVRings();
   }
   _verts.resize(nverts_total);
   _panels.resize(nquads_total + ntris_total);
+  _wakeverts.resize(nverts_wake_total);
+  _vrings.resize(nvrings_total);
 
   // Store geometry pointers
 
   vcounter = 0;
   pcounter = 0;
+  vwcounter = 0;
+  vrcounter = 0;
   for ( i = 0; i < nwings; i++ ) 
   {
     nverts = _wings[i].nVerts();
@@ -69,7 +79,161 @@ void Aircraft::setGeometryPointers ()
       _panels[pcounter] = _wings[i].triFace(j);
       pcounter += 1;
     }
+
+    nverts_wake = _wings[i].wake().nVerts();
+    for ( j = 0; j < nverts_wake; j++ )
+    {
+      _wakeverts[vwcounter] = _wings[i].wake().vert(j);
+      vwcounter += 1;
+    }
+
+    nvrings = _wings[i].wake().nVRings();
+    for ( j = 0; j < nvrings; j++ )
+    {
+      _vrings[vrcounter] = _wings[i].wake().vRing(j);
+      vrcounter += 1;
+    }
   }
+}
+
+/******************************************************************************/
+//
+// Writes legacy VTK surface viz
+//
+/******************************************************************************/
+int Aircraft::writeSurfaceViz ( const std::string & fname ) const
+{
+  std::ofstream f;
+  unsigned int i, j, nverts, npanels, cellsize, ncellverts;
+
+  f.open(fname.c_str());
+  if (! f.is_open())
+  {
+    conditional_stop(1, "Aircraft::writeSurfaceViz",
+                     "Unable to open " + fname + " for writing."); 
+    return 1;
+  }
+
+  // Header
+
+  f << "# vtk DataFile Version 3.0" << std::endl;
+  f << casename << std::endl;
+  f << "ASCII" << std::endl;
+  f << "DATASET UNSTRUCTURED_GRID" << std::endl;
+
+  // Write vertices
+
+  nverts = _verts.size();
+  f << "POINTS " << nverts << " double" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->x();
+    f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->y();
+    f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->z()
+      << std::endl;
+  } 
+
+  // Write panels
+
+  npanels = _panels.size();
+  cellsize = 0;
+  for ( i = 0; i < npanels; i++ )
+  {
+    cellsize += 1 + _panels[i]->nVertices();
+  }
+  f << "CELLS " << npanels << " " << cellsize << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    ncellverts = _panels[i]->nVertices();    
+    if ( (ncellverts != 4) && (ncellverts != 3) )
+    {
+      conditional_stop(1, "Aircraft::writeSurfaceViz",
+                       "Panels must all be quad- or tri-type.");  
+      return 1;
+    }
+    f << ncellverts;
+    for ( j = 0; j < ncellverts; j++ )
+    {
+      f << " " << _panels[i]->vertex(j).idx();
+    }
+    f << std::endl;
+  }
+  f << "CELL_TYPES " << npanels << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    ncellverts = _panels[i]->nVertices();    
+    if (ncellverts == 4)
+      f << 9 << std::endl;
+    else if (ncellverts == 3)
+      f << 5 << std::endl;
+  }
+
+  f.close();
+
+  return 0;
+}
+
+/******************************************************************************/
+//
+// Writes legacy VTK wake viz
+//
+/******************************************************************************/
+int Aircraft::writeWakeViz ( const std::string & fname ) const
+{
+  std::ofstream f;
+  unsigned int i, j, nverts, nrings;
+
+  f.open(fname.c_str());
+  if (! f.is_open())
+  {
+    conditional_stop(1, "Aircraft::writeWakeViz",
+                     "Unable to open " + fname + " for writing."); 
+    return 1;
+  }
+
+  // Header
+
+  f << "# vtk DataFile Version 3.0" << std::endl;
+  f << casename << std::endl;
+  f << "ASCII" << std::endl;
+  f << "DATASET UNSTRUCTURED_GRID" << std::endl;
+
+  // Write vertices
+
+  nverts = _wakeverts.size();
+  f << "POINTS " << nverts << " double" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->x();
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->y();
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->z() << std::endl;
+  } 
+
+  // Write vortex rings
+
+  nrings = _vrings.size();
+  f << "CELLS " << nrings << " " << 5*nrings << std::endl;
+  for ( i = 0; i < nrings; i++ )
+  {
+    f << 4;
+    for ( j = 0; j < 4; j++ )
+    {
+      f << " " << _vrings[i]->vertex(j).idx();
+    }
+    f << std::endl;
+  }
+  f << "CELL_TYPES " << nrings << std::endl;
+  for ( i = 0; i < nrings; i++ )
+  {
+    f << 9 << std::endl;
+  }
+
+  f.close();
+
+  return 0;
 }
 
 /******************************************************************************/
@@ -85,6 +249,8 @@ Aircraft::Aircraft ()
   _momcen << 0., 0., 0.;
   _verts.resize(0);
   _panels.resize(0);
+  _wakeverts.resize(0);
+  _vrings.resize(0);
 }
 
 /******************************************************************************/
@@ -105,6 +271,8 @@ int Aircraft::readXML ( const std::string & geom_file )
   const int npointside = 100;
   int next_global_faceidx = 0;
   int next_global_vertidx = 0;
+  int next_wake_vertidx = 0;
+  int next_wake_ringidx = 0;
 
   doc.LoadFile(geom_file.c_str());
   if ( (doc.ErrorID() == XML_ERROR_FILE_NOT_FOUND) ||
@@ -336,6 +504,7 @@ int Aircraft::readXML ( const std::string & geom_file )
     _wings[nwings].setAirfoils(foils);    
     _wings[nwings].setupSections(user_sections);
     _wings[nwings].createPanels(next_global_vertidx, next_global_faceidx);
+    _wings[nwings].setupWake(next_wake_vertidx, next_wake_ringidx);
     nwings += 1;
   }
 
@@ -357,74 +526,18 @@ int Aircraft::readXML ( const std::string & geom_file )
 // Writes legacy VTK viz files
 //
 /******************************************************************************/
-int Aircraft::writeViz ( const std::string & fname ) const
+int Aircraft::writeViz ( const std::string & prefix ) const
 {
-  std::ofstream f;
-  unsigned int i, j, nverts, npanels, cellsize, ncellverts;
+  std::string surfname, wakename;
 
-  f.open(fname.c_str());
-  if (! f.is_open())
-  {
-    conditional_stop(1, "Aircraft::writeViz",
-                     "Unable to open " + fname + " for writing."); 
+  surfname = prefix + "_surfs.vtk";
+  wakename = prefix + "_wake.vtk";
+
+  if (writeSurfaceViz(surfname) != 0)
     return 1;
-  }
 
-  // Header
-
-  f << "# vtk DataFile Version 3.0" << std::endl;
-  f << casename << std::endl;
-  f << "ASCII" << std::endl;
-  f << "DATASET UNSTRUCTURED_GRID" << std::endl;
-
-  // Write vertices
-
-  nverts = _verts.size();
-  f << "POINTS " << nverts << " double" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->x();
-    f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->y();
-    f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->z()
-      << std::endl;
-  } 
-
-  // Write panels
-
-  npanels = _panels.size();
-  cellsize = 0;
-  for ( i = 0; i < npanels; i++ )
-  {
-    cellsize += 1 + _panels[i]->nVertices();
-  }
-  f << "CELLS " << npanels << " " << cellsize << std::endl;
-  for ( i = 0; i < npanels; i++ )
-  {
-    ncellverts = _panels[i]->nVertices();    
-    if ( (ncellverts != 4) && (ncellverts != 3) )
-    {
-      conditional_stop(1, "Aircraft::writeViz",
-                       "Panels must all be quad- or tri-type.");  
-      return 1;
-    }
-    f << ncellverts;
-    for ( j = 0; j < ncellverts; j++ )
-    {
-      f << " " << _panels[i]->vertex(j).idx();
-    }
-    f << std::endl;
-  }
-  f << "CELL_TYPES " << npanels << std::endl;
-  for ( i = 0; i < npanels; i++ )
-  {
-    ncellverts = _panels[i]->nVertices();    
-    if (ncellverts == 4)
-      f << 9 << std::endl;
-    else if (ncellverts == 3)
-      f << 5 << std::endl;
-  }
-
-  f.close();
+  if (writeWakeViz(wakename) != 0)
+    return 1;
 
   return 0;
 }
