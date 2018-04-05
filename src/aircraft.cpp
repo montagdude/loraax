@@ -130,10 +130,10 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
   f << "ASCII" << std::endl;
   f << "DATASET UNSTRUCTURED_GRID" << std::endl;
 
-  // Write vertices
+  // Write vertices and mirror vertices
 
   nverts = _verts.size();
-  f << "POINTS " << nverts << " double" << std::endl;
+  f << "POINTS " << nverts*2 << " double" << std::endl;
   for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->x();
@@ -141,8 +141,15 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
     f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->z()
       << std::endl;
   } 
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left <<  _verts[i]->x();
+    f << std::setprecision(14) << std::setw(25) << std::left << -_verts[i]->y();
+    f << std::setprecision(14) << std::setw(25) << std::left <<  _verts[i]->z()
+      << std::endl;
+  } 
 
-  // Write panels
+  // Write panels and mirror panels
 
   npanels = _panels.size();
   cellsize = 0;
@@ -150,7 +157,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
   {
     cellsize += 1 + _panels[i]->nVertices();
   }
-  f << "CELLS " << npanels << " " << cellsize << std::endl;
+  f << "CELLS " << npanels*2 << " " << cellsize*2 << std::endl;
   for ( i = 0; i < npanels; i++ )
   {
     ncellverts = _panels[i]->nVertices();    
@@ -167,7 +174,28 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
     }
     f << std::endl;
   }
-  f << "CELL_TYPES " << npanels << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    ncellverts = _panels[i]->nVertices();    
+    f << ncellverts;
+    for ( j = 0; j < ncellverts; j++ )
+    {
+      f << " " << _panels[i]->vertex(j).idx()+nverts;
+    }
+    f << std::endl;
+  }
+
+  // Cell types for panels and mirror panels
+
+  f << "CELL_TYPES " << npanels*2 << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    ncellverts = _panels[i]->nVertices();    
+    if (ncellverts == 4)
+      f << 9 << std::endl;
+    else if (ncellverts == 3)
+      f << 5 << std::endl;
+  }
   for ( i = 0; i < npanels; i++ )
   {
     ncellverts = _panels[i]->nVertices();    
@@ -208,11 +236,11 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
   f << "ASCII" << std::endl;
   f << "DATASET UNSTRUCTURED_GRID" << std::endl;
 
-  // Write vertices
+  // Write vertices and mirror vertices
 
   nverts = _wakeverts.size();
   nsurf_verts = _verts.size();
-  f << "POINTS " << nverts << " double" << std::endl;
+  f << "POINTS " << nverts*2 << " double" << std::endl;
   for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
@@ -222,11 +250,20 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
     f << std::setprecision(14) << std::setw(25) << std::left
       << _wakeverts[i]->z() << std::endl;
   } 
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->x();
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << -_wakeverts[i]->y();
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->z() << std::endl;
+  } 
 
-  // Write vortex rings and horseshoe vortices
+  // Write vortex elements and mirror element
 
   nvorts = _vorts.size();
-  f << "CELLS " << nvorts << " " << 5*nvorts << std::endl;
+  f << "CELLS " << nvorts*2 << " " << 5*nvorts*2 << std::endl;
   for ( i = 0; i < nvorts; i++ )
   {
     type = _vorts[i]->type();
@@ -239,11 +276,31 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
     f << 4;
     for ( j = 0; j < 4; j++ )
     {
-      f << " " << _vorts[i]->vertex(j).idx() - nsurf_verts;
+      f << " " << _vorts[i]->vertex(j).idx()-nsurf_verts;
     }
     f << std::endl;
   }
-  f << "CELL_TYPES " << nvorts << std::endl;
+  for ( i = 0; i < nvorts; i++ )
+  {
+    f << 4;
+    for ( j = 0; j < 4; j++ )
+    {
+      f << " " << _vorts[i]->vertex(j).idx()-nsurf_verts+nverts;
+    }
+    f << std::endl;
+  }
+
+  // Cell types for vortex elements and mirror elements
+
+  f << "CELL_TYPES " << nvorts*2 << std::endl;
+  for ( i = 0; i < nvorts; i++ )
+  {
+    type = _vorts[i]->type();
+    if (type == "vortexring")
+      f << 9 << std::endl;
+    else if (type == "horseshoevortex")
+      f << 4 << std::endl;
+  }
   for ( i = 0; i < nvorts; i++ )
   {
     type = _vorts[i]->type();
