@@ -8,12 +8,12 @@
 #include "geometry.h"
 #include "singularities.h"
 #include "vertex.h"
-#include "face.h"
-#include "triface.h"
+#include "panel.h"
+#include "tripanel.h"
 
 /******************************************************************************/
 //
-// Quad face class.  Derived class from Face, has 4 nodes/edges.
+// Quad panel class.  Derived class from Panel, has 4 nodes/edges.
 // 
 /******************************************************************************/
 
@@ -22,30 +22,31 @@
 // Default constructor
 //
 /******************************************************************************/
-TriFace::TriFace ()
+TriPanel::TriPanel ()
 {
   _verts.resize(3);
   _xtrans.resize(3);
   _ytrans.resize(3);
+  _type = "tripanel";
 }
 
 /******************************************************************************/
 //
-// Add vertex and compute face geometric quantities when three are set. Vertices
-// should be added in a counterclockwise order.
+// Add vertex and compute panel geometric quantities when three are set.
+// Vertices should be added in a counterclockwise order.
 //
 /******************************************************************************/
-int TriFace::addVertex ( Vertex * vert )
+int TriPanel::addVertex ( Vertex * vert )
 {
   if (_currverts == 3)
   {
-    conditional_stop(1, "TriFace::addVertex",
+    conditional_stop(1, "TriPanel::addVertex",
                      "3 vertices have already been set.");
     return 1;
   }
 
   _verts[_currverts] = vert;
-  _verts[_currverts]->addFace(this);
+  _verts[_currverts]->addElement(this);
   _currverts += 1;
 
   if (_currverts == 3)
@@ -66,7 +67,7 @@ int TriFace::addVertex ( Vertex * vert )
 // source / doublet approximations
 //
 /******************************************************************************/
-void TriFace::computeCharacteristicLength ()
+void TriPanel::computeCharacteristicLength ()
 {
   double len1, len2, len3;
   Eigen::Vector3d side1, side2, side3;
@@ -97,7 +98,7 @@ void TriFace::computeCharacteristicLength ()
 // Computes area
 //
 /******************************************************************************/
-void TriFace::computeArea ()
+void TriPanel::computeArea ()
 {
   _area = tri_area(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
                    _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
@@ -109,7 +110,7 @@ void TriFace::computeArea ()
 // Computes normal
 //
 /******************************************************************************/
-void TriFace::computeNormal ()
+void TriPanel::computeNormal ()
 {
   _norm = tri_normal(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
                      _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
@@ -121,7 +122,7 @@ void TriFace::computeNormal ()
 // Computes centroid by intersection of vertex - edge midpoint lines
 //
 /******************************************************************************/
-void TriFace::computeCentroid () 
+void TriPanel::computeCentroid () 
 {
   _cen = tri_centroid(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
                       _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
@@ -134,7 +135,7 @@ void TriFace::computeCentroid ()
 // Also computes and stores panel endpoints in panel frame.
 //
 /******************************************************************************/
-void TriFace::computeTransform ()
+void TriPanel::computeTransform ()
 {
   unsigned int i;
   Eigen::Vector3d vec, transvec;
@@ -166,7 +167,7 @@ void TriFace::computeTransform ()
 // Computes source influence coefficient
 //
 /******************************************************************************/
-double TriFace::sourcePhiCoeff ( const double & x, const double & y, 
+double TriPanel::sourcePhiCoeff ( const double & x, const double & y, 
                                  const double & z, const bool onpanel,
                                  const std::string & side ) const
 {
@@ -206,7 +207,7 @@ double TriFace::sourcePhiCoeff ( const double & x, const double & y,
 // Computes source induced velocity component
 //
 /******************************************************************************/
-Eigen::Vector3d TriFace::sourceVCoeff ( const double & x, const double & y, 
+Eigen::Vector3d TriPanel::sourceVCoeff ( const double & x, const double & y, 
                                         const double & z, const bool onpanel,
                                         const std::string & side ) const
 {
@@ -252,7 +253,7 @@ Eigen::Vector3d TriFace::sourceVCoeff ( const double & x, const double & y,
 // Computes doublet influence coefficient
 //
 /******************************************************************************/
-double TriFace::doubletPhiCoeff ( const double & x, const double & y, 
+double TriPanel::doubletPhiCoeff ( const double & x, const double & y, 
                                   const double & z, const bool onpanel,
                                   const std::string & side ) const
 {
@@ -287,7 +288,7 @@ double TriFace::doubletPhiCoeff ( const double & x, const double & y,
 // Computes doublet induced velocity component
 //
 /******************************************************************************/
-Eigen::Vector3d TriFace::doubletVCoeff ( const double & x, const double & y, 
+Eigen::Vector3d TriPanel::doubletVCoeff ( const double & x, const double & y, 
                                          const double & z, const bool onpanel,
                                          const std::string & side ) const
 {
@@ -328,7 +329,7 @@ Eigen::Vector3d TriFace::doubletVCoeff ( const double & x, const double & y,
 // Computes induced velocity potential at a point
 //
 /******************************************************************************/
-double TriFace::inducedPotential ( const double & x, const double & y, 
+double TriPanel::inducedPotential ( const double & x, const double & y, 
                                    const double & z, const bool onpanel,
                                    const std::string & side ) const
 {
@@ -345,7 +346,7 @@ double TriFace::inducedPotential ( const double & x, const double & y,
 // Computes induced velocity component at a point
 //
 /******************************************************************************/
-Eigen::Vector3d TriFace::inducedVelocity ( const double & x, const double & y, 
+Eigen::Vector3d TriPanel::inducedVelocity ( const double & x, const double & y, 
                                            const double & z, const bool onpanel,
                                            const std::string & side ) const
 {

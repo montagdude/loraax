@@ -1,13 +1,13 @@
 #include <vector>
 #include <Eigen/Core>
 #include "util.h"
-#include "face.h"
+#include "element.h"
 #include "vertex.h"
 
 /******************************************************************************/
 //
 // Vertex class. Defines x, y, z coordinates in space and stores references to
-// neighboring faces.
+// neighboring elements.
 // 
 /******************************************************************************/
 
@@ -22,8 +22,8 @@ Vertex::Vertex ()
   _x = 0.0;
   _y = 0.0;
   _z = 0.0;
-  _nfaces = 0;
-  _faces.resize(0);
+  _nelems = 0;
+  _elements.resize(0);
 }
 
 /******************************************************************************/
@@ -86,54 +86,55 @@ void Vertex::rotate ( const Eigen::Matrix3d & transform )
 
 /******************************************************************************/
 //
-// Adding or accessing face references
+// Adding or accessing element references
 //
 /******************************************************************************/
-int Vertex::addFace ( Face * face )
+int Vertex::addElement ( Element * element )
 {
   unsigned int i;
 
-  // Only add if the face is not already in the list
+  // Only add if the element is not already in the list
 
-  for ( i = 0; i < _nfaces; i++ )
+  for ( i = 0; i < _nelems; i++ )
   {
-    if (_faces[i]->idx() == face->idx())
+    if (_elements[i]->idx() == element->idx())
     {
 #ifdef DEBUG
-      print_warning("Vertex::addFace", "Face " + int2string(face->idx()) +
+      print_warning("Vertex::addElement", "Element " + 
+                    int2string(element->idx()) +
                     std::string(" already in list."));
 #endif
       return 1;
     }
   }
 
-  _nfaces += 1;
-  _faces.push_back(face);
+  _nelems += 1;
+  _elements.push_back(element);
 
   return 0;
 }
 
-Face & Vertex::face ( unsigned int fidx ) const
+Element & Vertex::element ( unsigned int eidx ) const
 {
-  if (fidx >= _nfaces)
+  if (eidx >= _nelems)
   {
-    conditional_stop(1, "Vertex::face", "Index out of range.");
+    conditional_stop(1, "Vertex::element", "Index out of range.");
   }
 
-  return *_faces[fidx];
+  return *_elements[eidx];
 }
 
-bool Vertex::isNeighbor ( const Face * face ) const
+bool Vertex::isNeighbor ( const Element * element ) const
 {
   unsigned int i;
 
-  for ( i = 0; i < _nfaces; i++ )
+  for ( i = 0; i < _nelems; i++ )
   {
-    if (_faces[i]->idx() == face->idx())
+    if (_elements[i]->idx() == element->idx())
       return true;
   }
 
   return false;
 }
 
-unsigned int Vertex::nFaces () const { return _nfaces; }
+unsigned int Vertex::nElems () const { return _nelems; }

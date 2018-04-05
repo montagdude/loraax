@@ -8,8 +8,8 @@
 #include "wing.h"
 
 class Vertex;
-class Face;
-class VortexRing;
+class Panel;
+class Vortex;
 
 /******************************************************************************/
 //
@@ -27,9 +27,10 @@ class Aircraft {
     Eigen::Vector3d _momcen;		// Pitching moment reference point
 
     std::vector<Vertex *> _verts;	// Pointers to vertices
-    std::vector<Face *> _panels;	// Pointers to panels 
+    std::vector<Panel *> _panels;	// Pointers to panels 
     std::vector<Vertex *> _wakeverts;   // Pointers to wake vertices
-    std::vector<VortexRing *> _vrings;	// Pointers to vortex rings
+    std::vector<Vortex *> _vorts;	// Pointers to wake vortex panels and
+                                        //   horseshoes
 
     // Set up pointers to vertices, panels, and wake elements
 

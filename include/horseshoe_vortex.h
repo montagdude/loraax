@@ -1,7 +1,7 @@
-// Header for VortexRing class
+// Header for HorseshoeVortex class
 
-#ifndef VORTEXRING_H
-#define VORTEXRING_H
+#ifndef HORSESHOEVORTEX_H
+#define HORSESHOEVORTEX_H
 
 #include <vector>
 #include <Eigen/Core>
@@ -11,18 +11,18 @@ class Vertex;
 
 /******************************************************************************/
 //
-// Vortex ring class
+// Horseshoe vortex class
 //
 /******************************************************************************/
-class VortexRing: public Vortex {
+class HorseshoeVortex: public Vortex {
 
   public:
 
     // Constructor
 
-    VortexRing ();
+    HorseshoeVortex ();
 
-    // Set
+    // Set vertices
 
     int addVertex ( Vertex * vert );
 

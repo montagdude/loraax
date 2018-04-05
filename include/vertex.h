@@ -5,12 +5,12 @@
 
 #include <Eigen/Core>
 
-class Face;
+class Element;
 
 /******************************************************************************/
 //
 // Vertex class. Defines x, y, z coordinates in space and stores references to
-// neighboring faces.
+// neighboring elements.
 //
 /******************************************************************************/
 class Vertex {
@@ -19,8 +19,8 @@ class Vertex {
 
     int _idx;
     double _x, _y, _z;
-    std::vector<Face *> _faces;		// Neighboring faces
-    unsigned int _nfaces;
+    std::vector<Element *> _elements;		// Neighboring elements
+    unsigned int _nelems;
 
   public:
 
@@ -47,12 +47,12 @@ class Vertex {
     void translate ( const double & dx, const double & dy, const double & dz );
     void rotate ( const Eigen::Matrix3d & transform );
 
-    // Adding or accessing face references
+    // Adding or accessing lement references
 
-    int addFace ( Face * face ); 
-    Face & face ( unsigned int fidx ) const;
-    bool isNeighbor ( const Face * face ) const;
-    unsigned int nFaces () const;
+    int addElement ( Element * element ); 
+    Element & element ( unsigned int eidx ) const;
+    bool isNeighbor ( const Element * element ) const;
+    unsigned int nElems () const;
 };
 
 #endif

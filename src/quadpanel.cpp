@@ -7,12 +7,12 @@
 #include "geometry.h"
 #include "singularities.h"
 #include "vertex.h"
-#include "face.h"
-#include "quadface.h"
+#include "panel.h"
+#include "quadpanel.h"
 
 /******************************************************************************/
 //
-// Quad face class.  Derived class from Face, has 4 endpoints.
+// Quad panel class.  Derived class from Panel, has 4 endpoints.
 // 
 /******************************************************************************/
 
@@ -21,30 +21,31 @@
 // Default constructor
 //
 /******************************************************************************/
-QuadFace::QuadFace ()
+QuadPanel::QuadPanel ()
 {
   _verts.resize(4);
   _xtrans.resize(4);
   _ytrans.resize(4);
+  _type = "quadpanel";
 }
 
 /******************************************************************************/
 //
-// Add vertex and compute face geometric quantities when four are set. Vertices
+// Add vertex and compute panel geometric quantities when four are set. Vertices
 // should be added in a counterclockwise order.
 //
 /******************************************************************************/
-int QuadFace::addVertex ( Vertex * vert )
+int QuadPanel::addVertex ( Vertex * vert )
 {
   if (_currverts == 4)
   {
-    conditional_stop(1, "QuadFace::addVertex",
+    conditional_stop(1, "QuadPanel::addVertex",
                      "4 vertices have already been set.");
     return 1;
   }
 
   _verts[_currverts] = vert;
-  _verts[_currverts]->addFace(this);
+  _verts[_currverts]->addElement(this);
   _currverts += 1;
 
   if (_currverts == 4)
@@ -65,7 +66,7 @@ int QuadFace::addVertex ( Vertex * vert )
 // source / doublet approximations)
 //
 /******************************************************************************/
-void QuadFace::computeCharacteristicLength ()
+void QuadPanel::computeCharacteristicLength ()
 {
   Eigen::Vector3d diag1, diag2;
 
@@ -87,7 +88,7 @@ void QuadFace::computeCharacteristicLength ()
 // Computes area
 //
 /******************************************************************************/
-void QuadFace::computeArea ()
+void QuadPanel::computeArea ()
 {
   _area = quad_area(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
                     _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
@@ -100,7 +101,7 @@ void QuadFace::computeArea ()
 // Computes normal
 //
 /******************************************************************************/
-void QuadFace::computeNormal ()
+void QuadPanel::computeNormal ()
 {
   _norm = quad_normal(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
                       _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
@@ -113,7 +114,7 @@ void QuadFace::computeNormal ()
 // Computes centroid by dividing into two triangles
 //
 /******************************************************************************/
-void QuadFace::computeCentroid () 
+void QuadPanel::computeCentroid () 
 {
   _cen = quad_centroid(_verts[0]->x(), _verts[0]->y(), _verts[0]->z(),
                        _verts[1]->x(), _verts[1]->y(), _verts[1]->z(),
@@ -127,7 +128,7 @@ void QuadFace::computeCentroid ()
 // Also computes and stores panel endpoints in panel frame.
 //
 /******************************************************************************/
-void QuadFace::computeTransform ()
+void QuadPanel::computeTransform ()
 {
   unsigned int i;
   Eigen::Vector3d vec, transvec;
@@ -159,7 +160,7 @@ void QuadFace::computeTransform ()
 // Computes source influence coefficient
 //
 /******************************************************************************/
-double QuadFace::sourcePhiCoeff ( const double & x, const double & y, 
+double QuadPanel::sourcePhiCoeff ( const double & x, const double & y, 
                                   const double & z, const bool onpanel,
                                   const std::string & side ) const
 {
@@ -200,7 +201,7 @@ double QuadFace::sourcePhiCoeff ( const double & x, const double & y,
 // Computes source induced velocity component
 //
 /******************************************************************************/
-Eigen::Vector3d QuadFace::sourceVCoeff ( const double & x, const double & y, 
+Eigen::Vector3d QuadPanel::sourceVCoeff ( const double & x, const double & y, 
                                          const double & z, const bool onpanel,
                                          const std::string & side ) const
 {
@@ -247,7 +248,7 @@ Eigen::Vector3d QuadFace::sourceVCoeff ( const double & x, const double & y,
 // Computes doublet influence coefficient
 //
 /******************************************************************************/
-double QuadFace::doubletPhiCoeff ( const double & x, const double & y, 
+double QuadPanel::doubletPhiCoeff ( const double & x, const double & y, 
                                    const double & z, const bool onpanel,
                                    const std::string & side ) const
 {
@@ -283,7 +284,7 @@ double QuadFace::doubletPhiCoeff ( const double & x, const double & y,
 // Computes doublet induced velocity component
 //
 /******************************************************************************/
-Eigen::Vector3d QuadFace::doubletVCoeff ( const double & x, const double & y, 
+Eigen::Vector3d QuadPanel::doubletVCoeff ( const double & x, const double & y, 
                                           const double & z, const bool onpanel,
                                           const std::string & side ) const
 {
@@ -325,7 +326,7 @@ Eigen::Vector3d QuadFace::doubletVCoeff ( const double & x, const double & y,
 // Computes induced velocity potential at a point
 //
 /******************************************************************************/
-double QuadFace::inducedPotential ( const double & x, const double & y, 
+double QuadPanel::inducedPotential ( const double & x, const double & y, 
                                     const double & z, const bool onpanel,
                                     const std::string & side ) const
 {
@@ -342,7 +343,7 @@ double QuadFace::inducedPotential ( const double & x, const double & y,
 // Computes induced velocity component at a point
 //
 /******************************************************************************/
-Eigen::Vector3d QuadFace::inducedVelocity ( 
+Eigen::Vector3d QuadPanel::inducedVelocity ( 
                                            const double & x, const double & y, 
                                            const double & z, const bool onpanel,
                                            const std::string & side ) const

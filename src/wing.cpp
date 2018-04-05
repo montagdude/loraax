@@ -10,9 +10,10 @@
 #include "airfoil.h"
 #include "section.h"
 #include "vertex.h"
+#include "quadpanel.h"
+#include "tripanel.h"
+#include "wake.h"
 #include "wing.h"
-
-#include <iostream>
 
 // Data for optimizing spanwise spacing
 
@@ -21,7 +22,7 @@ std::vector<int> fixed_stations;
 
 /******************************************************************************/
 //
-// Wing class. Contains sections, airfoils, paneling info, faces, a wake, etc.
+// Wing class. Contains sections, airfoils, panels, wake, etc.
 // 
 /******************************************************************************/
 
@@ -574,10 +575,10 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 /******************************************************************************/
 //
 // Creates panels and surface vertex pointers. Increments next_global_vertidx
-// and next_global_faceidx
+// and next_global_elemidx
 //
 /******************************************************************************/
-void Wing::createPanels ( int & next_global_vertidx, int & next_global_faceidx )
+void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 {
   unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad;
   double dx, dy, dz, tegap;
@@ -620,13 +621,13 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_faceidx )
   {
     for ( j = 0; j < 2*_nchord-2; j++ )
     {
-      _quads[qcounter].setIdx(next_global_faceidx);
+      _quads[qcounter].setIdx(next_global_elemidx);
       _quads[qcounter].addVertex(&_sections[i].vert(j));
       _quads[qcounter].addVertex(&_sections[i+1].vert(j));
       _quads[qcounter].addVertex(&_sections[i+1].vert(j+1));
       _quads[qcounter].addVertex(&_sections[i].vert(j+1));
       qcounter += 1;
-      next_global_faceidx += 1;
+      next_global_elemidx += 1;
     }
   }
 
@@ -636,38 +637,38 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_faceidx )
   tcounter = 0;
   if (ntri == 2)
   {
-    _tris[tcounter].setIdx(next_global_faceidx);
+    _tris[tcounter].setIdx(next_global_elemidx);
     _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
     _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
     _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
     tcounter += 1;
-    next_global_faceidx += 1;
+    next_global_elemidx += 1;
   }
   else
   {
-    _quads[qcounter].setIdx(next_global_faceidx);
+    _quads[qcounter].setIdx(next_global_elemidx);
     _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
     _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
     _quads[qcounter].addVertex(&_sections[_nspan-1].vert(1));
     _quads[qcounter].addVertex(&_sections[_nspan-1].vert(0));
     qcounter += 1;
-    next_global_faceidx += 1;
+    next_global_elemidx += 1;
   }
   for ( i = 1; i < _nchord-2; i++ ) 
   {
-    _quads[qcounter].setIdx(next_global_faceidx);
+    _quads[qcounter].setIdx(next_global_elemidx);
     _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2-i));
     _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3-i));
     _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i+1));
     _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i));
     qcounter += 1;
-    next_global_faceidx += 1;
+    next_global_elemidx += 1;
   }
-  _tris[tcounter].setIdx(next_global_faceidx);
+  _tris[tcounter].setIdx(next_global_elemidx);
   _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord));
   _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
   _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2));
-  next_global_faceidx += 1;
+  next_global_elemidx += 1;
 }
 
 /******************************************************************************/
@@ -675,7 +676,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_faceidx )
 // Sets up wake
 //
 /******************************************************************************/
-void Wing::setupWake ( int & next_wake_vertidx, int & next_wake_ringidx )
+void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
 {
   unsigned int i, tlquad, blquad, trquad, brquad, tiptri, tipquad;
   std::vector<Vertex> teverts;
@@ -701,7 +702,7 @@ void Wing::setupWake ( int & next_wake_vertidx, int & next_wake_ringidx )
     tegap = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
     teverts[i].setCoordinates(xm, ym, zm);
 
-    // Identify whether it is on trailing edge faces
+    // Identify whether it is on trailing edge panels
 
     if (tegap < 1E-12)
     {
@@ -709,17 +710,17 @@ void Wing::setupWake ( int & next_wake_vertidx, int & next_wake_ringidx )
       {
         trquad = 0;
         brquad = 2*_nchord-3;
-        teverts[i].addFace(&_quads[trquad]);
-        teverts[i].addFace(&_quads[brquad]);
+        teverts[i].addElement(&_quads[trquad]);
+        teverts[i].addElement(&_quads[brquad]);
       }
       else if (i == _nspan-1)
       {
         tlquad = (_nspan-2)*(2*_nchord-2);
         blquad = (_nspan-1)*(2*_nchord-2) - 1;
         tiptri = 0; 
-        teverts[i].addFace(&_quads[tlquad]);
-        teverts[i].addFace(&_quads[blquad]);
-        teverts[i].addFace(&_tris[tiptri]);
+        teverts[i].addElement(&_quads[tlquad]);
+        teverts[i].addElement(&_quads[blquad]);
+        teverts[i].addElement(&_tris[tiptri]);
       }
       else
       {
@@ -727,10 +728,10 @@ void Wing::setupWake ( int & next_wake_vertidx, int & next_wake_ringidx )
         blquad = i*(2*_nchord-2) - 1;
         trquad = i*(2*_nchord-2);
         brquad = (i+1)*(2*_nchord-2) - 1;
-        teverts[i].addFace(&_quads[tlquad]);
-        teverts[i].addFace(&_quads[blquad]);
-        teverts[i].addFace(&_quads[trquad]);
-        teverts[i].addFace(&_quads[brquad]);
+        teverts[i].addElement(&_quads[tlquad]);
+        teverts[i].addElement(&_quads[blquad]);
+        teverts[i].addElement(&_quads[trquad]);
+        teverts[i].addElement(&_quads[brquad]);
       }
     }
     else
@@ -738,14 +739,14 @@ void Wing::setupWake ( int & next_wake_vertidx, int & next_wake_ringidx )
       if (i == _nspan-1)
       {
         tipquad = (_nspan-1)*(2*_nchord-2);
-        teverts[i].addFace(&_quads[tipquad]);
+        teverts[i].addElement(&_quads[tipquad]);
       }
     }
   }
 
   // Initialize wake
 
-  _wake.initialize(teverts, next_wake_vertidx, next_wake_ringidx);
+  _wake.initialize(teverts, next_global_vertidx, next_global_elemidx);
 }
 
 /******************************************************************************/
@@ -766,21 +767,21 @@ Vertex * Wing::vert ( unsigned int vidx )
   return _verts[vidx];
 }
 
-QuadFace * Wing::quadFace ( unsigned int qidx )
+QuadPanel * Wing::quadPanel ( unsigned int qidx )
 {
 #ifdef DEBUG
   if (qidx >= _quads.size())
-    conditional_stop(1, "Wing::quadFace", "Index out of range.");
+    conditional_stop(1, "Wing::quadPanel", "Index out of range.");
 #endif
 
   return &_quads[qidx];
 }
 
-TriFace * Wing::triFace ( unsigned int tidx )
+TriPanel * Wing::triPanel ( unsigned int tidx )
 {
 #ifdef DEBUG
   if (tidx >= _tris.size())
-    conditional_stop(1, "Wing::triFace", "Index out of range.");
+    conditional_stop(1, "Wing::triPanel", "Index out of range.");
 #endif
 
   return &_tris[tidx];

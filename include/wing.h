@@ -7,15 +7,15 @@
 #include <string>
 #include "section.h"
 #include "airfoil.h"
-#include "quadface.h"
-#include "triface.h"
+#include "quadpanel.h"
+#include "tripanel.h"
 #include "wake.h"
 
 class Vertex;
 
 /******************************************************************************/
 //
-// Wing class. Contains sections, airfoils, paneling info, faces, a wake, etc.
+// Wing class. Contains sections, airfoils, panels, wake, etc.
 //
 /******************************************************************************/
 class Wing {
@@ -36,8 +36,8 @@ class Wing {
 					//   root & tip spacing rations
     std::vector<Airfoil> _foils;  	// User-specified airfoils
     std::vector<Vertex *> _verts;	// Pointers to vertices on wing and wake
-    std::vector<QuadFace> _quads;	// Quad faces (panels)
-    std::vector<TriFace> _tris;		// Tri faces (panels) at tip 
+    std::vector<QuadPanel> _quads;	// Quad panels
+    std::vector<TriPanel> _tris;	// Tri panels at tip
     Wake _wake;				// Wake
 
     std::vector<double> adjustSpacing ( 
@@ -74,11 +74,11 @@ class Wing {
 
     // Creates panels and surface vertex pointers
 
-    void createPanels ( int & next_global_vertidx, int & next_global_faceid );
+    void createPanels ( int & next_global_vertidx, int & next_global_elemid );
 
     // Set up wake
 
-    void setupWake ( int & next_wake_vertidx, int & next_wake_ringidx );
+    void setupWake ( int & next_global_vertidx, int & next_global_elemidx );
 
     // Access to verts and panels
 
@@ -86,8 +86,8 @@ class Wing {
     unsigned int nQuads () const;
     unsigned int nTris () const;
     Vertex * vert ( unsigned int vidx );
-    QuadFace * quadFace ( unsigned int qidx );
-    TriFace * triFace ( unsigned int tidx );
+    QuadPanel * quadPanel ( unsigned int qidx );
+    TriPanel * triPanel ( unsigned int tidx );
 
     // Access to wake
 

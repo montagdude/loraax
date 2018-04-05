@@ -10,7 +10,7 @@ CXXFLAGS=$(DEBUGFLAGS)
 
 #### Main program ##############################################################
 
-OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o face.o triface.o quadface.o sectional_object.o airfoil.o section.o vortex_ring.o wake.o wing.o aircraft.o loraax.o
+OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o element.o panel.o tripanel.o quadpanel.o sectional_object.o airfoil.o section.o vortex.o vortex_ring.o horseshoe_vortex.o wake.o wing.o aircraft.o loraax.o
 EXE=loraax
 SRCDIR=../src
 INCLUDE=-I../include -I/usr/include/eigen3
@@ -65,14 +65,17 @@ singularities.o: $(SRCDIR)/singularities.cpp
 vertex.o: $(SRCDIR)/vertex.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/vertex.cpp
 
-face.o: $(SRCDIR)/face.cpp
-	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/face.cpp
+element.o: $(SRCDIR)/element.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/element.cpp
 
-triface.o: $(SRCDIR)/triface.cpp
-	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/triface.cpp
+panel.o: $(SRCDIR)/panel.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/panel.cpp
 
-quadface.o: $(SRCDIR)/quadface.cpp
-	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/quadface.cpp
+tripanel.o: $(SRCDIR)/tripanel.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/tripanel.cpp
+
+quadpanel.o: $(SRCDIR)/quadpanel.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/quadpanel.cpp
 
 sectional_object.o: $(SRCDIR)/sectional_object.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/sectional_object.cpp
@@ -82,6 +85,12 @@ airfoil.o: $(SRCDIR)/airfoil.cpp
 
 section.o: $(SRCDIR)/section.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/section.cpp
+
+vortex.o: $(SRCDIR)/vortex.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/vortex.cpp
+
+horseshoe_vortex.o: $(SRCDIR)/horseshoe_vortex.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/horseshoe_vortex.cpp
 
 vortex_ring.o: $(SRCDIR)/vortex_ring.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/vortex_ring.cpp

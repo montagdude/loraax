@@ -28,7 +28,7 @@ void Aircraft::setGeometryPointers ()
   unsigned int nwings, nverts_total, nquads_total, ntris_total;
   unsigned int i, j, nverts, nquads, ntris, vcounter, pcounter;
   unsigned int nverts_wake_total, nverts_wake, vwcounter;
-  unsigned int nvrings_total, nvrings, vrcounter;
+  unsigned int nvrings_total, nhshoes_total, nvrings, nhshoes, vortcounter;
 
   // Get sizes first (don't use push_back, because it invalidates pointers)
 
@@ -38,6 +38,7 @@ void Aircraft::setGeometryPointers ()
   ntris_total = 0;
   nverts_wake_total = 0;
   nvrings_total = 0;
+  nhshoes_total = 0;
   for ( i = 0; i < nwings; i++ )
   {
     nverts_total += _wings[i].nVerts();
@@ -45,18 +46,19 @@ void Aircraft::setGeometryPointers ()
     ntris_total += _wings[i].nTris();
     nverts_wake_total += _wings[i].wake().nVerts();
     nvrings_total += _wings[i].wake().nVRings();
+    nhshoes_total += _wings[i].wake().nHShoes();
   }
   _verts.resize(nverts_total);
   _panels.resize(nquads_total + ntris_total);
   _wakeverts.resize(nverts_wake_total);
-  _vrings.resize(nvrings_total);
+  _vorts.resize(nvrings_total + nhshoes_total);
 
   // Store geometry pointers
 
   vcounter = 0;
   pcounter = 0;
   vwcounter = 0;
-  vrcounter = 0;
+  vortcounter = 0;
   for ( i = 0; i < nwings; i++ ) 
   {
     nverts = _wings[i].nVerts();
@@ -69,14 +71,14 @@ void Aircraft::setGeometryPointers ()
     nquads = _wings[i].nQuads();
     for ( j = 0; j < nquads; j++ )
     {
-      _panels[pcounter] = _wings[i].quadFace(j);
+      _panels[pcounter] = _wings[i].quadPanel(j);
       pcounter += 1;
     }
 
     ntris = _wings[i].nTris();
     for ( j = 0; j < ntris; j++ )
     {
-      _panels[pcounter] = _wings[i].triFace(j);
+      _panels[pcounter] = _wings[i].triPanel(j);
       pcounter += 1;
     }
 
@@ -90,9 +92,16 @@ void Aircraft::setGeometryPointers ()
     nvrings = _wings[i].wake().nVRings();
     for ( j = 0; j < nvrings; j++ )
     {
-      _vrings[vrcounter] = _wings[i].wake().vRing(j);
-      vrcounter += 1;
+      _vorts[vortcounter] = _wings[i].wake().vRing(j);
+      vortcounter += 1;
     }
+
+    nhshoes = _wings[i].wake().nHShoes();
+    for ( j = 0; j < nhshoes; j++ )
+    {
+      _vorts[vortcounter] = _wings[i].wake().hShoe(j);
+      vortcounter += 1;
+    } 
   }
 }
 
@@ -181,7 +190,8 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
 int Aircraft::writeWakeViz ( const std::string & fname ) const
 {
   std::ofstream f;
-  unsigned int i, j, nverts, nrings;
+  unsigned int i, j, nverts, nvorts, nsurf_verts;
+  std::string type;
 
   f.open(fname.c_str());
   if (! f.is_open())
@@ -201,6 +211,7 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
   // Write vertices
 
   nverts = _wakeverts.size();
+  nsurf_verts = _verts.size();
   f << "POINTS " << nverts << " double" << std::endl;
   for ( i = 0; i < nverts; i++ )
   {
@@ -212,23 +223,34 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
       << _wakeverts[i]->z() << std::endl;
   } 
 
-  // Write vortex rings
+  // Write vortex rings and horseshoe vortices
 
-  nrings = _vrings.size();
-  f << "CELLS " << nrings << " " << 5*nrings << std::endl;
-  for ( i = 0; i < nrings; i++ )
+  nvorts = _vorts.size();
+  f << "CELLS " << nvorts << " " << 5*nvorts << std::endl;
+  for ( i = 0; i < nvorts; i++ )
   {
+    type = _vorts[i]->type();
+    if ( (type != "vortexring") && (type != "horseshoevortex") )
+    {
+      conditional_stop(1, "Aircraft::writeWakeViz",
+                   "Wake elements must be vortex rings or horseshoe vortices.");
+      return 1;
+    }
     f << 4;
     for ( j = 0; j < 4; j++ )
     {
-      f << " " << _vrings[i]->vertex(j).idx();
+      f << " " << _vorts[i]->vertex(j).idx() - nsurf_verts;
     }
     f << std::endl;
   }
-  f << "CELL_TYPES " << nrings << std::endl;
-  for ( i = 0; i < nrings; i++ )
+  f << "CELL_TYPES " << nvorts << std::endl;
+  for ( i = 0; i < nvorts; i++ )
   {
-    f << 9 << std::endl;
+    type = _vorts[i]->type();
+    if (type == "vortexring")
+      f << 9 << std::endl;
+    else if (type == "horseshoevortex")
+      f << 4 << std::endl;
   }
 
   f.close();
@@ -250,7 +272,7 @@ Aircraft::Aircraft ()
   _verts.resize(0);
   _panels.resize(0);
   _wakeverts.resize(0);
-  _vrings.resize(0);
+  _vorts.resize(0);
 }
 
 /******************************************************************************/
@@ -261,7 +283,7 @@ Aircraft::Aircraft ()
 int Aircraft::readXML ( const std::string & geom_file )
 {
   XMLDocument doc;
-  unsigned int nwings;
+  unsigned int i, nwings;
   int nchord, nspan, check;
   double lesprat, tesprat, rootsprat, tipsprat;
   std::vector<Section> user_sections;
@@ -269,10 +291,8 @@ int Aircraft::readXML ( const std::string & geom_file )
   double xle, y, zle, chord, twist, ymax;
   std::string source, des, path;
   const int npointside = 100;
-  int next_global_faceidx = 0;
+  int next_global_elemidx = 0;
   int next_global_vertidx = 0;
-  int next_wake_vertidx = 0;
-  int next_wake_ringidx = 0;
 
   doc.LoadFile(geom_file.c_str());
   if ( (doc.ErrorID() == XML_ERROR_FILE_NOT_FOUND) ||
@@ -503,9 +523,15 @@ int Aircraft::readXML ( const std::string & geom_file )
 
     _wings[nwings].setAirfoils(foils);    
     _wings[nwings].setupSections(user_sections);
-    _wings[nwings].createPanels(next_global_vertidx, next_global_faceidx);
-    _wings[nwings].setupWake(next_wake_vertidx, next_wake_ringidx);
+    _wings[nwings].createPanels(next_global_vertidx, next_global_elemidx);
     nwings += 1;
+  }
+
+  // Set up wake for each wing
+
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].setupWake(next_global_vertidx, next_global_elemidx);
   }
 
   if (nwings < 1)
