@@ -56,7 +56,8 @@
         <!-- The tip section is the one with largest Y -->
         <XLE>4.8</XLE>
         <Y>23.5</Y>
-        <ZLE>2.90625</ZLE>
+        <!--<ZLE>2.90625</ZLE>-->
+        <ZLE>2.92</ZLE>
         <Chord>4.2</Chord>
         <Twist>-5.</Twist>
       </Section>

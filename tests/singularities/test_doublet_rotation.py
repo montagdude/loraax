@@ -32,6 +32,6 @@ def doublet_vs_vring(doublet, vring):
 if __name__ == "__main__":
 
   doublet = ld('tri_doublet1.dat')
-  vring2 = ld('vring2.dat')
+  vring = ld('vring4.dat')
 
-  doublet_vs_vring(doublet, vring2)
+  doublet_vs_vring(doublet, vring)

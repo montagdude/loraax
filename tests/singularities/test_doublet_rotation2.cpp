@@ -19,8 +19,6 @@ int main ()
   double x, z, ymin, ymax, dy, rcore;
   std::ofstream f;
 
-  farfield_distance_factor = 1.E+06;
-
   v1.setCoordinates(0., 0.0, 0.0);
   v2.setCoordinates(1., 0.0, 0.0);
   v3.setCoordinates(1., 0.5, 0.5);
@@ -56,7 +54,7 @@ int main ()
     velq[i] = pan1.inducedVelocity(x, y[i], z, false, "top");
   } 
 
-  f.open("vring3.dat");
+  f.open("vring5.dat");
   f << "VARIABLES = \"x\" \"y\" \"z\" \"Vx\" \"Vy\" \"Vz\"" << std::endl;
   for ( i = 0; i < npoints; i++ )
   {
@@ -65,7 +63,7 @@ int main ()
       << std::endl;
   }
   f.close();
-  std::cout << "Wrote file vring3.dat." << std::endl;
+  std::cout << "Wrote file vring5.dat." << std::endl;
 
   f.open("quad_doublet1.dat");
   f << "VARIABLES = \"x\" \"y\" \"z\" \"Vx\" \"Vy\" \"Vz\"" << std::endl;

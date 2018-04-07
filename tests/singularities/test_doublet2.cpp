@@ -19,8 +19,6 @@ int main ()
   double deltx, delty, pdoublet, px, py, x, z, ymin, ymax, dy;
   std::ofstream f;
 
-  farfield_distance_factor = 1.E+06;
-
   v1.setCoordinates(0., -0.5, 0.0);
   v2.setCoordinates(0., 0.5, 0.0);
   v3.setCoordinates(1., 0.5, 0.);

@@ -31,10 +31,6 @@ extern int viz_freq;
 extern xfoil_geom_options_type xfoil_geom_opts;
 extern xfoil_options_type xfoil_run_opts;
 
-// Algorithm settings
-
-extern double farfield_distance_factor;
-
 // Functions
 
 int read_setting ( const XMLElement *elem, const std::string & setting,

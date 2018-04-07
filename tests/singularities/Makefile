@@ -10,7 +10,7 @@ CXXFLAGS=$(DEBUGFLAGS)
 
 #### Main program ##############################################################
 
-OBJ=util.o settings.o transformations.o geometry.o singularities.o vertex.o element.o panel.o tripanel.o quadpanel.o vortex.o vortex_ring.o horseshoe_vortex.o
+OBJ=util.o transformations.o geometry.o singularities.o vertex.o element.o panel.o tripanel.o quadpanel.o vortex.o vortex_ring.o horseshoe_vortex.o
 HSHOE=test_hshoe
 DOUBLET=test_doublet
 DOUBLET2=test_doublet2
@@ -24,7 +24,6 @@ SRCDIR=../../src
 INCLUDE=-I../../include -I/usr/include/eigen3
 #INCLUDE=-I../../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
 #LDFLAGS=-L/data/dprosser/locally_installed/lib64
-LIBS=-ltinyxml2
 
 ################################################################################
 
@@ -41,31 +40,31 @@ endif
 all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(SOURCE) $(ROTSOURCE)
 
 $(HSHOE): $(OBJ) test_hshoe.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(HSHOE) $(OBJ) test_hshoe.o $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(HSHOE) $(OBJ) test_hshoe.o
 
 $(DOUBLET): $(OBJ) test_doublet.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(DOUBLET) $(OBJ) test_doublet.o $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(DOUBLET) $(OBJ) test_doublet.o
 
 $(DOUBLET2): $(OBJ) test_doublet2.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(DOUBLET2) $(OBJ) test_doublet2.o $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(DOUBLET2) $(OBJ) test_doublet2.o
 
 $(TRIDOUBLET): $(OBJ) test_tri_doublet.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(TRIDOUBLET) $(OBJ) test_tri_doublet.o $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(TRIDOUBLET) $(OBJ) test_tri_doublet.o
 
 $(ROTDOUBLET): $(OBJ) test_doublet_rotation.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ROTDOUBLET) $(OBJ) test_doublet_rotation.o $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ROTDOUBLET) $(OBJ) test_doublet_rotation.o
 
 $(ROTDOUBLET2): $(OBJ) test_doublet_rotation2.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ROTDOUBLET2) $(OBJ) test_doublet_rotation2.o $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ROTDOUBLET2) $(OBJ) test_doublet_rotation2.o
 
 $(POINTDOUBLET): $(OBJ) test_point_doublet.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(POINTDOUBLET) $(OBJ) test_point_doublet.o $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(POINTDOUBLET) $(OBJ) test_point_doublet.o
 
 $(SOURCE): $(OBJ) test_source.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(SOURCE) $(OBJ) test_source.o $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(SOURCE) $(OBJ) test_source.o
 
 $(ROTSOURCE): $(OBJ) test_source_rotation.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ROTSOURCE) $(OBJ) test_source_rotation.o $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ROTSOURCE) $(OBJ) test_source_rotation.o
 
 clean: 
 	rm -f *.o
@@ -78,9 +77,6 @@ clo_parser.o: $(SRCDIR)/clo_parser.cpp
 
 algorithms.o: $(SRCDIR)/algorithms.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/algorithms.cpp
-
-settings.o: $(SRCDIR)/settings.cpp
-	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/settings.cpp
 
 transformations.o: $(SRCDIR)/transformations.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/transformations.cpp

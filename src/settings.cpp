@@ -28,8 +28,6 @@ int viz_freq;
 xfoil_geom_options_type xfoil_geom_opts;
 xfoil_options_type xfoil_run_opts;
 
-double farfield_distance_factor;
-
 /******************************************************************************/
 //
 // Reads a single setting from XMLElement
