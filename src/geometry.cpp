@@ -367,5 +367,5 @@ Eigen::Matrix3d transform_from_normal ( const double & nx, const double & ny,
 
   // Transformation from inertial frame to local frame
 
-  return euler_rotation(a2, -a1, 0.0);
+  return euler_rotation(a2*180./M_PI, -a1*180./M_PI, 0.0);
 }
