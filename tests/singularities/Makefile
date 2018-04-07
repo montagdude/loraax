@@ -19,6 +19,7 @@ ROTDOUBLET=test_doublet_rotation
 ROTDOUBLET2=test_doublet_rotation2
 POINTDOUBLET=test_point_doublet
 SOURCE=test_source
+ROTSOURCE=test_source_rotation
 SRCDIR=../../src
 INCLUDE=-I../../include -I/usr/include/eigen3
 #INCLUDE=-I../../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
@@ -37,7 +38,7 @@ endif
 
 ################################################################################
 
-all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(SOURCE)
+all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(SOURCE) $(ROTSOURCE)
 
 $(HSHOE): $(OBJ) test_hshoe.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(HSHOE) $(OBJ) test_hshoe.o $(LIBS)
@@ -62,6 +63,9 @@ $(POINTDOUBLET): $(OBJ) test_point_doublet.o
 
 $(SOURCE): $(OBJ) test_source.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(SOURCE) $(OBJ) test_source.o $(LIBS)
+
+$(ROTSOURCE): $(OBJ) test_source_rotation.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ROTSOURCE) $(OBJ) test_source_rotation.o $(LIBS)
 
 clean: 
 	rm -f *.o
@@ -152,3 +156,6 @@ test_point_doublet.o: test_point_doublet.cpp
 
 test_source.o: test_source.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_source.cpp
+
+test_source_rotation.o: test_source_rotation.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_source_rotation.cpp
