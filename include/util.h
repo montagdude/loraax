@@ -26,5 +26,6 @@ std::string repeat_string ( const std::string & , unsigned int );
 std::vector<std::string> split_string ( const std::string & );
 std::vector<std::string> split_string ( const std::string &, char );
 double vector_min ( const std::vector<double> & vec );
+double sign ( const double & val );
 
 #endif

@@ -3,8 +3,10 @@
 #define _USE_MATH_DEFINES
 
 #include <cmath>
+#include <algorithm>	// std::max
 #include <string>
 #include <Eigen/Core>
+#include "util.h"
 
 // Note: all distributed source/doublet distributions on panels assume that 
 // panel centroid is at the origin and that the panel endpoints lie on the z = 0
@@ -41,7 +43,7 @@ double tri_source_potential (
 {
   double d01, d12, d20;
   double r0, r1, r2;
-  double m01, m12, m20;
+  double dx01, dx12, dx20, m01, m12, m20;
   double e0, e1, e2;
   double h0, h1, h2;
   double phi;
@@ -59,9 +61,12 @@ double tri_source_potential (
   r2 = std::sqrt(std::pow(x - x2, 2.) + std::pow(y - y2, 2.) + 
                  std::pow(z, 2.));
 
-  m01 = (y1 - y0)/(x1 - x0);
-  m12 = (y2 - y1)/(x2 - x1);
-  m20 = (y0 - y2)/(x0 - x2);
+  dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
+  dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
+  dx20 = sign(x0-x2)*std::max(std::abs(x0-x2), eps);
+  m01 = (y1 - y0)/dx01;
+  m12 = (y2 - y1)/dx12;
+  m20 = (y0 - y2)/dx20;
 
   e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
   e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
@@ -108,7 +113,7 @@ double quad_source_potential (
 {
   double d01, d12, d23, d30;
   double r0, r1, r2, r3;
-  double m01, m12, m23, m30;
+  double dx01, dx12, dx23, dx30, m01, m12, m23, m30;
   double e0, e1, e2, e3;
   double h0, h1, h2, h3;
   double phi;
@@ -129,10 +134,14 @@ double quad_source_potential (
   r3 = std::sqrt(std::pow(x - x3, 2.) + std::pow(y - y3, 2.) + 
                  std::pow(z, 2.));
 
-  m01 = (y1 - y0)/(x1 - x0);
-  m12 = (y2 - y1)/(x2 - x1);
-  m23 = (y3 - y2)/(x3 - x2);
-  m30 = (y0 - y3)/(x0 - x3);
+  dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
+  dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
+  dx23 = sign(x3-x2)*std::max(std::abs(x3-x2), eps);
+  dx30 = sign(x0-x3)*std::max(std::abs(x0-x3), eps);
+  m01 = (y1 - y0)/dx01;
+  m12 = (y2 - y1)/dx12;
+  m23 = (y3 - y2)/dx23;
+  m30 = (y0 - y3)/dx30;
 
   e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
   e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
@@ -204,7 +213,7 @@ Eigen::Vector3d tri_source_velocity (
 {
   double d01, d12, d20;
   double r0, r1, r2;
-  double m01, m12, m20;
+  double dx01, dx12, dx20, m01, m12, m20;
   double e0, e1, e2;
   double h0, h1, h2;
   Eigen::Vector3d velpf;
@@ -224,9 +233,12 @@ Eigen::Vector3d tri_source_velocity (
 
   if (not onpanel)
   {
-    m01 = (y1 - y0)/(x1 - x0);
-    m12 = (y2 - y1)/(x2 - x1);
-    m20 = (y0 - y2)/(x0 - x2);
+    dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
+    dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
+    dx20 = sign(x0-x2)*std::max(std::abs(x0-x2), eps);
+    m01 = (y1 - y0)/dx01;
+    m12 = (y2 - y1)/dx12;
+    m20 = (y0 - y2)/dx20;
 
     e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
     e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
@@ -281,7 +293,7 @@ Eigen::Vector3d quad_source_velocity (
 {
   double d01, d12, d23, d30;
   double r0, r1, r2, r3;
-  double m01, m12, m23, m30;
+  double dx01, dx12, dx23, dx30, m01, m12, m23, m30;
   double e0, e1, e2, e3;
   double h0, h1, h2, h3;
   Eigen::Vector3d velpf;
@@ -304,10 +316,14 @@ Eigen::Vector3d quad_source_velocity (
 
   if (not onpanel)
   {
-    m01 = (y1 - y0)/(x1 - x0);
-    m12 = (y2 - y1)/(x2 - x1);
-    m23 = (y3 - y2)/(x3 - x2);
-    m30 = (y0 - y3)/(x0 - x3);
+    dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
+    dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
+    dx23 = sign(x3-x2)*std::max(std::abs(x3-x2), eps);
+    dx30 = sign(x0-x3)*std::max(std::abs(x0-x3), eps);
+    m01 = (y1 - y0)/dx01;
+    m12 = (y2 - y1)/dx12;
+    m23 = (y3 - y2)/dx23;
+    m30 = (y0 - y3)/dx30;
   
     e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
     e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
@@ -361,7 +377,7 @@ Eigen::Vector3d quad_source_velocity (
 double point_doublet_potential ( const double & x, const double & y,
                                  const double & z )
 {
-  return -z / (4.*M_PI*std::pow(x*x + y*y + z*z, 1.5));
+  return z / (4.*M_PI*std::pow(x*x + y*y + z*z, 1.5));
 }
 
 /******************************************************************************/
@@ -377,7 +393,7 @@ double tri_doublet_potential (
                         const bool onpanel, const std::string & side )
 {
   double r0, r1, r2;
-  double m01, m12, m20;
+  double dx01, dx12, dx20, m01, m12, m20;
   double e0, e1, e2;
   double h0, h1, h2;
   double phi;
@@ -399,9 +415,12 @@ double tri_doublet_potential (
     r2 = std::sqrt(std::pow(x - x2, 2.) + std::pow(y - y2, 2.) + 
                    std::pow(z, 2.));
   
-    m01 = (y1 - y0)/(x1 - x0);
-    m12 = (y2 - y1)/(x2 - x1);
-    m20 = (y0 - y2)/(x0 - x2);
+    dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
+    dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
+    dx20 = sign(x0-x2)*std::max(std::abs(x0-x2), eps);
+    m01 = (y1 - y0)/dx01;
+    m12 = (y2 - y1)/dx12;
+    m20 = (y0 - y2)/dx20;
   
     e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
     e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
@@ -413,7 +432,7 @@ double tri_doublet_potential (
   
     // Doublet potential
   
-    phi = -1. / (4.*M_PI) * (
+    phi = 1. / (4.*M_PI) * (
           std::atan((m01*e0 - h0)/(z*r0)) - std::atan((m01*e1 - h1)/(z*r1))
         + std::atan((m12*e1 - h1)/(z*r1)) - std::atan((m12*e2 - h2)/(z*r2))
         + std::atan((m20*e2 - h2)/(z*r2)) - std::atan((m20*e0 - h0)/(z*r0)) );
@@ -436,7 +455,7 @@ double quad_doublet_potential (
                         const bool onpanel, const std::string & side )
 {
   double r0, r1, r2, r3;
-  double m01, m12, m23, m30;
+  double dx01, dx12, dx23, dx30, m01, m12, m23, m30;
   double e0, e1, e2, e3;
   double h0, h1, h2, h3;
   double phi;
@@ -460,10 +479,14 @@ double quad_doublet_potential (
     r3 = std::sqrt(std::pow(x - x3, 2.) + std::pow(y - y3, 2.) + 
                    std::pow(z, 2.));
   
-    m01 = (y1 - y0)/(x1 - x0);
-    m12 = (y2 - y1)/(x2 - x1);
-    m23 = (y3 - y2)/(x3 - x2);
-    m30 = (y0 - y3)/(x0 - x3);
+    dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
+    dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
+    dx23 = sign(x3-x2)*std::max(std::abs(x3-x2), eps);
+    dx30 = sign(x0-x3)*std::max(std::abs(x0-x3), eps);
+    m01 = (y1 - y0)/dx01;
+    m12 = (y2 - y1)/dx12;
+    m23 = (y3 - y2)/dx23;
+    m30 = (y0 - y3)/dx30;
   
     e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
     e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
@@ -477,7 +500,7 @@ double quad_doublet_potential (
   
     // Doublet potential
   
-    phi = -1. / (4.*M_PI) * (
+    phi = 1. / (4.*M_PI) * (
           std::atan((m01*e0 - h0)/(z*r0)) - std::atan((m01*e1 - h1)/(z*r1))
         + std::atan((m12*e1 - h1)/(z*r1)) - std::atan((m12*e2 - h2)/(z*r2))
         + std::atan((m23*e2 - h2)/(z*r2)) - std::atan((m23*e3 - h3)/(z*r3))
@@ -501,9 +524,9 @@ Eigen::Vector3d point_doublet_velocity ( const double & x, const double & y,
 
   den = std::pow(x*x + y*y + z*z, 2.5);
 
-  velpf(0) = 3.*x*z / (4.*M_PI*den);
-  velpf(1) = 3.*y*z / (4.*M_PI*den);
-  velpf(2) = -(x*x + y*y - 2.*z*z) / (4.*M_PI*den);
+  velpf(0) = -3.*x*z / (4.*M_PI*den);
+  velpf(1) = -3.*y*z / (4.*M_PI*den);
+  velpf(2) = (x*x + y*y - 2.*z*z) / (4.*M_PI*den);
 
   return velpf;
 }
@@ -521,7 +544,7 @@ Eigen::Vector3d tri_doublet_velocity (
                         const bool onpanel, const std::string & side )
 {
   double r0, r1, r2;
-  double m01, m12, m20;
+  double dx01, dx12, dx20, m01, m12, m20;
   double e0, e1, e2;
   double h0, h1, h2;
   double dr0dx, dr1dx, dr2dx;
@@ -543,9 +566,12 @@ Eigen::Vector3d tri_doublet_velocity (
   r2 = std::sqrt(std::pow(x - x2, 2.) + std::pow(y - y2, 2.) + 
                  std::pow(z, 2.));
 
-  m01 = (y1 - y0)/(x1 - x0);
-  m12 = (y2 - y1)/(x2 - x1);
-  m20 = (y0 - y2)/(x0 - x2);
+  dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
+  dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
+  dx20 = sign(x0-x2)*std::max(std::abs(x0-x2), eps);
+  m01 = (y1 - y0)/dx01;
+  m12 = (y2 - y1)/dx12;
+  m20 = (y0 - y2)/dx20;
 
   e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
   e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
@@ -598,7 +624,7 @@ Eigen::Vector3d tri_doublet_velocity (
   
     // Velocity components in panel frame
   
-    velpf(0) = -1. / (4.*M_PI) * z * (
+    velpf(0) = 1. / (4.*M_PI) * z * (
                (r0*(m01*de0dx - dh0dx) - dr0dx*(m01*e0 - h0)) / den0
              - (r1*(m01*de1dx - dh1dx) - dr1dx*(m01*e1 - h1)) / den1
              + (r1*(m12*de1dx - dh1dx) - dr1dx*(m12*e1 - h1)) / den2
@@ -606,7 +632,7 @@ Eigen::Vector3d tri_doublet_velocity (
              + (r2*(m20*de2dx - dh2dx) - dr2dx*(m20*e2 - h2)) / den4
              - (r0*(m20*de0dx - dh0dx) - dr0dx*(m20*e0 - h0)) / den5 );
   
-    velpf(1) = -1. / (4.*M_PI) * z * (
+    velpf(1) = 1. / (4.*M_PI) * z * (
                (-r0*dh0dy - dr0dy*(m01*e0 - h0)) / den0
              - (-r1*dh1dy - dr1dy*(m01*e1 - h1)) / den1
              + (-r1*dh1dy - dr1dy*(m12*e1 - h1)) / den2
@@ -614,7 +640,7 @@ Eigen::Vector3d tri_doublet_velocity (
              + (-r2*dh2dy - dr2dy*(m20*e2 - h2)) / den4
              - (-r0*dh0dy - dr0dy*(m20*e0 - h0)) / den5 );
   
-    velpf(2) = -1. / (4.*M_PI) * (
+    velpf(2) = 1. / (4.*M_PI) * (
                (z*r0*m01*de0dz - (z*dr0dz + r0)*(m01*e0 - h0)) / den0
              - (z*r1*m01*de1dz - (z*dr1dz + r1)*(m01*e1 - h1)) / den1
              + (z*r1*m12*de1dz - (z*dr1dz + r1)*(m12*e1 - h1)) / den2
@@ -627,7 +653,7 @@ Eigen::Vector3d tri_doublet_velocity (
   {
     velpf(0) = 0.0;
     velpf(1) = 0.0;
-    velpf(2) = -1. / (4.*M_PI) * (
+    velpf(2) = 1. / (4.*M_PI) * (
                -r0/(m01*e0 - h0) + r1/(m01*e1 - h1) 
              -  r1/(m12*e1 - h1) + r2/(m12*e2 - h2) 
              -  r2/(m20*e2 - h2) + r0/(m20*e0 - h0) );
@@ -650,7 +676,7 @@ Eigen::Vector3d quad_doublet_velocity (
                         const bool onpanel, const std::string & side )
 {
   double r0, r1, r2, r3;
-  double m01, m12, m23, m30;
+  double dx01, dx12, dx23, dx30, m01, m12, m23, m30;
   double e0, e1, e2, e3;
   double h0, h1, h2, h3;
   double dr0dx, dr1dx, dr2dx, dr3dx;
@@ -674,10 +700,14 @@ Eigen::Vector3d quad_doublet_velocity (
   r3 = std::sqrt(std::pow(x - x3, 2.) + std::pow(y - y3, 2.) + 
                  std::pow(z, 2.));
 
-  m01 = (y1 - y0)/(x1 - x0);
-  m12 = (y2 - y1)/(x2 - x1);
-  m23 = (y3 - y2)/(x3 - x2);
-  m30 = (y0 - y3)/(x0 - x3);
+  dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
+  dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
+  dx23 = sign(x3-x2)*std::max(std::abs(x3-x2), eps);
+  dx30 = sign(x0-x3)*std::max(std::abs(x0-x3), eps);
+  m01 = (y1 - y0)/dx01;
+  m12 = (y2 - y1)/dx12;
+  m23 = (y3 - y2)/dx23;
+  m30 = (y0 - y3)/dx30;
 
   e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
   e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
@@ -741,7 +771,7 @@ Eigen::Vector3d quad_doublet_velocity (
   
     // Velocity components in panel frame
   
-    velpf(0) = -1. / (4.*M_PI) * z * (
+    velpf(0) = 1. / (4.*M_PI) * z * (
                (r0*(m01*de0dx - dh0dx) - dr0dx*(m01*e0 - h0)) / den0
              - (r1*(m01*de1dx - dh1dx) - dr1dx*(m01*e1 - h1)) / den1
              + (r1*(m12*de1dx - dh1dx) - dr1dx*(m12*e1 - h1)) / den2
@@ -751,7 +781,7 @@ Eigen::Vector3d quad_doublet_velocity (
              + (r3*(m30*de3dx - dh3dx) - dr3dx*(m30*e3 - h3)) / den6
              - (r0*(m30*de0dx - dh0dx) - dr0dx*(m30*e0 - h0)) / den7 );
   
-    velpf(1) = -1. / (4.*M_PI) * z * (
+    velpf(1) = 1. / (4.*M_PI) * z * (
                (-r0*dh0dy - dr0dy*(m01*e0 - h0)) / den0
              - (-r1*dh1dy - dr1dy*(m01*e1 - h1)) / den1
              + (-r1*dh1dy - dr1dy*(m12*e1 - h1)) / den2
@@ -761,7 +791,7 @@ Eigen::Vector3d quad_doublet_velocity (
              + (-r3*dh3dy - dr3dy*(m30*e3 - h3)) / den6
              - (-r0*dh0dy - dr0dy*(m30*e0 - h0)) / den7 );
   
-    velpf(2) = -1. / (4.*M_PI) * (
+    velpf(2) = 1. / (4.*M_PI) * (
                (z*r0*m01*de0dz - (z*dr0dz + r0)*(m01*e0 - h0)) / den0
              - (z*r1*m01*de1dz - (z*dr1dz + r1)*(m01*e1 - h1)) / den1
              + (z*r1*m12*de1dz - (z*dr1dz + r1)*(m12*e1 - h1)) / den2
@@ -776,7 +806,7 @@ Eigen::Vector3d quad_doublet_velocity (
   {
     velpf(0) = 0.0;
     velpf(1) = 0.0;
-    velpf(2) = -1. / (4.*M_PI) * (
+    velpf(2) = 1. / (4.*M_PI) * (
                -r0/(m01*e0 - h0) + r1/(m01*e1 - h1) 
              -  r1/(m12*e1 - h1) + r2/(m12*e2 - h2) 
              -  r2/(m23*e2 - h2) + r3/(m23*e3 - h3)
@@ -807,6 +837,14 @@ Eigen::Vector3d vortex_velocity (
   r0(1) = y2 - y1;
   r0(2) = z2 - z1;
   l0 = r0.norm();
+
+  if (std::abs(l0) < eps)
+  {
+    vel(0) = 0.0;
+    vel(1) = 0.0;
+    vel(2) = 0.0;
+    return vel;
+  }  
 
   // Vectors from endpoints to point P (and lengths)
 

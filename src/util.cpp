@@ -424,3 +424,16 @@ double vector_min ( const std::vector<double> & vec )
 
   return fmin;
 }
+
+/******************************************************************************/
+//
+// Returns -1 for val < 0 and 1 for val >= 0
+//
+/******************************************************************************/
+double sign ( const double & val )
+{
+  if (val < 0.)
+    return -1.;
+  else
+    return 1.;
+}
