@@ -10,6 +10,7 @@
 #include "quadpanel.h"
 #include "tripanel.h"
 #include "wake.h"
+#include "wake_strip.h"
 
 class Vertex;
 
@@ -39,6 +40,7 @@ class Wing {
     std::vector<QuadPanel> _quads;	// Quad panels
     std::vector<TriPanel> _tris;	// Tri panels at tip
     Wake _wake;				// Wake
+    std::vector<WakeStrip> _wakestrips;	// Wake strips behind TE panels
 
     std::vector<double> adjustSpacing ( 
                                const std::vector<double> & nom_stations ) const;
@@ -89,9 +91,11 @@ class Wing {
     QuadPanel * quadPanel ( unsigned int qidx );
     TriPanel * triPanel ( unsigned int tidx );
 
-    // Access to wake
+    // Access to wake and wake strips
 
     Wake & wake ();
+    unsigned int nWStrips () const;
+    WakeStrip * wStrip ( unsigned int wsidx );
 };
 
 #endif

@@ -13,7 +13,10 @@
 #include "quadpanel.h"
 #include "tripanel.h"
 #include "wake.h"
+#include "wake_strip.h"
 #include "wing.h"
+
+#include <iostream>
 
 // Data for optimizing spanwise spacing
 
@@ -257,6 +260,7 @@ Wing::Wing ()
   _verts.resize(0);
   _quads.resize(0);
   _tris.resize(0);
+  _wakestrips.resize(0);
 }
 
 /******************************************************************************/
@@ -678,7 +682,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 /******************************************************************************/
 void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
 {
-  unsigned int i, tlquad, blquad, trquad, brquad, tiptri, tipquad;
+  unsigned int i, j, tlquad, blquad, trquad, brquad, tiptri, tipquad, nvorts;
   std::vector<Vertex> teverts;
   double xt, yt, zt, xb, yb, zb, xm, ym, zm, dx, dy, dz, tegap;
 
@@ -747,6 +751,23 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
   // Initialize wake
 
   _wake.initialize(teverts, next_global_vertidx, next_global_elemidx);
+
+  // Create wake strips
+//FIXME: check and make sure the right things are being pointed to
+
+  nvorts = int(ceil(wakelen/(dt*uinf)));
+  _wakestrips.resize(_nspan-1);
+  for ( i = 0; i < _nspan-1; i++ )
+  {
+    _wakestrips[i].setNVortices(nvorts);
+    _wakestrips[i].setTEPanels(&_quads[i*(2*_nchord-2)],
+                               &_quads[(i+1)*(2*_nchord-2)-1]);
+    for ( j = 0; j < nvorts-1; j++ )
+    {
+      _wakestrips[i].setVortexPointer(j, _wake.vRing(i*(nvorts-1)+j));
+    }
+    _wakestrips[i].setVortexPointer(nvorts-1, _wake.hShoe(i));
+  }
 }
 
 /******************************************************************************/
@@ -789,7 +810,17 @@ TriPanel * Wing::triPanel ( unsigned int tidx )
 
 /******************************************************************************/
 //
-// Access to wake
+// Access to wake and wake strips
 //
 /******************************************************************************/
 Wake & Wing::wake () { return _wake; }
+unsigned int Wing::nWStrips () const { return _wakestrips.size(); }
+WakeStrip * Wing::wStrip ( unsigned int wsidx )
+{
+#ifdef DEBUG
+  if (wsidx >= _wakestrips.size())
+    conditional_stop(1, "Wing::wStrip", "Index out of range.");
+#endif
+
+  return &_wakestrips[wsidx];
+}
