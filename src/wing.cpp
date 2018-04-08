@@ -753,7 +753,6 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
   _wake.initialize(teverts, next_global_vertidx, next_global_elemidx);
 
   // Create wake strips
-//FIXME: check and make sure the right things are being pointed to
 
   nvorts = int(ceil(wakelen/(dt*uinf)));
   _wakestrips.resize(_nspan-1);

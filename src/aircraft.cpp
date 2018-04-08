@@ -5,10 +5,12 @@
 #include "util.h"
 #include "settings.h"
 #include "section.h"
+#include "wake_strip.h"
+#include "wake.h"
+#include "panel.h"
+#include "vortex.h"
 #include "wing.h"
 #include "aircraft.h"
-
-#include <iostream>
 
 using namespace tinyxml2;
 
@@ -311,6 +313,126 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
   }
 
   f.close();
+
+  return 0;
+}
+
+/******************************************************************************/
+//
+// Writes legacy VTK wake strip viz (for checking purposes). One file is written
+// for each strip so they can be cycled through.
+//
+/******************************************************************************/
+int Aircraft::writeWakeStripViz ( const std::string & prefix )
+{
+  std::ofstream f;
+  unsigned int counter;
+  unsigned int i, j, k, nwings, nstrips, nsurf_verts, nwake_verts, nvorts;
+  std::string fname;
+  std::vector<WakeStrip *> wakestrips;
+
+  // Determine number of wake strips and populate container
+
+  nwings = _wings.size();
+  nstrips = 0;
+  for ( i = 0; i < nwings; i++ )
+  {
+    nstrips += _wings[i].nWStrips();
+  }
+  wakestrips.resize(nstrips);
+  counter = 0;
+  for ( i = 0; i < nwings; i++ )
+  {
+    for ( j = 0; j < _wings[i].nWStrips(); j++ )
+    {
+      wakestrips[counter] = _wings[i].wStrip(j);
+      counter += 1;
+    }
+  }
+
+  // Write a file for each strip
+
+  for ( j = 0; j < nstrips; j++ )
+  {
+    fname = prefix + "_timestep" + int2string(j) + ".vtk";
+    f.open(fname.c_str());
+    if (! f.is_open())
+    {
+      conditional_stop(1, "Aircraft::writeWakeStripViz",
+                       "Unable to open " + fname + " for writing."); 
+      return 1;
+    }
+
+    // Header
+
+    f << "# vtk DataFile Version 3.0" << std::endl;
+    f << casename << std::endl;
+    f << "ASCII" << std::endl;
+    f << "DATASET UNSTRUCTURED_GRID" << std::endl;
+
+    // Write all surface and wake vertices
+
+    nsurf_verts = _verts.size();
+    nwake_verts = _wakeverts.size();
+    f << "POINTS " << nsurf_verts + nwake_verts << " double" << std::endl;
+    for ( i = 0; i < nsurf_verts; i++ )
+    {
+      f << std::setprecision(14) << std::setw(25) << std::left
+        << _verts[i]->x();
+      f << std::setprecision(14) << std::setw(25) << std::left
+        << _verts[i]->y();
+      f << std::setprecision(14) << std::setw(25) << std::left
+        << _verts[i]->z() << std::endl;
+    } 
+    for ( i = 0; i < nwake_verts; i++ )
+    {
+      f << std::setprecision(14) << std::setw(25) << std::left
+        << _wakeverts[i]->x();
+      f << std::setprecision(14) << std::setw(25) << std::left
+        << _wakeverts[i]->y();
+      f << std::setprecision(14) << std::setw(25) << std::left
+        << _wakeverts[i]->z() << std::endl;
+    } 
+
+    // Write TE panels and wake strip elements
+
+    nvorts = wakestrips[j]->nVortices();
+    f << "CELLS " << 2+nvorts << " " << 5*(2+nvorts) << std::endl;
+    f << 4;
+    for ( k = 0; k < 4; k++ )
+    {
+      f << " " << wakestrips[j]->topTEPan()->vertex(k).idx();
+    }
+    f << std::endl;
+    f << 4;
+    for ( k = 0; k < 4; k++ )
+    {
+      f << " " << wakestrips[j]->botTEPan()->vertex(k).idx();
+    }
+    f << std::endl;
+    for ( i = 0; i < nvorts; i++ )
+    {
+      f << 4;
+      for ( k = 0; k < 4; k++ )
+      {
+        f << " " << wakestrips[j]->vortex(i)->vertex(k).idx();
+      }
+      f << std::endl;
+    } 
+
+    // Cell types
+
+    f << "CELL_TYPES " << 2+nvorts << std::endl;
+    f << 9 << std::endl;
+    f << 9 << std::endl;
+    for ( i = 0; i < nvorts-1; i++ )
+    {
+      f << 9 << std::endl;
+    }
+    f << 4 << std::endl;
+
+    f.close();
+  }
 
   return 0;
 }

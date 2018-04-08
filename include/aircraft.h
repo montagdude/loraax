@@ -38,8 +38,9 @@ class Aircraft {
 
     // Write VTK viz
 
-    int writeSurfaceViz ( const std::string & prefix ) const;
-    int writeWakeViz ( const std::string & prefix ) const;
+    int writeSurfaceViz ( const std::string & fname ) const;
+    int writeWakeViz ( const std::string & fname ) const;
+    int writeWakeStripViz ( const std::string & prefix );
 
   public:
 
@@ -53,7 +54,7 @@ class Aircraft {
 
     // Write VTK viz
 
-    int writeViz ( const std::string & prefix ) const;
+    int writeViz ( const std::string & prefix );
 };
 
 #endif
