@@ -1,6 +1,10 @@
 // Stores global settings
 
+#define _USE_MATH_DEFINES
+
 #include <string>
+#include <Eigen/Core>
+#include <cmath>
 #include <tinyxml2.h>
 extern "C"
 {
@@ -15,6 +19,7 @@ using namespace tinyxml2;
 
 std::string casename;
 double uinf;
+Eigen::Vector3d uinfvec;
 double rhoinf;
 double muinf;
 double alpha;
@@ -189,6 +194,12 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
   xfoil_geom_opts.xsref2 = 1.0;
   xfoil_geom_opts.xpref1 = 1.0;
   xfoil_geom_opts.xpref2 = 1.0;
+
+  // Set freestream vector
+
+  uinfvec(0) = uinf*cos(alpha*M_PI/180.);
+  uinfvec(1) = 0.;
+  uinfvec(2) = uinf*sin(alpha*M_PI/180.);
   
   return 0;
 }

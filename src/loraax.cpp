@@ -34,7 +34,20 @@ int main (int argc, char* argv[])
   if (ac.readXML(geom_file) != 0)
     return 3;
 
-  ac.writeViz(casename);
+  // Set source strengths
+
+  std::cout << "Setting source strengths ..." << std::endl;
+  ac.setSourceStrengths();
+
+  // Construct, factorize, and solve the system
+
+  std::cout << "Constructing the linear system ..." << std::endl;
+  ac.constructSystem();
+  std::cout << "Factorizing the AIC matrix ..." << std::endl;
+  ac.factorize();
+  std::cout << "Solving the linear system with " << ac.systemSize()
+            << " unknowns ..." << std::endl;
+  ac.solveSystem();
 
   return 0; 
 }

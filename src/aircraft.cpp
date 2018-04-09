@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <tinyxml2.h>
+#include <Eigen/Core>
 #include "util.h"
 #include "settings.h"
 #include "section.h"
@@ -452,6 +453,9 @@ Aircraft::Aircraft ()
   _panels.resize(0);
   _wakeverts.resize(0);
   _vorts.resize(0);
+  _aic.resize(0,0);
+  _mu.resize(0);
+  _rhs.resize(0);
 }
 
 /******************************************************************************/
@@ -725,6 +729,136 @@ int Aircraft::readXML ( const std::string & geom_file )
 
   return 0;
 }
+
+/******************************************************************************/
+//
+// Sets source strengths
+//
+/******************************************************************************/
+void Aircraft::setSourceStrengths ()
+{
+  unsigned int i, npanels;
+  Eigen::Vector3d norm;
+
+  npanels = _panels.size();
+#ifdef DEBUG
+  if (npanels == 0)
+    conditional_stop(1, "Aircraft::setSourceStrengths", "No panels exist.");
+#endif
+
+#pragma omp parallel for private(i,norm)
+  for ( i = 0; i < npanels; i++ )
+  {
+    norm = _panels[i]->normal();
+    _panels[i]->setSourceStrength(-uinfvec.transpose() * norm);
+  }
+}
+
+/******************************************************************************/
+//
+// Constructs AIC matrix and RHS vector
+//
+/******************************************************************************/
+void Aircraft::constructSystem ()
+{
+  unsigned int i, j, k, l, m, nwings, npanels, nstrips, nvorts;
+  int toptepan, bottepan;
+  Eigen::Vector3d cen, norm, stripvel;
+  WakeStrip * strip;
+  double rcore, stripic; 
+  bool onpanel;
+
+//FIXME: make this a function of wingspan?
+  rcore = 1.E-08;
+
+  npanels = _panels.size();
+#ifdef DEBUG
+  if (npanels == 0)
+    conditional_stop(1, "Aircraft::constructSystem", "No panels exist.");
+#endif
+  nwings = _wings.size();
+
+//FIXME: need to take mirror image into account
+  _aic.resize(npanels,npanels);
+  _rhs.resize(npanels);
+#pragma omp parallel for private(cen,norm,j,onpanel,k,nstrips,strip,nvorts,\
+                                 stripvel,m,stripic,toptepan,bottepan)
+  for ( i = 0; i < npanels; i++ )
+  {
+    // Collocation point at centroid of panel (point of BC application)
+
+    cen = _panels[i]->centroid();
+
+    // Panel normal vector
+
+    norm = _panels[i]->normal();
+
+    // Surface doublet influence coefficients
+
+    for ( j = 0; j < npanels; j++ )
+    {
+      if (i == j)
+        onpanel = true;
+      else
+        onpanel = false;
+      _aic(i,j) = _panels[j]->doubletVCoeff(cen(0), cen(1), cen(2), onpanel,
+                                            "top").transpose() * norm;
+    }
+
+    // Wake influence coefficients applied to TE panels
+
+    for ( k = 0; k < nwings; k++ )
+    {
+      nstrips = _wings[k].nWStrips(); 
+      for ( l = 0; l < nstrips; l++ )
+      {
+        strip = _wings[k].wStrip(l);
+        nvorts = strip->nVortices();
+        stripvel(0) = 0.;
+        stripvel(1) = 0.;
+        stripvel(2) = 0.;
+        for ( m = 0; m < nvorts; m++ )
+        {
+          stripvel += strip->vortex(m)->VCoeff(cen(0), cen(1), cen(2), rcore);
+        }
+        stripic = stripvel.transpose() * norm;
+        toptepan = strip->topTEPan()->idx();
+        bottepan = strip->botTEPan()->idx();
+        _aic(i,toptepan) += stripic;
+        _aic(i,bottepan) -= stripic;
+      }
+    }
+
+    // Right hand side: source and freestream influence
+
+    _rhs(i) = uinfvec.transpose() * norm;
+    for ( j = 0; j < npanels; j++ )
+    {
+      if (i == j)
+        onpanel = true;
+      else
+        onpanel = false;
+      _rhs(i) -= _panels[j]->sourceStrength()
+               * _panels[j]->sourceVCoeff(cen(0), cen(1), cen(2), onpanel,
+                                          "top").transpose() * norm;
+    }
+  }
+}
+
+/******************************************************************************/
+//
+// Factorizes the AIC matrix and solves the system
+//
+/******************************************************************************/
+void Aircraft::factorize () { _lu.compute(_aic); }
+void Aircraft::solveSystem () { _mu = _lu.solve(_rhs); }
+
+/******************************************************************************/
+//
+// Gives size of system of equations (= number of panels)
+//
+/******************************************************************************/
+unsigned int Aircraft::systemSize () const { return _panels.size(); }
 
 /******************************************************************************/
 //

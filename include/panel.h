@@ -72,7 +72,6 @@ class Panel: public Element {
                                            const double & y, const double & z,
                                            const bool onpanel,
                                            const std::string & side ) const = 0;
-
 };
 
 #endif

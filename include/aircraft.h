@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include <Eigen/Dense>
 #include "wing.h"
 
 class Vertex;
@@ -32,6 +33,12 @@ class Aircraft {
     std::vector<Vortex *> _vorts;	// Pointers to wake vortex panels and
                                         //   horseshoes
 
+    Eigen::MatrixXd _aic;		// Aero influence coefficients matrix
+    Eigen::VectorXd _mu;		// Unknown doublet strengths vector
+    Eigen::VectorXd _rhs;		// Right hand side vector
+    Eigen::PartialPivLU<Eigen::MatrixXd> _lu;
+					// LU factorization of AIC matrix
+
     // Set up pointers to vertices, panels, and wake elements
 
     void setGeometryPointers ();
@@ -52,9 +59,23 @@ class Aircraft {
 
     int readXML ( const std::string & geom_file );
 
+    // Set source strengths
+
+    void setSourceStrengths ();
+
+    // Construct AIC matrix and RHS vector, factorize, and solve
+
+    void constructSystem ();
+    void factorize ();
+    void solveSystem ();
+
+    // Gives size of system of equations (= number of panels)
+
+    unsigned int systemSize () const;
+
     // Write VTK viz
 
-    int writeViz ( const std::string & prefix );
+    int writeViz ( const std::string & prefix ) const;
 };
 
 #endif

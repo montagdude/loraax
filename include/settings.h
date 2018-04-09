@@ -4,6 +4,7 @@
 #define SETTINGS_H
 
 #include <string>
+#include <Eigen/Core>
 #include <tinyxml2.h>
 extern "C"
 {
@@ -16,6 +17,7 @@ using namespace tinyxml2;
 
 extern std::string casename;
 extern double uinf;
+extern Eigen::Vector3d uinfvec;
 extern double rhoinf;
 extern double muinf;
 extern double alpha;
