@@ -1,0 +1,110 @@
+\documentclass[11pt]{article}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{color}
+\usepackage[left=1.2in, right=1in, top=1in, bottom=1in]{geometry}
+\usepackage{verbatim}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{LORAAX Theory Guide}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+\section{Boundary Conditions}\label{sec:bcs}
+
+LORAAX uses Neumann-type boundary conditions on wing surfaces, which specify 0
+normal flow through a panel:
+
+\begin{equation}
+\mathbf{V}\cdot{\mathbf{\hat{n}}} = 0.
+\label{eq:bc1}
+\end{equation}
+
+The velocity is the sum of all sources, doublets, and vortices, plus the freestream
+influence, as follows:
+
+\begin{equation}
+\mathbf{V} = \sum_{i=1}^{N_{\text{pan}}}\left(\mathbf{a}_i\mu_i + \mathbf{b}_i\sigma_i\right)
+           + \sum_{j=1}^{N_{\text{vort}}}\mathbf{c}_i\gamma_i + \mathbf{V}_\infty,
+\label{eq:vel1}
+\end{equation}
+
+\noindent where $\mathbf{a}_i$ and $\mathbf{b}_i$ are the influence
+coefficients due to the
+doublet panel $i$ and source panel $i$, respectively, $\mathbf{c}_j$ is the
+influence
+coefficient due to wake vortex ring or horseshoe $j$, and $\mu$, $\sigma$, and
+$\gamma$ are distributed doublet, source, and circulation strengths of these
+elements, respectively.
+
+\section{System of Equations}
+
+Following from the boundary conditions, a system of equations can be formed to
+solve for the unknown doublet, source, and circulation strengths. However, the
+system is underconstrained if each of these is considered an unknown. First, one
+of the source or doublet strengths on each panel must be specified. Typically,
+the source strength is specified as
+
+\begin{equation}
+\sigma_i = -\mathbf{V}_\infty\cdot\mathbf{\hat{n}}.
+\label{eq:sigma1}
+\end{equation}
+
+This form takes care of the ``zeroth-order'' freestream portion of the boundary
+condition, allowing for smaller doublet strengths. During the first iteration
+prior to unsteady wake rollup, the entire line of wake vortices behind a set of
+top- and bottom-surface trailing edge panels is
+
+\begin{equation}
+\gamma_{\text{te}} = \mu_{\text{te,top}} - \mu_{\text{te,bot}},
+\label{eq:wake_circ}
+\end{equation}
+
+\noindent where \emph{te} represents the portion of the wing's trailing edge
+spanned by a given column of panels and wake vortices. This relation is required
+by the Kutta condition; it results in no jump in singularity strength across the
+trailing edge. Rewriting the equations above, the boundary condition for a given
+panel can be represented as
+
+\begin{equation}
+  \sum_{i=1}^{N_{\text{pan}}}\mathbf{a}_i\mu_i\cdot\mathbf{\hat{n}}
++ \sum_{k=1}^{N_{\text{te}}}\mathbf{d}_k
+    \left(\mu_{k,\text{top}} - \mu_{k,\text{bot}}\right)\cdot\mathbf{\hat{n}}
+= \mathbf{V}_\infty\cdot\mathbf{\hat{n}}
++ \sum_{i=1}^{N_{\text{pan}}}\left(\mathbf{V}_\infty\cdot\mathbf{\hat{n}}_i\right)
+    \left(\mathbf{b}_i\cdot\mathbf{\hat{n}}\right).
+\label{eq:system1}
+\end{equation}
+
+\noindent Note that the unknowns are the doublet strengths $\mu$ only, while the
+known quantities have been moved to the right hand side. The influence
+coefficients $\mathbf{d}_k$ represent the velocity due to the strip of wake
+vortices behind the trailing edge spanwise location $k$ with unit circulation
+strength. Equation \ref{eq:system1} can be
+applied to each of the surface panels, with only the influence coefficients
+$\mathbf{a}$, $\mathbf{b}$, and $\mathbf{d}$ changing. The result is a system of
+$N_{\text{pan}}$ equations with $N_{\text{pan}}$ unknown doublet strengths. It
+can be represented in matrix form as follows:
+
+\begin{equation}
+\mathbf{\overline{AIC}}\boldsymbol{\mu} = \mathbf{RHS},
+\label{eq:system2}
+\end{equation}
+
+\noindent where $\mathbf{\overline{AIC}}$ is the matrix of aerodynamic influence
+coefficients,
+$\boldsymbol{\mu}$ is the vector of unknown doublet strengths, and $\mathbf{RHS}$ is the
+vector of known quantities on the right hand side of the equation. $\mathbf{\overline{AIC}}$
+is a
+dense square matrix, so a direct method like LU decomposition is most appropriate to solve
+it.
+
+\end{document}
