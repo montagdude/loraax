@@ -778,7 +778,6 @@ void Aircraft::constructSystem ()
 #endif
   nwings = _wings.size();
 
-//FIXME: need to take mirror image into account
   _aic.resize(npanels,npanels);
   _rhs.resize(npanels);
 #pragma omp parallel for private(cen,norm,j,onpanel,k,nstrips,strip,nvorts,\
@@ -802,7 +801,7 @@ void Aircraft::constructSystem ()
       else
         onpanel = false;
       _aic(i,j) = _panels[j]->doubletVCoeff(cen(0), cen(1), cen(2), onpanel,
-                                            "top").transpose() * norm;
+                                            "top", true).transpose() * norm;
     }
 
     // Wake influence coefficients applied to TE panels
@@ -819,7 +818,8 @@ void Aircraft::constructSystem ()
         stripvel(2) = 0.;
         for ( m = 0; m < nvorts; m++ )
         {
-          stripvel += strip->vortex(m)->VCoeff(cen(0), cen(1), cen(2), rcore);
+          stripvel += strip->vortex(m)->VCoeff(cen(0), cen(1), cen(2), rcore,
+                                               true);
         }
         stripic = stripvel.transpose() * norm;
         toptepan = strip->topTEPan()->idx();
@@ -840,7 +840,7 @@ void Aircraft::constructSystem ()
         onpanel = false;
       _rhs(i) -= _panels[j]->sourceStrength()
                * _panels[j]->sourceVCoeff(cen(0), cen(1), cen(2), onpanel,
-                                          "top").transpose() * norm;
+                                          "top", true).transpose() * norm;
     }
   }
 }

@@ -39,26 +39,29 @@ class QuadPanel: public Panel {
     // Computing source and doublet influence coefficients at a point
 
     double sourcePhiCoeff ( const double & x, const double & y,
-                            const double & z, const bool onpanel,
+                            const double & z, bool onpanel,
                             const std::string & side ) const;
     Eigen::Vector3d sourceVCoeff ( const double & x, const double & y,
-                                   const double & z, const bool onpanel,
-                                   const std::string & side ) const;
+                                   const double & z, bool onpanel,
+                                   const std::string & side,
+                                   bool mirror_y=false ) const;
     double doubletPhiCoeff ( const double & x, const double & y,
-                             const double & z, const bool onpanel,
+                             const double & z, bool onpanel,
                              const std::string & side ) const;
     Eigen::Vector3d doubletVCoeff ( const double & x, const double & y,
-                                    const double & z, const bool onpanel,
-                                    const std::string & side ) const;
+                                    const double & z, bool onpanel,
+                                    const std::string & side,
+                                    bool mirror_y=false ) const;
 
     // Computing induced velocity potential and induced velocity at a point
 
     double inducedPotential ( const double & x, const double & y,
-                              const double & z, const bool onpanel,
+                              const double & z, bool onpanel,
                               const std::string & side ) const;
     Eigen::Vector3d inducedVelocity ( const double & x, const double & y,
-                                      const double & z, const bool onpanel,
-                                      const std::string & side ) const;
+                                      const double & z, bool onpanel,
+                                      const std::string & side,
+                                      bool mirror_y=false ) const;
 
 };
 

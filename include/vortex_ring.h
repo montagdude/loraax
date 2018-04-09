@@ -22,18 +22,20 @@ class VortexRing: public Vortex {
 
     VortexRing ();
 
-    // Set
+    // Set vertices
 
     int addVertex ( Vertex * vert );
 
     // Induced velocity coefficient and induced velocity at a point
 
     Eigen::Vector3d VCoeff ( const double & x, const double & y,
-                             const double & z, const double & rcore ) const;
+                             const double & z, const double & rcore,
+                             bool mirror_y=false ) const;
 
     Eigen::Vector3d inducedVelocity ( const double & x, const double & y,
                                       const double & z,
-                                      const double & rcore ) const;
+                                      const double & rcore,
+                                      bool mirror_y=false ) const;
 };
 
 #endif

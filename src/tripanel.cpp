@@ -168,8 +168,8 @@ void TriPanel::computeTransform ()
 //
 /******************************************************************************/
 double TriPanel::sourcePhiCoeff ( const double & x, const double & y, 
-                                 const double & z, const bool onpanel,
-                                 const std::string & side ) const
+                                  const double & z, bool onpanel,
+                                  const std::string & side ) const
 {
   Eigen::Vector3d vec, transvec;
 
@@ -196,10 +196,11 @@ double TriPanel::sourcePhiCoeff ( const double & x, const double & y,
 //
 /******************************************************************************/
 Eigen::Vector3d TriPanel::sourceVCoeff ( const double & x, const double & y, 
-                                        const double & z, const bool onpanel,
-                                        const std::string & side ) const
+                                         const double & z, bool onpanel,
+                                         const std::string & side,
+                                         bool mirror_y ) const
 {
-  Eigen::Vector3d vec, transvec, velpf, velif;
+  Eigen::Vector3d vec, transvec, velpf, velif, velif_mirror;
 
   // Vector from centroid to point
 
@@ -221,6 +222,24 @@ Eigen::Vector3d TriPanel::sourceVCoeff ( const double & x, const double & y,
   
   velif = _invtrans*velpf;
 
+  // Compute mirror image contribution if requested. Always assume the mirror
+  // image point is not on the panel.
+
+  if (mirror_y)
+  {
+    vec(0) =  x - _cen[0];
+    vec(1) = -y - _cen[1];
+    vec(2) =  z - _cen[2];
+    transvec = _trans*vec;
+    velpf = tri_source_velocity(transvec(0), transvec(1), transvec(2),
+                                _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2], 
+                                _xtrans[1], _ytrans[1], false, side);
+    velif_mirror = _invtrans*velpf;
+    velif(0) += velif_mirror(0);
+    velif(1) -= velif_mirror(1);
+    velif(2) += velif_mirror(2);
+  }
+
   return velif;
 }
 
@@ -230,7 +249,7 @@ Eigen::Vector3d TriPanel::sourceVCoeff ( const double & x, const double & y,
 //
 /******************************************************************************/
 double TriPanel::doubletPhiCoeff ( const double & x, const double & y, 
-                                  const double & z, const bool onpanel,
+                                  const double & z, bool onpanel,
                                   const std::string & side ) const
 {
   Eigen::Vector3d vec, transvec;
@@ -255,10 +274,11 @@ double TriPanel::doubletPhiCoeff ( const double & x, const double & y,
 //
 /******************************************************************************/
 Eigen::Vector3d TriPanel::doubletVCoeff ( const double & x, const double & y, 
-                                         const double & z, const bool onpanel,
-                                         const std::string & side ) const
+                                         const double & z, bool onpanel,
+                                         const std::string & side,
+                                         bool mirror_y ) const
 {
-  Eigen::Vector3d vec, transvec, velpf, velif;
+  Eigen::Vector3d vec, transvec, velpf, velif, velif_mirror;
 
   // Transform point to panel frame
 
@@ -277,6 +297,24 @@ Eigen::Vector3d TriPanel::doubletVCoeff ( const double & x, const double & y,
 
   velif = _invtrans*velpf;
 
+  // Compute mirror image contribution if requested. Always assume the mirror
+  // image point is not on the panel.
+
+  if (mirror_y)
+  {
+    vec(0) =  x - _cen[0];
+    vec(1) = -y - _cen[1];
+    vec(2) =  z - _cen[2];
+    transvec = _trans*vec;
+    velpf = tri_doublet_velocity(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
+                                 _xtrans[1], _ytrans[1], false, side);
+    velif_mirror = _invtrans*velpf;
+    velif(0) += velif_mirror(0);
+    velif(1) -= velif_mirror(1);
+    velif(2) += velif_mirror(2);
+  }
+
   return velif;
 }
 
@@ -286,7 +324,7 @@ Eigen::Vector3d TriPanel::doubletVCoeff ( const double & x, const double & y,
 //
 /******************************************************************************/
 double TriPanel::inducedPotential ( const double & x, const double & y, 
-                                   const double & z, const bool onpanel,
+                                   const double & z, bool onpanel,
                                    const std::string & side ) const
 {
   double potential;
@@ -303,13 +341,14 @@ double TriPanel::inducedPotential ( const double & x, const double & y,
 //
 /******************************************************************************/
 Eigen::Vector3d TriPanel::inducedVelocity ( const double & x, const double & y, 
-                                           const double & z, const bool onpanel,
-                                           const std::string & side ) const
+                                           const double & z, bool onpanel,
+                                           const std::string & side,
+                                           bool mirror_y ) const
 {
   Eigen::Vector3d vel;
 
-  vel = ( sourceVCoeff(x, y, z, onpanel, side)*_sigma
-      +   doubletVCoeff(x, y, z, onpanel, side)*_mu );
+  vel = ( sourceVCoeff(x, y, z, onpanel, side, mirror_y)*_sigma
+      +   doubletVCoeff(x, y, z, onpanel, side, mirror_y)*_mu );
 
   return vel;
 }

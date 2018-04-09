@@ -32,11 +32,13 @@ class Vortex: public Element {
     // Induced velocity coefficient and induced velocity at a point
 
     virtual Eigen::Vector3d VCoeff ( const double & x, const double & y,
-                             const double & z, const double & rcore ) const = 0;
+                                     const double & z, const double & rcore,
+                                     bool mirror_y=false ) const = 0;
 
     virtual Eigen::Vector3d inducedVelocity ( const double & x, const double & y,
                                               const double & z,
-                                              const double & rcore ) const = 0;
+                                              const double & rcore,
+                                              bool mirror_y=false ) const = 0;
 };
 
 #endif

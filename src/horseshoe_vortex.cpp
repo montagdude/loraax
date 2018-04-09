@@ -49,10 +49,10 @@ int HorseshoeVortex::addVertex ( Vertex * vert )
 //
 /******************************************************************************/
 Eigen::Vector3d HorseshoeVortex::VCoeff ( const double & x, const double & y, 
-                                         const double & z,
-                                         const double & rcore ) const
+                                         const double & z, const double & rcore,
+                                         bool mirror_y ) const
 {
-  Eigen::Vector3d vel;
+  Eigen::Vector3d vel, vel_mirror;
 
 #ifdef DEBUG
   if (_currverts < 4)
@@ -78,6 +78,27 @@ Eigen::Vector3d HorseshoeVortex::VCoeff ( const double & x, const double & y,
                          _verts[2]->z(), _verts[3]->x(), _verts[3]->y(),
                          _verts[3]->z(), rcore, true);
 
+  if (mirror_y)
+  {
+    vel_mirror(0) = 0.0;
+    vel_mirror(1) = 0.0;
+    vel_mirror(2) = 0.0;
+
+    vel_mirror -= vortex_velocity(x, -y, z, _verts[1]->x(), _verts[1]->y(),
+                                  _verts[1]->z(), _verts[0]->x(),
+                                  _verts[0]->y(), _verts[0]->z(), rcore, true);
+    vel_mirror += vortex_velocity(x, -y, z, _verts[1]->x(), _verts[1]->y(),
+                                  _verts[1]->z(), _verts[2]->x(),
+                                  _verts[2]->y(), _verts[2]->z(), rcore, false);
+    vel_mirror += vortex_velocity(x, -y, z, _verts[2]->x(), _verts[2]->y(),
+                                  _verts[2]->z(), _verts[3]->x(),
+                                  _verts[3]->y(), _verts[3]->z(), rcore, true);
+
+    vel(0) += vel_mirror(0);
+    vel(1) -= vel_mirror(1);
+    vel(2) += vel_mirror(2);
+  }
+
   return vel;
 }
 
@@ -88,10 +109,11 @@ Eigen::Vector3d HorseshoeVortex::VCoeff ( const double & x, const double & y,
 /******************************************************************************/
 Eigen::Vector3d HorseshoeVortex::inducedVelocity ( const double & x,
                                              const double & y, const double & z,
-                                             const double & rcore ) const
+                                             const double & rcore,
+                                             bool mirror_y ) const
 {
   Eigen::Vector3d vel;
 
-  vel = VCoeff(x, y, z, rcore)*_gamma; 
+  vel = VCoeff(x, y, z, rcore, mirror_y)*_gamma; 
   return vel;
 }
