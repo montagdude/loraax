@@ -208,9 +208,92 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
       f << 5 << std::endl;
   }
 
-  // Source strengths (incl. mirror panels)
+  // Vertex coordinates (incl. mirror panels)
+
+  f << "POINT_DATA " << nverts*2 << std::endl;
+  f << "SCALARS x double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->x() << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->x() << std::endl;
+  }
+
+  f << "SCALARS y double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->y() << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << -_verts[i]->y() << std::endl;
+  }
+
+  f << "SCALARS z double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->z() << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->z() << std::endl;
+  }
+
+  // Cell coordinates (incl. mirror panels)
 
   f << "CELL_DATA " << npanels*2 << std::endl;
+  f << "SCALARS xc double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _panels[i]->centroid()(0) << std::endl;
+  }
+  for ( i = 0; i < npanels; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _panels[i]->centroid()(0) << std::endl;
+  }
+
+  f << "SCALARS yc double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _panels[i]->centroid()(1) << std::endl;
+  }
+  for ( i = 0; i < npanels; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << -_panels[i]->centroid()(1) << std::endl;
+  }
+
+  f << "SCALARS zc double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _panels[i]->centroid()(2) << std::endl;
+  }
+  for ( i = 0; i < npanels; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _panels[i]->centroid()(2) << std::endl;
+  }
+
+  // Source strengths (incl. mirror panels)
+
   f << "SCALARS source_strength double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
   for ( i = 0; i < npanels; i++ )
@@ -342,6 +425,22 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
       f << 9 << std::endl;
     else if (type == "horseshoevortex")
       f << 4 << std::endl;
+  }
+
+  // Write wake circulation (incl. mirror)
+
+  f << "CELL_DATA " << nvorts*2 << std::endl;
+  f << "SCALARS circulation double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nvorts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _vorts[i]->circulation() << std::endl;
+  }
+  for ( i = 0; i < nvorts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _vorts[i]->circulation() << std::endl;
   }
 
   f.close();
@@ -807,6 +906,22 @@ void Aircraft::setDoubletStrengths ()
   for ( i = 0; i < npanels; i++ )
   {
     _panels[i]->setDoubletStrength(_mu(i));
+  }
+}
+
+/******************************************************************************/
+//
+// Sets vortex wake circulation strengths
+//
+/******************************************************************************/
+void Aircraft::setWakeCirculation ()
+{
+  unsigned int i, nwings;
+
+  nwings = _wings.size();
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].setWakeCirculation();
   }
 }
 

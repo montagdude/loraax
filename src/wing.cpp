@@ -16,8 +16,6 @@
 #include "wake_strip.h"
 #include "wing.h"
 
-#include <iostream>
-
 // Data for optimizing spanwise spacing
 
 std::vector<double> nom_stations, new_stations, s_wing;
@@ -611,11 +609,17 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
   dz = _sections[_nspan-1].vert(0).z() -
        _sections[_nspan-1].vert(2*_nchord-2).z();
   tegap = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
-  if (tegap > 1E-12)
-    ntri = 1;
-  else
-    ntri = 2;
-  nquad = (_nspan-1)*(2*_nchord-2) + _nchord-1 - ntri;
+//FIXME: the small tri at the leading edge can result in really large doublet
+//strength, oscillating from + to -, along the tip. I'm not sure if these tip
+//panels are really needed. If so, may need to split them along the MCL to
+//improve cell quality.
+  //if (tegap > 1E-12)
+  //  ntri = 1;
+  //else
+  //  ntri = 2;
+  //nquad = (_nspan-1)*(2*_nchord-2) + _nchord-1 - ntri;
+ntri = 0;
+nquad = (_nspan-1)*(2*_nchord-2);
 
   // Create quad panels on wing surface
 
@@ -635,44 +639,44 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
     }
   }
 
-  // Create quad and tri panels on wingtip
+//  // Create quad and tri panels on wingtip
 
-  _tris.resize(ntri);
-  tcounter = 0;
-  if (ntri == 2)
-  {
-    _tris[tcounter].setIdx(next_global_elemidx);
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
-    tcounter += 1;
-    next_global_elemidx += 1;
-  }
-  else
-  {
-    _quads[qcounter].setIdx(next_global_elemidx);
-    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
-    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
-    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(1));
-    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(0));
-    qcounter += 1;
-    next_global_elemidx += 1;
-  }
-  for ( i = 1; i < _nchord-2; i++ ) 
-  {
-    _quads[qcounter].setIdx(next_global_elemidx);
-    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2-i));
-    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3-i));
-    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i+1));
-    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i));
-    qcounter += 1;
-    next_global_elemidx += 1;
-  }
-  _tris[tcounter].setIdx(next_global_elemidx);
-  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord));
-  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
-  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2));
-  next_global_elemidx += 1;
+//  _tris.resize(ntri);
+//  tcounter = 0;
+//  if (ntri == 2)
+//  {
+//    _tris[tcounter].setIdx(next_global_elemidx);
+//    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
+//    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+//    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
+//    tcounter += 1;
+//    next_global_elemidx += 1;
+//  }
+//  else
+//  {
+//    _quads[qcounter].setIdx(next_global_elemidx);
+//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
+//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(1));
+//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(0));
+//    qcounter += 1;
+//    next_global_elemidx += 1;
+//  }
+//  for ( i = 1; i < _nchord-2; i++ ) 
+//  {
+//    _quads[qcounter].setIdx(next_global_elemidx);
+//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2-i));
+//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3-i));
+//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i+1));
+//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i));
+//    qcounter += 1;
+//    next_global_elemidx += 1;
+//  }
+//  _tris[tcounter].setIdx(next_global_elemidx);
+//  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord));
+//  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
+//  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2));
+//  next_global_elemidx += 1;
 }
 
 /******************************************************************************/
@@ -822,4 +826,33 @@ WakeStrip * Wing::wStrip ( unsigned int wsidx )
 #endif
 
   return &_wakestrips[wsidx];
+}
+
+/******************************************************************************/
+//
+// Sets wake circulation
+//
+/******************************************************************************/
+void Wing::setWakeCirculation ()
+{
+  unsigned int i, j, nstrips, nvorts;
+  double gamma;
+
+  nstrips = _wakestrips.size();
+#ifdef DEBUG
+  if (nstrips == 0)
+    print_warning(1, "Wing::setWakeCirculation", "No wake strips present.");
+#endif
+
+#pragma omp parallel for private(i,gamma,nvorts,j)
+  for ( i = 0; i < nstrips; i++ )
+  {
+    gamma = _wakestrips[i].topTEPan()->doubletStrength()
+          - _wakestrips[i].botTEPan()->doubletStrength();
+    nvorts = _wakestrips[i].nVortices();
+    for ( j = 0; j < nvorts; j++ )
+    {
+      _wakestrips[i].vortex(j)->setCirculation(gamma);
+    }
+  }
 }

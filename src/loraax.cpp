@@ -54,6 +54,11 @@ int main (int argc, char* argv[])
   std::cout << "Setting doublet strengths ..." << std::endl;
   ac.setDoubletStrengths();
 
+  // Set wake circulation
+
+  std::cout << "Setting wake circulation ..." << std::endl;
+  ac.setWakeCirculation();
+
   // Write viz
 
   ac.writeViz(casename);

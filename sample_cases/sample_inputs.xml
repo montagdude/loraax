@@ -32,7 +32,7 @@
   <FreestreamViscosity>1.81e-05</FreestreamViscosity>
 
 <!-- Angle of attack, in degrees. -->
-  <AngleOfAttack>5.0</AngleOfAttack>
+  <AngleOfAttack>3.0</AngleOfAttack>
 
 <!-- Time step size, in seconds, for wake rollup and iterative viscous -
      inviscid coupling. -->

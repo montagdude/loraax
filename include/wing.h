@@ -96,6 +96,10 @@ class Wing {
     Wake & wake ();
     unsigned int nWStrips () const;
     WakeStrip * wStrip ( unsigned int wsidx );
+
+    // Set wake circulation
+
+    void setWakeCirculation ();
 };
 
 #endif
