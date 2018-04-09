@@ -59,9 +59,10 @@ class Aircraft {
 
     int readXML ( const std::string & geom_file );
 
-    // Set source strengths
+    // Set source and doublet strengths
 
     void setSourceStrengths ();
+    void setDoubletStrengths ();
 
     // Construct AIC matrix and RHS vector, factorize, and solve
 

@@ -208,6 +208,37 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
       f << 5 << std::endl;
   }
 
+  // Source strengths (incl. mirror panels)
+
+  f << "CELL_DATA " << npanels*2 << std::endl;
+  f << "SCALARS source_strength double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _panels[i]->sourceStrength() << std::endl;
+  }
+  for ( i = 0; i < npanels; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _panels[i]->sourceStrength() << std::endl;
+  }
+
+  // Doublet strengths (incl. mirror panels)
+
+  f << "SCALARS doublet_strength double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _panels[i]->doubletStrength() << std::endl;
+  }
+  for ( i = 0; i < npanels; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _panels[i]->doubletStrength() << std::endl;
+  }
+
   f.close();
 
   return 0;
@@ -756,6 +787,31 @@ void Aircraft::setSourceStrengths ()
 
 /******************************************************************************/
 //
+// Sets doublet strengths from solution vector
+//
+/******************************************************************************/
+void Aircraft::setDoubletStrengths ()
+{
+  unsigned int i, npanels;
+
+  npanels = _panels.size();
+#ifdef DEBUG
+  if (npanels == 0)
+    conditional_stop(1, "Aircraft::setDoubletStrengths", "No panels exist.");
+  if (_mu.size() != npanels)
+    conditional_stop(1, "Aircraft::setDoubletStrengths",
+                     "Inconsistent number of panels and solution vector size.");
+#endif
+
+#pragma omp parallel for private(i)
+  for ( i = 0; i < npanels; i++ )
+  {
+    _panels[i]->setDoubletStrength(_mu(i));
+  }
+}
+
+/******************************************************************************/
+//
 // Constructs AIC matrix and RHS vector
 //
 /******************************************************************************/
@@ -780,7 +836,7 @@ void Aircraft::constructSystem ()
 
   _aic.resize(npanels,npanels);
   _rhs.resize(npanels);
-#pragma omp parallel for private(cen,norm,j,onpanel,k,nstrips,strip,nvorts,\
+#pragma omp parallel for private(i,cen,norm,j,onpanel,k,nstrips,l,strip,nvorts,\
                                  stripvel,m,stripic,toptepan,bottepan)
   for ( i = 0; i < npanels; i++ )
   {
@@ -831,7 +887,7 @@ void Aircraft::constructSystem ()
 
     // Right hand side: source and freestream influence
 
-    _rhs(i) = uinfvec.transpose() * norm;
+    _rhs(i) = -uinfvec.transpose() * norm;
     for ( j = 0; j < npanels; j++ )
     {
       if (i == j)

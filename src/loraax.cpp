@@ -49,5 +49,14 @@ int main (int argc, char* argv[])
             << " unknowns ..." << std::endl;
   ac.solveSystem();
 
+  // Set doublet strengths
+
+  std::cout << "Setting doublet strengths ..." << std::endl;
+  ac.setDoubletStrengths();
+
+  // Write viz
+
+  ac.writeViz(casename);
+
   return 0; 
 }
