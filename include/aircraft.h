@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <Eigen/Dense>
+#include <fstream>
 #include "wing.h"
 
 class Vertex;
@@ -46,7 +47,9 @@ class Aircraft {
     // Write VTK viz
 
     int writeSurfaceViz ( const std::string & fname ) const;
+    void writeSurfaceData ( std::ofstream & f ) const;
     int writeWakeViz ( const std::string & fname ) const;
+    void writeWakeData ( std::ofstream & f ) const;
     int writeWakeStripViz ( const std::string & prefix );
 
   public:

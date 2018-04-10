@@ -8,6 +8,7 @@
 #include "section.h"
 #include "wake_strip.h"
 #include "wake.h"
+#include "element.h"
 #include "panel.h"
 #include "vortex.h"
 #include "wing.h"
@@ -208,6 +209,26 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
       f << 5 << std::endl;
   }
 
+  // Surface data at vertices
+
+  writeSurfaceData(f);
+
+  f.close();
+
+  return 0;
+}
+
+/******************************************************************************/
+//
+// Writes surface data to VTK viz file
+//
+/******************************************************************************/
+void Aircraft::writeSurfaceData ( std::ofstream & f ) const
+{
+  unsigned int i, nverts;
+
+  nverts = _verts.size();
+  
   // Vertex coordinates (incl. mirror panels)
 
   f << "POINT_DATA " << nverts*2 << std::endl;
@@ -250,81 +271,33 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
       << _verts[i]->z() << std::endl;
   }
 
-  // Cell coordinates (incl. mirror panels)
-
-  f << "CELL_DATA " << npanels*2 << std::endl;
-  f << "SCALARS xc double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < npanels; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _panels[i]->centroid()(0) << std::endl;
-  }
-  for ( i = 0; i < npanels; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _panels[i]->centroid()(0) << std::endl;
-  }
-
-  f << "SCALARS yc double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < npanels; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _panels[i]->centroid()(1) << std::endl;
-  }
-  for ( i = 0; i < npanels; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << -_panels[i]->centroid()(1) << std::endl;
-  }
-
-  f << "SCALARS zc double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < npanels; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _panels[i]->centroid()(2) << std::endl;
-  }
-  for ( i = 0; i < npanels; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _panels[i]->centroid()(2) << std::endl;
-  }
-
-  // Source strengths (incl. mirror panels)
+  // Vertex data (incl. mirror panels)
 
   f << "SCALARS source_strength double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _panels[i]->sourceStrength() << std::endl;
+      << _verts[i]->data(0) << std::endl;
   }
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _panels[i]->sourceStrength() << std::endl;
+      << _verts[i]->data(0) << std::endl;
   }
-
-  // Doublet strengths (incl. mirror panels)
 
   f << "SCALARS doublet_strength double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _panels[i]->doubletStrength() << std::endl;
+      << _verts[i]->data(1) << std::endl;
   }
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _panels[i]->doubletStrength() << std::endl;
+      << _verts[i]->data(1) << std::endl;
   }
-
-  f.close();
-
-  return 0;
 }
 
 /******************************************************************************/
@@ -427,25 +400,82 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
       f << 4 << std::endl;
   }
 
-  // Write wake circulation (incl. mirror)
+  // Wake data at vertices
 
-  f << "CELL_DATA " << nvorts*2 << std::endl;
-  f << "SCALARS circulation double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nvorts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _vorts[i]->circulation() << std::endl;
-  }
-  for ( i = 0; i < nvorts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _vorts[i]->circulation() << std::endl;
-  }
+  writeWakeData(f);
 
   f.close();
 
   return 0;
+}
+
+/******************************************************************************/
+//
+// Writes wake data to VTK viz file
+//
+/******************************************************************************/
+void Aircraft::writeWakeData ( std::ofstream & f ) const
+{
+  unsigned int i, nverts;
+
+  nverts = _wakeverts.size();
+  
+  // Vertex coordinates (incl. mirror vertices)
+
+  f << "POINT_DATA " << nverts*2 << std::endl;
+  f << "SCALARS x double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->x() << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->x() << std::endl;
+  }
+
+  f << "SCALARS y double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->y() << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << -_wakeverts[i]->y() << std::endl;
+  }
+
+  f << "SCALARS z double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->z() << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->z() << std::endl;
+  }
+
+  // Vertex data (incl. mirror vertices)
+
+  f << "SCALARS circulation double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->data(2) << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->data(2) << std::endl;
+  }
 }
 
 /******************************************************************************/
@@ -867,8 +897,10 @@ int Aircraft::readXML ( const std::string & geom_file )
 /******************************************************************************/
 void Aircraft::setSourceStrengths ()
 {
-  unsigned int i, npanels;
+  unsigned int i, j, npanels, nverts, nelems, eidx;
+  double vsig, counter;
   Eigen::Vector3d norm;
+  Element *elem;
 
   npanels = _panels.size();
 #ifdef DEBUG
@@ -882,6 +914,33 @@ void Aircraft::setSourceStrengths ()
     norm = _panels[i]->normal();
     _panels[i]->setSourceStrength(-uinfvec.transpose() * norm);
   }
+
+  // Interpolate to vertices
+
+  nverts = _verts.size();
+#ifdef DEBUG
+  if (nverts == 0)
+    conditional_stop(1, "Aircraft::setSourceStrengths", "No vertices exist.");
+#endif
+
+#pragma omp parallel for private(i,nelems,vsig,counter,j,elem,eidx)
+  for ( i = 0; i < nverts; i++ )
+  { 
+    nelems = _verts[i]->nElems();
+    vsig = 0.;
+    counter = 0.;
+    for ( j = 0; j < nelems; j++ )
+    {
+      elem = _verts[i]->element(j);
+      if ( (elem->type() == "quadpanel") || (elem->type() == "tripanel") )
+      {
+        eidx = elem->idx();
+        vsig += _panels[eidx]->sourceStrength();
+        counter += 1.;
+      }
+    }
+    _verts[i]->setData(0, vsig/counter);
+  }
 }
 
 /******************************************************************************/
@@ -891,7 +950,9 @@ void Aircraft::setSourceStrengths ()
 /******************************************************************************/
 void Aircraft::setDoubletStrengths ()
 {
-  unsigned int i, npanels;
+  unsigned int i, j, npanels, nverts, nelems, eidx;
+  double vmu, counter;
+  Element *elem;
 
   npanels = _panels.size();
 #ifdef DEBUG
@@ -907,6 +968,33 @@ void Aircraft::setDoubletStrengths ()
   {
     _panels[i]->setDoubletStrength(_mu(i));
   }
+
+  // Interpolate to vertices
+
+  nverts = _verts.size();
+#ifdef DEBUG
+  if (nverts == 0)
+    conditional_stop(1, "Aircraft::setDoubletStrengths", "No vertices exist.");
+#endif
+
+#pragma omp parallel for private(i,nelems,vmu,counter,j,elem,eidx)
+  for ( i = 0; i < nverts; i++ )
+  { 
+    nelems = _verts[i]->nElems();
+    vmu = 0.;
+    counter = 0.;
+    for ( j = 0; j < nelems; j++ )
+    {
+      elem = _verts[i]->element(j);
+      if ( (elem->type() == "quadpanel") || (elem->type() == "tripanel") )
+      {
+        eidx = elem->idx();
+        vmu += _panels[eidx]->doubletStrength();
+        counter += 1.;
+      }
+    }
+    _verts[i]->setData(1, vmu/counter);
+  }
 }
 
 /******************************************************************************/
@@ -916,12 +1004,57 @@ void Aircraft::setDoubletStrengths ()
 /******************************************************************************/
 void Aircraft::setWakeCirculation ()
 {
-  unsigned int i, nwings;
+  unsigned int i, j, k, nwings, nstrips, nvorts, nverts, npanels, nelems, eidx;
+  double gamma, vgam, counter;
+  WakeStrip *strip;
+  Element *elem;
 
   nwings = _wings.size();
   for ( i = 0; i < nwings; i++ )
   {
-    _wings[i].setWakeCirculation();
+    nstrips = _wings[i].nWStrips();
+#pragma omp parallel for private(j,strip,gamma,nvorts,k)
+    for ( j = 0; j < nstrips; j++ )
+    { 
+      strip = _wings[i].wStrip(j);
+      gamma = strip->topTEPan()->doubletStrength()
+            - strip->botTEPan()->doubletStrength();
+      nvorts = strip->nVortices();
+      for ( k = 0; k < nvorts; k++ )
+      {
+        strip->vortex(k)->setCirculation(gamma);
+      }
+    }
+  }
+
+  // Interpolate to wake vertices
+
+  nverts = _wakeverts.size(); 
+#ifdef DEBUG
+  if (nverts == 0)
+    conditional_stop(1, "Aircraft::setWakeCirculation",
+                     "No wake vertices exist.");
+#endif
+  npanels = _panels.size();
+
+#pragma omp parallel for private(i,nelems,vgam,counter,j,elem,eidx)
+  for ( i = 0; i < nverts; i++ )
+  {
+    nelems = _wakeverts[i]->nElems();
+    vgam = 0.;
+    counter = 0.;
+    for ( j = 0; j < nelems; j++ )
+    {
+      elem = _wakeverts[i]->element(j);
+      if ( (elem->type() == "vortexring") ||
+           (elem->type() == "horseshoevortex") )
+      {
+        eidx = elem->idx();
+        vgam += _vorts[eidx-npanels]->circulation();
+        counter += 1.;
+      }
+    }
+    _wakeverts[i]->setData(2, vgam/counter);
   }
 }
 

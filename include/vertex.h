@@ -3,6 +3,7 @@
 #ifndef VERTEX_H
 #define VERTEX_H
 
+#include <vector>
 #include <Eigen/Core>
 
 class Element;
@@ -21,6 +22,11 @@ class Vertex {
     double _x, _y, _z;
     std::vector<Element *> _elements;		// Neighboring elements
     unsigned int _nelems;
+
+    // Vertex data: source strength, doublet strength, circulation strength,
+    //              Vx, Vy, Vz, pressure, cp
+
+    std::vector<double> _data;
 
   public:
 
@@ -50,9 +56,14 @@ class Vertex {
     // Adding or accessing lement references
 
     int addElement ( Element * element ); 
-    Element & element ( unsigned int eidx ) const;
+    Element * element ( unsigned int eidx );
     bool isNeighbor ( const Element * element ) const;
     unsigned int nElems () const;
+
+    // Setting or accessing data. See legend in comments above.
+
+    int setData ( unsigned int idx, const double & var );
+    const double & data ( unsigned int idx ) const;
 };
 
 #endif

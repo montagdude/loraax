@@ -721,15 +721,16 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
         teverts[i].addElement(&_quads[trquad]);
         teverts[i].addElement(&_quads[brquad]);
       }
-      else if (i == _nspan-1)
-      {
-        tlquad = (_nspan-2)*(2*_nchord-2);
-        blquad = (_nspan-1)*(2*_nchord-2) - 1;
-        tiptri = 0; 
-        teverts[i].addElement(&_quads[tlquad]);
-        teverts[i].addElement(&_quads[blquad]);
-        teverts[i].addElement(&_tris[tiptri]);
-      }
+//FIXME: remove this if getting rid of tip panels
+      //else if (i == _nspan-1)
+      //{
+      //  tlquad = (_nspan-2)*(2*_nchord-2);
+      //  blquad = (_nspan-1)*(2*_nchord-2) - 1;
+      //  tiptri = 0; 
+      //  teverts[i].addElement(&_quads[tlquad]);
+      //  teverts[i].addElement(&_quads[blquad]);
+      //  teverts[i].addElement(&_tris[tiptri]);
+      //}
       else
       {
         tlquad = (i-1)*(2*_nchord-2);
@@ -742,14 +743,15 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
         teverts[i].addElement(&_quads[brquad]);
       }
     }
-    else
-    {
-      if (i == _nspan-1)
-      {
-        tipquad = (_nspan-1)*(2*_nchord-2);
-        teverts[i].addElement(&_quads[tipquad]);
-      }
-    }
+//FIXME: remove this if getting rid of tip panels
+    //else
+    //{
+    //  if (i == _nspan-1)
+    //  {
+    //    tipquad = (_nspan-1)*(2*_nchord-2);
+    //    teverts[i].addElement(&_quads[tipquad]);
+    //  }
+    //}
   }
 
   // Initialize wake
@@ -826,33 +828,4 @@ WakeStrip * Wing::wStrip ( unsigned int wsidx )
 #endif
 
   return &_wakestrips[wsidx];
-}
-
-/******************************************************************************/
-//
-// Sets wake circulation
-//
-/******************************************************************************/
-void Wing::setWakeCirculation ()
-{
-  unsigned int i, j, nstrips, nvorts;
-  double gamma;
-
-  nstrips = _wakestrips.size();
-#ifdef DEBUG
-  if (nstrips == 0)
-    print_warning(1, "Wing::setWakeCirculation", "No wake strips present.");
-#endif
-
-#pragma omp parallel for private(i,gamma,nvorts,j)
-  for ( i = 0; i < nstrips; i++ )
-  {
-    gamma = _wakestrips[i].topTEPan()->doubletStrength()
-          - _wakestrips[i].botTEPan()->doubletStrength();
-    nvorts = _wakestrips[i].nVortices();
-    for ( j = 0; j < nvorts; j++ )
-    {
-      _wakestrips[i].vortex(j)->setCirculation(gamma);
-    }
-  }
 }

@@ -24,6 +24,7 @@ Vertex::Vertex ()
   _z = 0.0;
   _nelems = 0;
   _elements.resize(0);
+  _data.resize(8);
 }
 
 /******************************************************************************/
@@ -114,14 +115,14 @@ int Vertex::addElement ( Element * element )
   return 0;
 }
 
-Element & Vertex::element ( unsigned int eidx ) const
+Element * Vertex::element ( unsigned int eidx )
 {
   if (eidx >= _nelems)
   {
     conditional_stop(1, "Vertex::element", "Index out of range.");
   }
 
-  return *_elements[eidx];
+  return _elements[eidx];
 }
 
 bool Vertex::isNeighbor ( const Element * element ) const
@@ -138,3 +139,33 @@ bool Vertex::isNeighbor ( const Element * element ) const
 }
 
 unsigned int Vertex::nElems () const { return _nelems; }
+
+/******************************************************************************/
+//
+// Setting or accessing data. See legend in comments in vertex.h.
+//
+/******************************************************************************/
+int Vertex::setData ( unsigned int idx, const double & var )
+{
+#ifdef DEBUG
+  if (idx >= _data.size())
+  {
+    conditional_stop(1, "Vertex::setData", "Index out of range.");
+    return 1;
+  }
+#endif
+
+  _data[idx] = var;
+
+  return 0;
+}
+
+const double & Vertex::data ( unsigned int idx ) const
+{
+#ifdef DEBUG
+  if (idx >= _data.size())
+    conditional_stop(1, "Vertex::data", "Index out of range.");
+#endif
+
+  return _data[idx];
+}
