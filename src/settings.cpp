@@ -46,7 +46,7 @@ int read_setting ( const XMLElement *elem, const std::string & setting,
   else
   {
     conditional_stop(1, "read_setting",
-                     "No " + setting +" in input file.");
+                     "No " + setting +" in xml element " + elem->Name() + ".");
     return 1;
   }
 
@@ -61,7 +61,7 @@ int read_setting ( const XMLElement *elem, const std::string & setting,
   else
   {
     conditional_stop(1, "read_setting",
-                     "No " + setting +" in input file.");
+                     "No " + setting +" in xml element " + elem->Name() + ".");
     return 1;
   }
 
@@ -76,7 +76,7 @@ int read_setting ( const XMLElement *elem, const std::string & setting,
   else
   {
     conditional_stop(1, "read_setting",
-                     "No " + setting +" in input file.");
+                     "No " + setting +" in xml element " + elem->Name() + ".");
     return 1;
   }
 
@@ -91,7 +91,7 @@ int read_setting ( const XMLElement *elem, const std::string & setting,
   else
   {
     conditional_stop(1, "read_setting",
-                     "No " + setting +" in input file.");
+                     "No " + setting +" in xml element " + elem->Name() + ".");
     return 1;
   }
 
