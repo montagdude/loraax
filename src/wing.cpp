@@ -721,16 +721,16 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
         teverts[i].addElement(&_quads[trquad]);
         teverts[i].addElement(&_quads[brquad]);
       }
+      else if (i == _nspan-1)
+      {
+        tlquad = (_nspan-2)*(2*_nchord-2);
+        blquad = (_nspan-1)*(2*_nchord-2) - 1;
+        tiptri = 0; 
+        teverts[i].addElement(&_quads[tlquad]);
+        teverts[i].addElement(&_quads[blquad]);
 //FIXME: remove this if getting rid of tip panels
-      //else if (i == _nspan-1)
-      //{
-      //  tlquad = (_nspan-2)*(2*_nchord-2);
-      //  blquad = (_nspan-1)*(2*_nchord-2) - 1;
-      //  tiptri = 0; 
-      //  teverts[i].addElement(&_quads[tlquad]);
-      //  teverts[i].addElement(&_quads[blquad]);
       //  teverts[i].addElement(&_tris[tiptri]);
-      //}
+      }
       else
       {
         tlquad = (i-1)*(2*_nchord-2);
