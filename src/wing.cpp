@@ -580,7 +580,8 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 // and next_global_elemidx
 //
 /******************************************************************************/
-void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
+void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
+                          bool include_tips )
 {
   unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad;
   double dx, dy, dz, tegap;
@@ -609,17 +610,19 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
   dz = _sections[_nspan-1].vert(0).z() -
        _sections[_nspan-1].vert(2*_nchord-2).z();
   tegap = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
-//FIXME: the small tri at the leading edge can result in really large doublet
-//strength, oscillating from + to -, along the tip. I'm not sure if these tip
-//panels are really needed. If so, may need to split them along the MCL to
-//improve cell quality.
-  //if (tegap > 1E-12)
-  //  ntri = 1;
-  //else
-  //  ntri = 2;
-  //nquad = (_nspan-1)*(2*_nchord-2) + _nchord-1 - ntri;
-ntri = 0;
-nquad = (_nspan-1)*(2*_nchord-2);
+  if (include_tips)
+  {
+    if (tegap > 1E-12)
+      ntri = 1;
+    else
+      ntri = 2;
+    nquad = (_nspan-1)*(2*_nchord-2) + _nchord-1 - ntri;
+  }
+  else
+  {
+    ntri = 0;
+    nquad = (_nspan-1)*(2*_nchord-2);
+  }
 
   // Create quad panels on wing surface
 
@@ -639,44 +642,47 @@ nquad = (_nspan-1)*(2*_nchord-2);
     }
   }
 
-//  // Create quad and tri panels on wingtip
+  if (include_tips)
+  {
+    // Create quad and tri panels on wingtip
 
-//  _tris.resize(ntri);
-//  tcounter = 0;
-//  if (ntri == 2)
-//  {
-//    _tris[tcounter].setIdx(next_global_elemidx);
-//    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
-//    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
-//    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
-//    tcounter += 1;
-//    next_global_elemidx += 1;
-//  }
-//  else
-//  {
-//    _quads[qcounter].setIdx(next_global_elemidx);
-//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
-//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
-//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(1));
-//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(0));
-//    qcounter += 1;
-//    next_global_elemidx += 1;
-//  }
-//  for ( i = 1; i < _nchord-2; i++ ) 
-//  {
-//    _quads[qcounter].setIdx(next_global_elemidx);
-//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2-i));
-//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3-i));
-//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i+1));
-//    _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i));
-//    qcounter += 1;
-//    next_global_elemidx += 1;
-//  }
-//  _tris[tcounter].setIdx(next_global_elemidx);
-//  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord));
-//  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
-//  _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2));
-//  next_global_elemidx += 1;
+    _tris.resize(ntri);
+    tcounter = 0;
+    if (ntri == 2)
+    {
+      _tris[tcounter].setIdx(next_global_elemidx);
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
+      tcounter += 1;
+      next_global_elemidx += 1;
+    }
+    else
+    {
+      _quads[qcounter].setIdx(next_global_elemidx);
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(1));
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(0));
+      qcounter += 1;
+      next_global_elemidx += 1;
+    }
+    for ( i = 1; i < _nchord-2; i++ ) 
+    {
+      _quads[qcounter].setIdx(next_global_elemidx);
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2-i));
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3-i));
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i+1));
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i));
+      qcounter += 1;
+      next_global_elemidx += 1;
+    }
+    _tris[tcounter].setIdx(next_global_elemidx);
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord));
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2));
+    next_global_elemidx += 1;
+  }
 }
 
 /******************************************************************************/
@@ -684,7 +690,8 @@ nquad = (_nspan-1)*(2*_nchord-2);
 // Sets up wake
 //
 /******************************************************************************/
-void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
+void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
+                       bool include_tips )
 {
   unsigned int i, j, tlquad, blquad, trquad, brquad, tiptri, tipquad, nvorts;
   std::vector<Vertex> teverts;
@@ -728,8 +735,8 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
         tiptri = 0; 
         teverts[i].addElement(&_quads[tlquad]);
         teverts[i].addElement(&_quads[blquad]);
-//FIXME: remove this if getting rid of tip panels
-      //  teverts[i].addElement(&_tris[tiptri]);
+        if (include_tips)
+          teverts[i].addElement(&_tris[tiptri]);
       }
       else
       {
@@ -743,15 +750,14 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
         teverts[i].addElement(&_quads[brquad]);
       }
     }
-//FIXME: remove this if getting rid of tip panels
-    //else
-    //{
-    //  if (i == _nspan-1)
-    //  {
-    //    tipquad = (_nspan-1)*(2*_nchord-2);
-    //    teverts[i].addElement(&_quads[tipquad]);
-    //  }
-    //}
+    else
+    {
+      if ( (i == _nspan-1) && (include_tips) )
+      {
+        tipquad = (_nspan-1)*(2*_nchord-2);
+        teverts[i].addElement(&_quads[tipquad]);
+      }
+    }
   }
 
   // Initialize wake
