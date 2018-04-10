@@ -30,6 +30,7 @@ class Panel: public Element {
                                    // frame and vice versa
     std::vector<double> _xtrans, _ytrans;
                                    // Panel endpoint coordinates in panel frame
+    Eigen::Vector3d _vel;	   // Flow velocity at centroid
 
   public:
 
@@ -50,6 +51,11 @@ class Panel: public Element {
     const double & area () const;
     const Eigen::Vector3d & centroid () const;
     const Eigen::Vector3d & normal () const;
+
+    // Setting and accessing flow velocity
+
+    void setVelocity ( const Eigen::Vector3d & vel );
+    const Eigen::Vector3d & velocity () const;
 
     // Virtual functions implemented in derived classes
     

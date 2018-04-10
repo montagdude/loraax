@@ -14,7 +14,12 @@
 #include "wing.h"
 #include "aircraft.h"
 
+#include <iostream>
+
 using namespace tinyxml2;
+
+//FIXME: make this a function of wingspan?
+const double rcore = 1.E-08;
 
 /******************************************************************************/
 //
@@ -297,6 +302,29 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
   {
     f << std::setprecision(14) << std::setw(25) << std::left
       << _verts[i]->data(1) << std::endl;
+  }
+
+//FIXME: write vertex data, not cell data
+
+  unsigned int npanels = _panels.size();
+  Eigen::Vector3d vel;
+  f << "CELL_DATA " << npanels*2 << std::endl;
+  f << "Vectors velocity double" << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    vel = _panels[i]->velocity();
+    f << std::setprecision(14) << std::setw(25) << std::left << vel(0);
+    f << std::setprecision(14) << std::setw(25) << std::left << vel(1);
+    f << std::setprecision(14) << std::setw(25) << std::left << vel(2)
+      << std::endl;
+  }
+  for ( i = 0; i < npanels; i++ )
+  {
+    vel = _panels[i]->velocity();
+    f << std::setprecision(14) << std::setw(25) << std::left << vel(0);
+    f << std::setprecision(14) << std::setw(25) << std::left << -vel(1);
+    f << std::setprecision(14) << std::setw(25) << std::left << vel(2)
+      << std::endl;
   }
 }
 
@@ -616,6 +644,8 @@ Aircraft::Aircraft ()
   _aic.resize(0,0);
   _mu.resize(0);
   _rhs.resize(0);
+  _sourceic.resize(0);
+  _doubletic.resize(0);
 }
 
 /******************************************************************************/
@@ -1076,11 +1106,8 @@ void Aircraft::constructSystem ()
   int toptepan, bottepan;
   Eigen::Vector3d cen, norm, stripvel;
   WakeStrip * strip;
-  double rcore, stripic; 
+  double stripic; 
   bool onpanel;
-
-//FIXME: make this a function of wingspan?
-  rcore = 1.E-08;
 
   npanels = _panels.size();
 #ifdef DEBUG
@@ -1170,6 +1197,76 @@ void Aircraft::solveSystem () { _mu = _lu.solve(_rhs); }
 //
 /******************************************************************************/
 unsigned int Aircraft::systemSize () const { return _panels.size(); }
+
+/******************************************************************************/
+//
+// Computes velocities at cell centroids and vertices. They are first computed
+// at cell centroids and then interpolated to vertices, because doublet panels
+// are not well behaved at panel edges.
+//
+/******************************************************************************/
+void Aircraft::computeVelocities ()
+{
+  unsigned int i, j, nverts, npanels, nwakeverts, nvorts;
+  bool onpanel;
+  Eigen::Vector3d cen, vel;
+
+  npanels = _panels.size();
+  nvorts = _vorts.size();
+
+  if (_sourceic.size() == 0)
+  {
+    // Compute surface velocity influence matrices first
+//FIXME: this should be done before computing _aic
+
+    _sourceic.resize(npanels);
+    _doubletic.resize(npanels);
+    for ( i = 0; i < npanels; i++ )
+    {
+      _sourceic[i].resize(npanels);
+      _doubletic[i].resize(npanels);
+    }
+
+#pragma omp parallel for private(i,cen,j,onpanel)
+    for ( i = 0; i < npanels; i++ )
+    {
+      cen = _panels[i]->centroid();
+      for ( j = 0; j < npanels; j++ )
+      { 
+        if (i == j)
+          onpanel = true;
+        else
+          onpanel = false;
+        _sourceic[i][j] = _panels[j]->sourceVCoeff(cen(0), cen(1), cen(2),
+                                                   onpanel, "top", true);
+        _doubletic[i][j] = _panels[j]->doubletVCoeff(cen(0), cen(1), cen(2),
+                                                     onpanel, "top", true);
+      }
+    }
+  }
+
+  // Velocity on surface panels
+
+#pragma omp parallel for private(i,cen,vel,j)
+  for ( i = 0; i < npanels; i++ )
+  {
+    cen = _panels[i]->centroid();
+
+    // Velocity made up of freestream, surface, and wake contribution
+ 
+    vel = uinfvec;
+    for ( j = 0; j < npanels; j++ )
+    {
+      vel += _sourceic[i][j]*_panels[j]->sourceStrength()
+          +  _doubletic[i][j]*_panels[j]->doubletStrength();
+    }
+    for ( j = 0; j < nvorts; j++ )
+    {
+      vel += _vorts[j]->inducedVelocity(cen(0), cen(1), cen(2), rcore, true);
+    }
+    _panels[i]->setVelocity(vel);
+  }
+}
 
 /******************************************************************************/
 //

@@ -24,6 +24,7 @@ Panel::Panel ()
   _length = 0.0;
   _area = 0.0;
   _xtrans.resize(0);
+  _vel << 0., 0., 0.;
 } 
 
 /******************************************************************************/
@@ -74,3 +75,11 @@ const Eigen::Vector3d & Panel::centroid () const { return _cen; }
 //
 /******************************************************************************/
 const Eigen::Vector3d & Panel::normal () const { return _norm; }
+
+/******************************************************************************/
+//
+// Set / access flow velocity at centroid
+//
+/******************************************************************************/
+void Panel::setVelocity ( const Eigen::Vector3d & vel ) { _vel = vel; }
+const Eigen::Vector3d & Panel::velocity () const { return _vel; }

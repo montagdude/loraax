@@ -59,6 +59,11 @@ int main (int argc, char* argv[])
   std::cout << "Setting wake circulation ..." << std::endl;
   ac.setWakeCirculation();
 
+  // Compute velocities at points
+
+  std::cout << "Computing velocities ..." << std::endl;
+  ac.computeVelocities();
+
   // Write viz
 
   ac.writeViz(casename);

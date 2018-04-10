@@ -555,6 +555,7 @@ Eigen::Vector3d tri_doublet_velocity (
   double dh0dx, dh1dx, dh2dx;
   double dh0dy, dh1dy, dh2dy;
   double den0, den1, den2, den3, den4, den5;
+  double term1, term2, term3, term4, term5, term6;
   Eigen::Vector3d velpf;
 
   // Geometric quantities needed
@@ -653,10 +654,17 @@ Eigen::Vector3d tri_doublet_velocity (
   {
     velpf(0) = 0.0;
     velpf(1) = 0.0;
+
+    term1 = m01*e0 - h0;
+    term2 = m01*e1 - h1;
+    term3 = m12*e1 - h1;
+    term4 = m12*e2 - h2;
+    term5 = m20*e2 - h2;
+    term6 = m20*e0 - h0;
     velpf(2) = 1. / (4.*M_PI) * (
-               -r0/(m01*e0 - h0) + r1/(m01*e1 - h1) 
-             -  r1/(m12*e1 - h1) + r2/(m12*e2 - h2) 
-             -  r2/(m20*e2 - h2) + r0/(m20*e0 - h0) );
+               -r0/term1 + r1/term2 
+             -  r1/term3 + r2/term4
+             -  r2/term5 + r0/term6 );
   }
 
   return velpf;
@@ -687,6 +695,7 @@ Eigen::Vector3d quad_doublet_velocity (
   double dh0dx, dh1dx, dh2dx, dh3dx;
   double dh0dy, dh1dy, dh2dy, dh3dy;
   double den0, den1, den2, den3, den4, den5, den6, den7;
+  double term1, term2, term3, term4, term5, term6, term7, term8;
   Eigen::Vector3d velpf;
 
   // Geometric quantities needed
@@ -806,11 +815,20 @@ Eigen::Vector3d quad_doublet_velocity (
   {
     velpf(0) = 0.0;
     velpf(1) = 0.0;
+
+    term1 = m01*e0 - h0;
+    term2 = m01*e1 - h1;
+    term3 = m12*e1 - h1;
+    term4 = m12*e2 - h2;
+    term5 = m23*e2 - h2; 
+    term6 = m23*e3 - h3;
+    term7 = m30*e3 - h3;
+    term8 = m30*e0 - h0;
     velpf(2) = 1. / (4.*M_PI) * (
-               -r0/(m01*e0 - h0) + r1/(m01*e1 - h1) 
-             -  r1/(m12*e1 - h1) + r2/(m12*e2 - h2) 
-             -  r2/(m23*e2 - h2) + r3/(m23*e3 - h3)
-             -  r3/(m30*e3 - h3) + r0/(m30*e0 - h0) );
+               -r0/term1 + r1/term2 
+             -  r1/term3 + r2/term4 
+             -  r2/term5 + r3/term6
+             -  r3/term7 + r0/term8 );
   }
 
   return velpf;

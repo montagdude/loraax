@@ -40,6 +40,9 @@ class Aircraft {
     Eigen::PartialPivLU<Eigen::MatrixXd> _lu;
 					// LU factorization of AIC matrix
 
+    std::vector<std::vector<Eigen::Vector3d> > _sourceic, _doubletic;
+					// Surface velocity influence coeffs
+
     // Set up pointers to vertices, panels, and wake elements
 
     void setGeometryPointers ();
@@ -77,6 +80,10 @@ class Aircraft {
     // Gives size of system of equations (= number of panels)
 
     unsigned int systemSize () const;
+
+    // Computes point velocities
+
+    void computeVelocities ();
 
     // Write VTK viz
 
