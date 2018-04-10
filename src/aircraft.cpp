@@ -849,6 +849,13 @@ int Aircraft::readXML ( const std::string & geom_file )
           return 2;
         }
       }
+      else
+      {
+        conditional_stop(1, "Aircraft::readXML",
+                         "Airfoil source must be 4 digit, 5 digit, or file.");
+        return 2;
+      }
+
       // Set up airfoil spline data and smooth paneling
 
       newfoil.ccwOrderCoordinates();
