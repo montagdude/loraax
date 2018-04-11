@@ -587,7 +587,10 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
                           bool include_tips )
 {
   unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, ntipverts, ioff;
+  unsigned int tlquad, trquad, blquad, brquad;
+  unsigned int tiptri1, tiptri2, tipquad1, tipquad2;
   double dx, dy, dz, tegap, x, y, z;
+  Vertex * toptevert, * bottevert;
 
   // Set vertex pointers on surface
 
@@ -742,6 +745,56 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
     _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2));
     next_global_elemidx += 1;
   }
+
+  // "Connect" TE vertices to TE panels on opposite side, even if there is a gap
+  
+  for ( i = 0; i < _nspan; i++ )
+  {
+    toptevert = &_sections[i].vert(0);
+    bottevert = &_sections[i].vert(2*_nchord-2);
+    if (i == 0)
+    {
+      trquad = 0;
+      brquad = 2*_nchord-3;
+      toptevert->addElement(&_quads[brquad]);
+      bottevert->addElement(&_quads[trquad]);
+    }
+    else if (i == _nspan-1)
+    {
+      tlquad = (_nspan-2)*(2*_nchord-2);
+      blquad = (_nspan-1)*(2*_nchord-2) - 1;
+      toptevert->addElement(&_quads[blquad]);
+      bottevert->addElement(&_quads[tlquad]);
+      if (include_tips)
+      {
+        if (tegap <= 1E-12)
+        {
+          tiptri1 = 0;
+          tiptri2 = 1;
+          toptevert->addElement(&_tris[tiptri1]);
+          bottevert->addElement(&_tris[tiptri2]);
+        }
+        else
+        {
+          tipquad1 = (_nspan-1)*(2*_nchord-2);
+          tipquad2 = (_nspan-1)*(2*_nchord-2)+1;
+          toptevert->addElement(&_quads[tipquad1]);
+          bottevert->addElement(&_quads[tipquad2]);
+        }
+      }
+    }
+    else
+    {
+      tlquad = (i-1)*(2*_nchord-2);
+      blquad = i*(2*_nchord-2) - 1;
+      trquad = i*(2*_nchord-2);
+      brquad = (i+1)*(2*_nchord-2) - 1; 
+      toptevert->addElement(&_quads[blquad]);
+      toptevert->addElement(&_quads[brquad]);
+      bottevert->addElement(&_quads[tlquad]);
+      bottevert->addElement(&_quads[trquad]);
+    }
+  }
 }
 
 /******************************************************************************/
@@ -777,52 +830,49 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
     tegap = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
     teverts[i].setCoordinates(xm, ym, zm);
 
-    // Identify whether it is on trailing edge panels
+    // "Connect" TE panels to wake vertices, even if there is a gap
 
-    if (tegap < 1E-12)
+    if (i == 0)
     {
-      if (i == 0)
+      trquad = 0;
+      brquad = 2*_nchord-3;
+      teverts[i].addElement(&_quads[trquad]);
+      teverts[i].addElement(&_quads[brquad]);
+    }
+    else if (i == _nspan-1)
+    {
+      tlquad = (_nspan-2)*(2*_nchord-2);
+      blquad = (_nspan-1)*(2*_nchord-2) - 1;
+      teverts[i].addElement(&_quads[tlquad]);
+      teverts[i].addElement(&_quads[blquad]);
+      if (include_tips)
       {
-        trquad = 0;
-        brquad = 2*_nchord-3;
-        teverts[i].addElement(&_quads[trquad]);
-        teverts[i].addElement(&_quads[brquad]);
-      }
-      else if (i == _nspan-1)
-      {
-        tlquad = (_nspan-2)*(2*_nchord-2);
-        blquad = (_nspan-1)*(2*_nchord-2) - 1;
-        teverts[i].addElement(&_quads[tlquad]);
-        teverts[i].addElement(&_quads[blquad]);
-        if (include_tips)
+        if (tegap <= 1E-12)
         {
           tiptri1 = 0;
           tiptri2 = 1;
           teverts[i].addElement(&_tris[tiptri1]);
           teverts[i].addElement(&_tris[tiptri2]);
         }
-      }
-      else
-      {
-        tlquad = (i-1)*(2*_nchord-2);
-        blquad = i*(2*_nchord-2) - 1;
-        trquad = i*(2*_nchord-2);
-        brquad = (i+1)*(2*_nchord-2) - 1;
-        teverts[i].addElement(&_quads[tlquad]);
-        teverts[i].addElement(&_quads[blquad]);
-        teverts[i].addElement(&_quads[trquad]);
-        teverts[i].addElement(&_quads[brquad]);
-      }
-    }
-    else
-    {
-      if ( (i == _nspan-1) && (include_tips) )
-      {
+        else
+        {
         tipquad1 = (_nspan-1)*(2*_nchord-2);
         tipquad2 = (_nspan-1)*(2*_nchord-2)+1;
         teverts[i].addElement(&_quads[tipquad1]);
         teverts[i].addElement(&_quads[tipquad2]);
+        }
       }
+    }
+    else
+    {
+      tlquad = (i-1)*(2*_nchord-2);
+      blquad = i*(2*_nchord-2) - 1;
+      trquad = i*(2*_nchord-2);
+      brquad = (i+1)*(2*_nchord-2) - 1;
+      teverts[i].addElement(&_quads[tlquad]);
+      teverts[i].addElement(&_quads[blquad]);
+      teverts[i].addElement(&_quads[trquad]);
+      teverts[i].addElement(&_quads[brquad]);
     }
   }
 
