@@ -23,8 +23,7 @@ class Vertex {
     std::vector<Panel *> _panels;		// Neighboring panels
     unsigned int _npanels;
 
-    // Vertex data: source strength, doublet strength, circulation strength,
-    //              Vx, Vy, Vz, pressure, cp
+    // Vertex data: source strength, doublet strength, Vx, Vy, Vz, pressure, cp
 
     std::vector<double> _data;
 

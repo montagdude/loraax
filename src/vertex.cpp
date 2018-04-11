@@ -27,8 +27,8 @@ Vertex::Vertex ()
   _z = 0.0;
   _npanels = 0;
   _panels.resize(0);
-  _data.resize(8);
-  for ( i = 0; i < 8; i++ ) { _data[i] = 0.; }
+  _data.resize(7);
+  for ( i = 0; i < 7; i++ ) { _data[i] = 0.; }
 }
 
 /******************************************************************************/
@@ -192,9 +192,9 @@ void Vertex::computeSurfaceData ()
 
   _data[0] = 0.;
   _data[1] = 0.;
+  _data[2] = 0.;
   _data[3] = 0.;
   _data[4] = 0.;
-  _data[5] = 0.;
   weightsum = 0.;
   for ( i = 0; i < _npanels; i++ )
   {
@@ -205,14 +205,14 @@ void Vertex::computeSurfaceData ()
     dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
     _data[0] += _panels[i]->sourceStrength()/dist;
     _data[1] += _panels[i]->doubletStrength()/dist;
-    _data[3] += _panels[i]->velocity()(0)/dist;
-    _data[4] += _panels[i]->velocity()(1)/dist;
-    _data[5] += _panels[i]->velocity()(2)/dist;
+    _data[2] += _panels[i]->velocity()(0)/dist;
+    _data[3] += _panels[i]->velocity()(1)/dist;
+    _data[4] += _panels[i]->velocity()(2)/dist;
     weightsum += 1./dist;
   }
   _data[0] /= weightsum;
   _data[1] /= weightsum;
+  _data[2] /= weightsum;
   _data[3] /= weightsum;
   _data[4] /= weightsum;
-  _data[5] /= weightsum;
 }

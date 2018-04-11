@@ -265,20 +265,20 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
   for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(2);
+    f << std::setprecision(14) << std::setw(25) << std::left
       << _verts[i]->data(3);
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(4);
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(5) << std::endl;
+      << _verts[i]->data(4) << std::endl;
   }
   for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(3);
+      << _verts[i]->data(2);
     f << std::setprecision(14) << std::setw(25) << std::left
-      << -_verts[i]->data(4);
+      << -_verts[i]->data(3);
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(5) << std::endl;
+      << _verts[i]->data(4) << std::endl;
   }
 }
 
@@ -382,7 +382,7 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
       f << 4 << std::endl;
   }
 
-  // Wake data at vertices
+  // Wake data at elements
 
   writeWakeData(f);
 
@@ -398,24 +398,24 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
 /******************************************************************************/
 void Aircraft::writeWakeData ( std::ofstream & f ) const
 {
-  unsigned int i, nverts;
+  unsigned int i, nvorts;
 
-  nverts = _wakeverts.size();
+  nvorts = _vorts.size();
   
-  // Vertex data (incl. mirror vertices)
+  // Element data (incl. mirror elements)
 
-  f << "POINT_DATA " << nverts*2 << std::endl;
+  f << "CELL_DATA " << nvorts*2 << std::endl;
   f << "SCALARS circulation double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
+  for ( i = 0; i < nvorts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->data(2) << std::endl;
+      << _vorts[i]->circulation() << std::endl;
   }
-  for ( i = 0; i < nverts; i++ )
+  for ( i = 0; i < nvorts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->data(2) << std::endl;
+      << _vorts[i]->circulation() << std::endl;
   }
 }
 
