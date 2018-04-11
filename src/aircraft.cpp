@@ -232,50 +232,9 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
 
   nverts = _verts.size();
   
-  // Vertex coordinates (incl. mirror panels)
-
-  f << "POINT_DATA " << nverts*2 << std::endl;
-  f << "SCALARS x double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->x() << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->x() << std::endl;
-  }
-
-  f << "SCALARS y double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->y() << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << -_verts[i]->y() << std::endl;
-  }
-
-  f << "SCALARS z double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->z() << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->z() << std::endl;
-  }
-
   // Vertex data (incl. mirror panels)
 
+  f << "POINT_DATA " << nverts*2 << std::endl;
   f << "SCALARS source_strength double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
   for ( i = 0; i < nverts; i++ )
@@ -446,50 +405,9 @@ void Aircraft::writeWakeData ( std::ofstream & f ) const
 
   nverts = _wakeverts.size();
   
-  // Vertex coordinates (incl. mirror vertices)
-
-  f << "POINT_DATA " << nverts*2 << std::endl;
-  f << "SCALARS x double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->x() << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->x() << std::endl;
-  }
-
-  f << "SCALARS y double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->y() << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << -_wakeverts[i]->y() << std::endl;
-  }
-
-  f << "SCALARS z double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->z() << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->z() << std::endl;
-  }
-
   // Vertex data (incl. mirror vertices)
 
+  f << "POINT_DATA " << nverts*2 << std::endl;
   f << "SCALARS circulation double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
   for ( i = 0; i < nverts; i++ )
