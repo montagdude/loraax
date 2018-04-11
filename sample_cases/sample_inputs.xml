@@ -1,9 +1,9 @@
 <Main>
 <!-- Case name -->
-  <CaseName>wortmann_ar4</CaseName>
+  <CaseName>wonky</CaseName>
 
 <!-- Aircraft definition. -->
-  <GeometryFile>wortmann_ar4.xml</GeometryFile>
+  <GeometryFile>wonky_aircraft.xml</GeometryFile>
 
 <!-- Freestream reference conditions. Freestream speed must be given in units of
      length/sec, where length is the length unit inherent in your aircraft
@@ -27,7 +27,7 @@
        density = 
        viscosity = 
 -->
-  <FreestreamSpeed>1.0</FreestreamSpeed>
+  <FreestreamSpeed>21.9</FreestreamSpeed>
   <FreestreamDensity>1.225</FreestreamDensity>
   <FreestreamViscosity>1.81e-05</FreestreamViscosity>
 
@@ -36,11 +36,11 @@
 
 <!-- Time step size, in seconds, for wake rollup and iterative viscous -
      inviscid coupling. -->
-  <TimeStep>0.2</TimeStep>
+  <TimeStep>0.1</TimeStep>
 
 <!-- The wake extends to infinity, but this length will roll up with the local
      flow velocity. -->
-  <WakeLength>7</WakeLength>
+  <WakeLength>30</WakeLength>
 
 <!-- Whether to run Xfoil for a coupled viscous solution. -->
   <Viscous>true</Viscous>

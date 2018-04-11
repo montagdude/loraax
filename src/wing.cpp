@@ -586,10 +586,10 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
                           bool include_tips )
 {
-  unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, ntipverts, ioff;
+  unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, ntipverts;
   unsigned int tlquad, trquad, blquad, brquad;
-  unsigned int tiptri1, tiptri2, tipquad1, tipquad2;
-  double dx, dy, dz, tegap, x, y, z;
+  unsigned int tiptri1, tiptri2;
+  double x, y, z;
   Vertex * toptevert, * bottevert;
 
   // Set vertex pointers on surface
@@ -609,25 +609,10 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
 
   // Determine number of quad and tri panels on surface
 
-  dx = _sections[_nspan-1].vert(0).x() -
-       _sections[_nspan-1].vert(2*_nchord-2).x();
-  dy = _sections[_nspan-1].vert(0).y() -
-       _sections[_nspan-1].vert(2*_nchord-2).y();
-  dz = _sections[_nspan-1].vert(0).z() -
-       _sections[_nspan-1].vert(2*_nchord-2).z();
-  tegap = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
   if (include_tips)
   {
-    if (tegap > 1E-12)
-    {
-      ntri = 2;
-      ntipverts = _nchord-1;
-    }
-    else
-    {
-      ntri = 4;
-      ntipverts = _nchord-2;
-    }
+    ntri = 4;
+    ntipverts = _nchord-2;
     _tipverts.resize(ntipverts);
     nquad = (_nspan-1)*(2*_nchord-2) + 2*(_nchord-1) - ntri;
   }
@@ -659,11 +644,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
   {
     // Create tip vertices along mean camber line
 
-    if (tegap > 1E-12)
-      ioff = 0;
-    else
-      ioff = 1;
-    for ( i = ioff; i < _nchord-1; i++ )
+    for ( i = 1; i < _nchord-1; i++ )
     { 
       x = 0.5*(_sections[_nspan-1].vert(i).x() +
                _sections[_nspan-1].vert(2*_nchord-2-i).x());
@@ -671,8 +652,8 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
                _sections[_nspan-1].vert(2*_nchord-2-i).y());
       z = 0.5*(_sections[_nspan-1].vert(i).z() +
                _sections[_nspan-1].vert(2*_nchord-2-i).z());
-      _tipverts[i-ioff].setIdx(next_global_vertidx);
-      _tipverts[i-ioff].setCoordinates(x, y, z);
+      _tipverts[i-1].setIdx(next_global_vertidx);
+      _tipverts[i-1].setCoordinates(x, y, z);
       next_global_vertidx += 1;
     }
 
@@ -680,58 +661,40 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
 
     _tris.resize(ntri);
     tcounter = 0;
-    if (tegap <= 1E-12)
-    {
-      _tris[tcounter].setIdx(next_global_elemidx);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
-      _tris[tcounter].addVertex(&_tipverts[0]);
-      tcounter += 1;
-      next_global_elemidx += 1;
 
-      _tris[tcounter].setIdx(next_global_elemidx);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
-      _tris[tcounter].addVertex(&_tipverts[0]);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
-      tcounter += 1;
-      next_global_elemidx += 1;
-    }
-    else
-    {
-      _quads[qcounter].setIdx(next_global_elemidx);
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
-      _quads[qcounter].addVertex(&_tipverts[1]);
-      _quads[qcounter].addVertex(&_tipverts[0]);
-      qcounter += 1;
-      next_global_elemidx += 1;
+    _tris[tcounter].setIdx(next_global_elemidx);
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+    _tris[tcounter].addVertex(&_tipverts[0]);
+    tcounter += 1;
+    next_global_elemidx += 1;
 
-      _quads[qcounter].setIdx(next_global_elemidx);
-      _quads[qcounter].addVertex(&_tipverts[0]);
-      _quads[qcounter].addVertex(&_tipverts[1]);
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(1));
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(0));
-      qcounter += 1;
-      next_global_elemidx += 1;
-    }
+    _tris[tcounter].setIdx(next_global_elemidx);
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
+    _tris[tcounter].addVertex(&_tipverts[0]);
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
+    tcounter += 1;
+    next_global_elemidx += 1;
+
     for ( i = 1; i < _nchord-2; i++ ) 
     {
       _quads[qcounter].setIdx(next_global_elemidx);
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2-i));
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3-i));
-      _quads[qcounter].addVertex(&_tipverts[i+1-ioff]);
-      _quads[qcounter].addVertex(&_tipverts[i-ioff]);
+      _quads[qcounter].addVertex(&_tipverts[i]);
+      _quads[qcounter].addVertex(&_tipverts[i-1]);
       qcounter += 1;
       next_global_elemidx += 1;
 
       _quads[qcounter].setIdx(next_global_elemidx);
-      _quads[qcounter].addVertex(&_tipverts[i-ioff]);
-      _quads[qcounter].addVertex(&_tipverts[i+1-ioff]);
+      _quads[qcounter].addVertex(&_tipverts[i-1]);
+      _quads[qcounter].addVertex(&_tipverts[i+1-1]);
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i+1));
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i));
       qcounter += 1;
       next_global_elemidx += 1;
     }
+
     _tris[tcounter].setIdx(next_global_elemidx);
     _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord));
     _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
@@ -746,7 +709,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
     next_global_elemidx += 1;
   }
 
-  // "Connect" TE vertices to TE panels on opposite side, even if there is a gap
+  // "Connect" TE vertices to TE panels on opposite side
   
   for ( i = 0; i < _nspan; i++ )
   {
@@ -767,20 +730,10 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
       bottevert->addPanel(&_quads[tlquad]);
       if (include_tips)
       {
-        if (tegap <= 1E-12)
-        {
-          tiptri1 = 0;
-          tiptri2 = 1;
-          toptevert->addPanel(&_tris[tiptri1]);
-          bottevert->addPanel(&_tris[tiptri2]);
-        }
-        else
-        {
-          tipquad1 = (_nspan-1)*(2*_nchord-2);
-          tipquad2 = (_nspan-1)*(2*_nchord-2)+1;
-          toptevert->addPanel(&_quads[tipquad1]);
-          bottevert->addPanel(&_quads[tipquad2]);
-        }
+        tiptri1 = 0;
+        tiptri2 = 1;
+        toptevert->addPanel(&_tris[tiptri1]);
+        bottevert->addPanel(&_tris[tiptri2]);
       }
     }
     else
@@ -806,9 +759,9 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
                        bool include_tips )
 {
   unsigned int i, j, tlquad, blquad, trquad, brquad;
-  unsigned int tiptri1, tiptri2, tipquad1, tipquad2, nvorts;
+  unsigned int tiptri1, tiptri2, nvorts;
   std::vector<Vertex> teverts;
-  double xt, yt, zt, xb, yb, zb, xm, ym, zm, dx, dy, dz, tegap;
+  double xt, yt, zt;
 
   // Create vertices along trailing edge
 
@@ -818,19 +771,9 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
     xt = _sections[i].vert(0).x();
     yt = _sections[i].vert(0).y();
     zt = _sections[i].vert(0).z(); 
-    xb = _sections[i].vert(2*_nchord-2).x();
-    yb = _sections[i].vert(2*_nchord-2).y();
-    zb = _sections[i].vert(2*_nchord-2).z(); 
-    xm = 0.5*(xt+xb);
-    ym = 0.5*(yt+yb);
-    zm = 0.5*(zt+zb);
-    dx = xt - xb;
-    dy = yt - yb;
-    dz = zt - zb;
-    tegap = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
-    teverts[i].setCoordinates(xm, ym, zm);
+    teverts[i].setCoordinates(xt, yt, zt);
 
-    // "Connect" TE panels to wake vertices, even if there is a gap
+    // "Connect" TE panels to wake vertices
 
     if (i == 0)
     {
@@ -847,20 +790,10 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
       teverts[i].addPanel(&_quads[blquad]);
       if (include_tips)
       {
-        if (tegap <= 1E-12)
-        {
-          tiptri1 = 0;
-          tiptri2 = 1;
-          teverts[i].addPanel(&_tris[tiptri1]);
-          teverts[i].addPanel(&_tris[tiptri2]);
-        }
-        else
-        {
-        tipquad1 = (_nspan-1)*(2*_nchord-2);
-        tipquad2 = (_nspan-1)*(2*_nchord-2)+1;
-        teverts[i].addPanel(&_quads[tipquad1]);
-        teverts[i].addPanel(&_quads[tipquad2]);
-        }
+        tiptri1 = 0;
+        tiptri2 = 1;
+        teverts[i].addPanel(&_tris[tiptri1]);
+        teverts[i].addPanel(&_tris[tiptri2]);
       }
     }
     else

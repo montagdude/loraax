@@ -83,6 +83,7 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
 {
   double slen, sle, unisp, lesp, tesp;
   double a4top, a5top, a4bot, a5bot;
+  double zte;
   std::vector<double> sv;
   std::vector<double> xf, zf;			// Vertices in foil coordinates
   unsigned int i;
@@ -138,6 +139,12 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   {
     _foil.splineInterp(sv[i], xf[i], zf[i]);
   }
+
+  // Close trailing edge
+
+  zte = 0.5*(zf[0] + zf[_nverts-1]);
+  zf[0] = zte;
+  zf[_nverts-1] = zte; 
 
   // Transform to section coordinates
 
