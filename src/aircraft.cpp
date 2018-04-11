@@ -261,27 +261,24 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
       << _verts[i]->data(1) << std::endl;
   }
 
-//FIXME: write vertex data, not cell data
-
-  unsigned int npanels = _panels.size();
-  Eigen::Vector3d vel;
-  f << "CELL_DATA " << npanels*2 << std::endl;
   f << "Vectors velocity double" << std::endl;
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < nverts; i++ )
   {
-    vel = _panels[i]->velocity();
-    f << std::setprecision(14) << std::setw(25) << std::left << vel(0);
-    f << std::setprecision(14) << std::setw(25) << std::left << vel(1);
-    f << std::setprecision(14) << std::setw(25) << std::left << vel(2)
-      << std::endl;
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(3);
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(4);
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(5) << std::endl;
   }
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < nverts; i++ )
   {
-    vel = _panels[i]->velocity();
-    f << std::setprecision(14) << std::setw(25) << std::left << vel(0);
-    f << std::setprecision(14) << std::setw(25) << std::left << -vel(1);
-    f << std::setprecision(14) << std::setw(25) << std::left << vel(2)
-      << std::endl;
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(3);
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << -_verts[i]->data(4);
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(5) << std::endl;
   }
 }
 
@@ -850,10 +847,8 @@ int Aircraft::readXML ( const std::string & geom_file )
 /******************************************************************************/
 void Aircraft::setSourceStrengths ()
 {
-  unsigned int i, j, npanels, nverts, nelems, eidx;
-  double vsig, counter;
+  unsigned int i, j, npanels;
   Eigen::Vector3d norm;
-  Element *elem;
 
   npanels = _panels.size();
 #ifdef DEBUG
@@ -867,33 +862,6 @@ void Aircraft::setSourceStrengths ()
     norm = _panels[i]->normal();
     _panels[i]->setSourceStrength(-uinfvec.transpose() * norm);
   }
-
-  // Interpolate to vertices
-
-  nverts = _verts.size();
-#ifdef DEBUG
-  if (nverts == 0)
-    conditional_stop(1, "Aircraft::setSourceStrengths", "No vertices exist.");
-#endif
-
-#pragma omp parallel for private(i,nelems,vsig,counter,j,elem,eidx)
-  for ( i = 0; i < nverts; i++ )
-  { 
-    nelems = _verts[i]->nElems();
-    vsig = 0.;
-    counter = 0.;
-    for ( j = 0; j < nelems; j++ )
-    {
-      elem = _verts[i]->element(j);
-      if ( (elem->type() == "quadpanel") || (elem->type() == "tripanel") )
-      {
-        eidx = elem->idx();
-        vsig += _panels[eidx]->sourceStrength();
-        counter += 1.;
-      }
-    }
-    _verts[i]->setData(0, vsig/counter);
-  }
 }
 
 /******************************************************************************/
@@ -903,9 +871,7 @@ void Aircraft::setSourceStrengths ()
 /******************************************************************************/
 void Aircraft::setDoubletStrengths ()
 {
-  unsigned int i, j, npanels, nverts, nelems, eidx;
-  double vmu, counter;
-  Element *elem;
+  unsigned int i, j, npanels;
 
   npanels = _panels.size();
 #ifdef DEBUG
@@ -921,33 +887,6 @@ void Aircraft::setDoubletStrengths ()
   {
     _panels[i]->setDoubletStrength(_mu(i));
   }
-
-  // Interpolate to vertices
-
-  nverts = _verts.size();
-#ifdef DEBUG
-  if (nverts == 0)
-    conditional_stop(1, "Aircraft::setDoubletStrengths", "No vertices exist.");
-#endif
-
-#pragma omp parallel for private(i,nelems,vmu,counter,j,elem,eidx)
-  for ( i = 0; i < nverts; i++ )
-  { 
-    nelems = _verts[i]->nElems();
-    vmu = 0.;
-    counter = 0.;
-    for ( j = 0; j < nelems; j++ )
-    {
-      elem = _verts[i]->element(j);
-      if ( (elem->type() == "quadpanel") || (elem->type() == "tripanel") )
-      {
-        eidx = elem->idx();
-        vmu += _panels[eidx]->doubletStrength();
-        counter += 1.;
-      }
-    }
-    _verts[i]->setData(1, vmu/counter);
-  }
 }
 
 /******************************************************************************/
@@ -957,10 +896,9 @@ void Aircraft::setDoubletStrengths ()
 /******************************************************************************/
 void Aircraft::setWakeCirculation ()
 {
-  unsigned int i, j, k, nwings, nstrips, nvorts, nverts, npanels, nelems, eidx;
-  double gamma, vgam, counter;
+  unsigned int i, j, k, nwings, nstrips, nvorts;
+  double gamma; 
   WakeStrip *strip;
-  Element *elem;
 
   nwings = _wings.size();
   for ( i = 0; i < nwings; i++ )
@@ -978,36 +916,6 @@ void Aircraft::setWakeCirculation ()
         strip->vortex(k)->setCirculation(gamma);
       }
     }
-  }
-
-  // Interpolate to wake vertices
-
-  nverts = _wakeverts.size(); 
-#ifdef DEBUG
-  if (nverts == 0)
-    conditional_stop(1, "Aircraft::setWakeCirculation",
-                     "No wake vertices exist.");
-#endif
-  npanels = _panels.size();
-
-#pragma omp parallel for private(i,nelems,vgam,counter,j,elem,eidx)
-  for ( i = 0; i < nverts; i++ )
-  {
-    nelems = _wakeverts[i]->nElems();
-    vgam = 0.;
-    counter = 0.;
-    for ( j = 0; j < nelems; j++ )
-    {
-      elem = _wakeverts[i]->element(j);
-      if ( (elem->type() == "vortexring") ||
-           (elem->type() == "horseshoevortex") )
-      {
-        eidx = elem->idx();
-        vgam += _vorts[eidx-npanels]->circulation();
-        counter += 1.;
-      }
-    }
-    _wakeverts[i]->setData(2, vgam/counter);
   }
 }
 
@@ -1116,9 +1024,7 @@ unsigned int Aircraft::systemSize () const { return _panels.size(); }
 
 /******************************************************************************/
 //
-// Computes velocities at cell centroids and vertices. They are first computed
-// at cell centroids and then interpolated to vertices, because doublet panels
-// are not well behaved at panel edges.
+// Computes velocities at cell centroids
 //
 /******************************************************************************/
 void Aircraft::computeVelocities ()
@@ -1181,6 +1087,23 @@ void Aircraft::computeVelocities ()
       vel += _vorts[j]->inducedVelocity(cen(0), cen(1), cen(2), rcore, true);
     }
     _panels[i]->setVelocity(vel);
+  }
+}
+
+/******************************************************************************/
+//
+// Computes vertex quantities from solution
+//
+/******************************************************************************/
+void Aircraft::computeVertexData ()
+{
+  unsigned int i, nverts;
+
+  nverts = _verts.size();
+#pragma omp parallel for private(i)
+  for ( i = 0; i < nverts; i++ )
+  {
+    _verts[i]->computeSurfaceData();
   }
 }
 

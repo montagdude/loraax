@@ -1,13 +1,14 @@
 #include <vector>
 #include <Eigen/Core>
+#include <cmath>
 #include "util.h"
-#include "element.h"
+#include "panel.h"
 #include "vertex.h"
 
 /******************************************************************************/
 //
 // Vertex class. Defines x, y, z coordinates in space and stores references to
-// neighboring elements.
+// neighboring panels.
 // 
 /******************************************************************************/
 
@@ -18,13 +19,16 @@
 /******************************************************************************/
 Vertex::Vertex ()
 {
+  unsigned int i;
+
   _idx = -1;
   _x = 0.0;
   _y = 0.0;
   _z = 0.0;
-  _nelems = 0;
-  _elements.resize(0);
+  _npanels = 0;
+  _panels.resize(0);
   _data.resize(8);
+  for ( i = 0; i < 8; i++ ) { _data[i] = 0.; }
 }
 
 /******************************************************************************/
@@ -87,58 +91,58 @@ void Vertex::rotate ( const Eigen::Matrix3d & transform )
 
 /******************************************************************************/
 //
-// Adding or accessing element references
+// Adding or accessing panel references
 //
 /******************************************************************************/
-int Vertex::addElement ( Element * element )
+int Vertex::addPanel ( Panel * panel )
 {
   unsigned int i;
 
-  // Only add if the element is not already in the list
+  // Only add if the panel is not already in the list
 
-  for ( i = 0; i < _nelems; i++ )
+  for ( i = 0; i < _npanels; i++ )
   {
-    if (_elements[i]->idx() == element->idx())
+    if (_panels[i]->idx() == panel->idx())
     {
 #ifdef DEBUG
-      print_warning("Vertex::addElement", "Element " + 
-                    int2string(element->idx()) +
+      print_warning("Vertex::addPanel", "Panel " + 
+                    int2string(panel->idx()) +
                     std::string(" already in list."));
 #endif
       return 1;
     }
   }
 
-  _nelems += 1;
-  _elements.push_back(element);
+  _npanels += 1;
+  _panels.push_back(panel);
 
   return 0;
 }
 
-Element * Vertex::element ( unsigned int eidx )
+Panel * Vertex::panel ( unsigned int pidx )
 {
-  if (eidx >= _nelems)
+  if (pidx >= _npanels)
   {
-    conditional_stop(1, "Vertex::element", "Index out of range.");
+    conditional_stop(1, "Vertex::panel", "Index out of range.");
   }
 
-  return _elements[eidx];
+  return _panels[pidx];
 }
 
-bool Vertex::isNeighbor ( const Element * element ) const
+bool Vertex::isNeighbor ( const Panel * panel ) const
 {
   unsigned int i;
 
-  for ( i = 0; i < _nelems; i++ )
+  for ( i = 0; i < _npanels; i++ )
   {
-    if (_elements[i]->idx() == element->idx())
+    if (_panels[i]->idx() == panel->idx())
       return true;
   }
 
   return false;
 }
 
-unsigned int Vertex::nElems () const { return _nelems; }
+unsigned int Vertex::nPanels () const { return _npanels; }
 
 /******************************************************************************/
 //
@@ -168,4 +172,47 @@ const double & Vertex::data ( unsigned int idx ) const
 #endif
 
   return _data[idx];
+}
+
+/******************************************************************************/
+//
+// Computes data for surface vertices. Source strength, doublet strength, and
+// velocity are interpolated from panels. Pressure and cp are computed from
+// velocity using Bernoulli equation and compressibility corrections.
+//
+/******************************************************************************/
+void Vertex::computeSurfaceData ()
+{
+  unsigned int i;
+  double dx, dy, dz, dist, weightsum;
+  Eigen::Vector3d cen;
+
+  // Compute source strength, doublet strength, and velocity by interpolation
+  // from panels
+
+  _data[0] = 0.;
+  _data[1] = 0.;
+  _data[3] = 0.;
+  _data[4] = 0.;
+  _data[5] = 0.;
+  weightsum = 0.;
+  for ( i = 0; i < _npanels; i++ )
+  {
+    cen = _panels[i]->centroid();
+    dx = _x - cen(0);
+    dy = _y - cen(1);
+    dz = _z - cen(2);
+    dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
+    _data[0] += _panels[i]->sourceStrength()/dist;
+    _data[1] += _panels[i]->doubletStrength()/dist;
+    _data[3] += _panels[i]->velocity()(0)/dist;
+    _data[4] += _panels[i]->velocity()(1)/dist;
+    _data[5] += _panels[i]->velocity()(2)/dist;
+    weightsum += 1./dist;
+  }
+  _data[0] /= weightsum;
+  _data[1] /= weightsum;
+  _data[3] /= weightsum;
+  _data[4] /= weightsum;
+  _data[5] /= weightsum;
 }

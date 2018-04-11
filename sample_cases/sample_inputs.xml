@@ -27,7 +27,7 @@
        density = 
        viscosity = 
 -->
-  <FreestreamSpeed>1</FreestreamSpeed>
+  <FreestreamSpeed>1.0</FreestreamSpeed>
   <FreestreamDensity>1.225</FreestreamDensity>
   <FreestreamViscosity>1.81e-05</FreestreamViscosity>
 

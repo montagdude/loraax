@@ -37,7 +37,6 @@ int HorseshoeVortex::addVertex ( Vertex * vert )
   }
 
   _verts[_currverts] = vert;
-  _verts[_currverts]->addElement(this);
   _currverts += 1;
 
   return 0;

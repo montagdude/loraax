@@ -6,12 +6,12 @@
 #include <vector>
 #include <Eigen/Core>
 
-class Element;
+class Panel;
 
 /******************************************************************************/
 //
 // Vertex class. Defines x, y, z coordinates in space and stores references to
-// neighboring elements.
+// neighboring panels.
 //
 /******************************************************************************/
 class Vertex {
@@ -20,8 +20,8 @@ class Vertex {
 
     int _idx;
     double _x, _y, _z;
-    std::vector<Element *> _elements;		// Neighboring elements
-    unsigned int _nelems;
+    std::vector<Panel *> _panels;		// Neighboring panels
+    unsigned int _npanels;
 
     // Vertex data: source strength, doublet strength, circulation strength,
     //              Vx, Vy, Vz, pressure, cp
@@ -53,17 +53,21 @@ class Vertex {
     void translate ( const double & dx, const double & dy, const double & dz );
     void rotate ( const Eigen::Matrix3d & transform );
 
-    // Adding or accessing lement references
+    // Adding or accessing connected panels
 
-    int addElement ( Element * element ); 
-    Element * element ( unsigned int eidx );
-    bool isNeighbor ( const Element * element ) const;
-    unsigned int nElems () const;
+    int addPanel ( Panel * panel ); 
+    Panel * panel ( unsigned int pidx );
+    bool isNeighbor ( const Panel * panel ) const;
+    unsigned int nPanels () const;
 
     // Setting or accessing data. See legend in comments above.
 
     int setData ( unsigned int idx, const double & var );
     const double & data ( unsigned int idx ) const;
+
+    // Computes data for surface vertices
+
+    void computeSurfaceData ();
 };
 
 #endif

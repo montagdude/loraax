@@ -59,10 +59,15 @@ int main (int argc, char* argv[])
   std::cout << "Setting wake circulation ..." << std::endl;
   ac.setWakeCirculation();
 
-  // Compute velocities at points
+  // Compute panel velocities
 
   std::cout << "Computing velocities ..." << std::endl;
   ac.computeVelocities();
+
+  // Compute vertex data
+
+  std::cout << "Computing vertex data ..." << std::endl;
+  ac.computeVertexData();
 
   // Write viz
 

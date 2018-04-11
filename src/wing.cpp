@@ -756,30 +756,30 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
     {
       trquad = 0;
       brquad = 2*_nchord-3;
-      toptevert->addElement(&_quads[brquad]);
-      bottevert->addElement(&_quads[trquad]);
+      toptevert->addPanel(&_quads[brquad]);
+      bottevert->addPanel(&_quads[trquad]);
     }
     else if (i == _nspan-1)
     {
       tlquad = (_nspan-2)*(2*_nchord-2);
       blquad = (_nspan-1)*(2*_nchord-2) - 1;
-      toptevert->addElement(&_quads[blquad]);
-      bottevert->addElement(&_quads[tlquad]);
+      toptevert->addPanel(&_quads[blquad]);
+      bottevert->addPanel(&_quads[tlquad]);
       if (include_tips)
       {
         if (tegap <= 1E-12)
         {
           tiptri1 = 0;
           tiptri2 = 1;
-          toptevert->addElement(&_tris[tiptri1]);
-          bottevert->addElement(&_tris[tiptri2]);
+          toptevert->addPanel(&_tris[tiptri1]);
+          bottevert->addPanel(&_tris[tiptri2]);
         }
         else
         {
           tipquad1 = (_nspan-1)*(2*_nchord-2);
           tipquad2 = (_nspan-1)*(2*_nchord-2)+1;
-          toptevert->addElement(&_quads[tipquad1]);
-          bottevert->addElement(&_quads[tipquad2]);
+          toptevert->addPanel(&_quads[tipquad1]);
+          bottevert->addPanel(&_quads[tipquad2]);
         }
       }
     }
@@ -789,10 +789,10 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
       blquad = i*(2*_nchord-2) - 1;
       trquad = i*(2*_nchord-2);
       brquad = (i+1)*(2*_nchord-2) - 1; 
-      toptevert->addElement(&_quads[blquad]);
-      toptevert->addElement(&_quads[brquad]);
-      bottevert->addElement(&_quads[tlquad]);
-      bottevert->addElement(&_quads[trquad]);
+      toptevert->addPanel(&_quads[blquad]);
+      toptevert->addPanel(&_quads[brquad]);
+      bottevert->addPanel(&_quads[tlquad]);
+      bottevert->addPanel(&_quads[trquad]);
     }
   }
 }
@@ -836,30 +836,30 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
     {
       trquad = 0;
       brquad = 2*_nchord-3;
-      teverts[i].addElement(&_quads[trquad]);
-      teverts[i].addElement(&_quads[brquad]);
+      teverts[i].addPanel(&_quads[trquad]);
+      teverts[i].addPanel(&_quads[brquad]);
     }
     else if (i == _nspan-1)
     {
       tlquad = (_nspan-2)*(2*_nchord-2);
       blquad = (_nspan-1)*(2*_nchord-2) - 1;
-      teverts[i].addElement(&_quads[tlquad]);
-      teverts[i].addElement(&_quads[blquad]);
+      teverts[i].addPanel(&_quads[tlquad]);
+      teverts[i].addPanel(&_quads[blquad]);
       if (include_tips)
       {
         if (tegap <= 1E-12)
         {
           tiptri1 = 0;
           tiptri2 = 1;
-          teverts[i].addElement(&_tris[tiptri1]);
-          teverts[i].addElement(&_tris[tiptri2]);
+          teverts[i].addPanel(&_tris[tiptri1]);
+          teverts[i].addPanel(&_tris[tiptri2]);
         }
         else
         {
         tipquad1 = (_nspan-1)*(2*_nchord-2);
         tipquad2 = (_nspan-1)*(2*_nchord-2)+1;
-        teverts[i].addElement(&_quads[tipquad1]);
-        teverts[i].addElement(&_quads[tipquad2]);
+        teverts[i].addPanel(&_quads[tipquad1]);
+        teverts[i].addPanel(&_quads[tipquad2]);
         }
       }
     }
@@ -869,10 +869,10 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
       blquad = i*(2*_nchord-2) - 1;
       trquad = i*(2*_nchord-2);
       brquad = (i+1)*(2*_nchord-2) - 1;
-      teverts[i].addElement(&_quads[tlquad]);
-      teverts[i].addElement(&_quads[blquad]);
-      teverts[i].addElement(&_quads[trquad]);
-      teverts[i].addElement(&_quads[brquad]);
+      teverts[i].addPanel(&_quads[tlquad]);
+      teverts[i].addPanel(&_quads[blquad]);
+      teverts[i].addPanel(&_quads[trquad]);
+      teverts[i].addPanel(&_quads[brquad]);
     }
   }
 

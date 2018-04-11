@@ -46,7 +46,7 @@ int TriPanel::addVertex ( Vertex * vert )
   }
 
   _verts[_currverts] = vert;
-  _verts[_currverts]->addElement(this);
+  _verts[_currverts]->addPanel(this);
   _currverts += 1;
 
   if (_currverts == 3)

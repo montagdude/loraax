@@ -429,7 +429,7 @@ void simplex_search ( std::vector<double> & xopt, double & fmin,
       {
         dist += std::pow(dv[0][k]-dv[j][k], 2.);
       }
-      dist = sqrt(dist);
+      dist = std::sqrt(dist);
       if (dist > diam)
         diam = dist;
     }
@@ -574,7 +574,7 @@ void simplex_search ( std::vector<double> & xopt, double & fmin,
     {
       dist += std::pow(dv[0][k]-dv[j][k], 2.);
     }
-    dist = sqrt(dist);
+    dist = std::sqrt(dist);
     if (dist > diam)
       diam = dist;
   }
@@ -643,7 +643,7 @@ void golden_search ( double & xmin, double & fmin, const double bounds[2],
   // Initialize search
 
   dist = bounds[1] - bounds[0];
-  T = 1.5 - sqrt(1.25);
+  T = 1.5 - std::sqrt(1.25);
   xval[1] = (1.-T)*xval[0] + T*xval[3];
   xval[2] = T*xval[0] + (1.-T)*xval[3];
   fmin = 1.e+06;
