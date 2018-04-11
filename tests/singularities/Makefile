@@ -21,9 +21,9 @@ POINTDOUBLET=test_point_doublet
 SOURCE=test_source
 ROTSOURCE=test_source_rotation
 SRCDIR=../../src
-INCLUDE=-I../../include -I/usr/include/eigen3
-#INCLUDE=-I../../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
-#LDFLAGS=-L/data/dprosser/locally_installed/lib64
+#INCLUDE=-I../../include -I/usr/include/eigen3
+INCLUDE=-I../../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
+LDFLAGS=-L/data/dprosser/locally_installed/lib64
 
 ################################################################################
 

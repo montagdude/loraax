@@ -7,12 +7,11 @@
 #include <string>
 #include "section.h"
 #include "airfoil.h"
+#include "vertex.h"
 #include "quadpanel.h"
 #include "tripanel.h"
 #include "wake.h"
 #include "wake_strip.h"
-
-class Vertex;
 
 /******************************************************************************/
 //
@@ -37,6 +36,7 @@ class Wing {
 					//   root & tip spacing rations
     std::vector<Airfoil> _foils;  	// User-specified airfoils
     std::vector<Vertex *> _verts;	// Pointers to vertices on wing and wake
+    std::vector<Vertex> _tipverts;       // Vertices on MCL of wingtip
     std::vector<QuadPanel> _quads;	// Quad panels
     std::vector<TriPanel> _tris;	// Tri panels at tip
     Wake _wake;				// Wake

@@ -14,8 +14,6 @@
 #include "wing.h"
 #include "aircraft.h"
 
-#include <iostream>
-
 using namespace tinyxml2;
 
 //FIXME: make this a function of wingspan?

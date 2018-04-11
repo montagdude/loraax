@@ -16,6 +16,8 @@
 #include "wake_strip.h"
 #include "wing.h"
 
+#include <iostream>
+
 // Data for optimizing spanwise spacing
 
 std::vector<double> nom_stations, new_stations, s_wing;
@@ -256,6 +258,7 @@ Wing::Wing ()
   _sections.resize(0);
   _foils.resize(0);
   _verts.resize(0);
+  _tipverts.resize(0);
   _quads.resize(0);
   _tris.resize(0);
   _wakestrips.resize(0);
@@ -583,8 +586,8 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
                           bool include_tips )
 {
-  unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad;
-  double dx, dy, dz, tegap;
+  unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, ntipverts, ioff;
+  double dx, dy, dz, tegap, x, y, z;
 
   // Set vertex pointers on surface
 
@@ -613,10 +616,17 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
   if (include_tips)
   {
     if (tegap > 1E-12)
-      ntri = 1;
-    else
+    {
       ntri = 2;
-    nquad = (_nspan-1)*(2*_nchord-2) + _nchord-1 - ntri;
+      ntipverts = _nchord-1;
+    }
+    else
+    {
+      ntri = 4;
+      ntipverts = _nchord-2;
+    }
+    _tipverts.resize(ntipverts);
+    nquad = (_nspan-1)*(2*_nchord-2) + 2*(_nchord-1) - ntri;
   }
   else
   {
@@ -644,15 +654,41 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
 
   if (include_tips)
   {
-    // Create quad and tri panels on wingtip
+    // Create tip vertices along mean camber line
+
+    if (tegap > 1E-12)
+      ioff = 0;
+    else
+      ioff = 1;
+    for ( i = ioff; i < _nchord-1; i++ )
+    { 
+      x = 0.5*(_sections[_nspan-1].vert(i).x() +
+               _sections[_nspan-1].vert(2*_nchord-2-i).x());
+      y = 0.5*(_sections[_nspan-1].vert(i).y() +
+               _sections[_nspan-1].vert(2*_nchord-2-i).y());
+      z = 0.5*(_sections[_nspan-1].vert(i).z() +
+               _sections[_nspan-1].vert(2*_nchord-2-i).z());
+      _tipverts[i-ioff].setIdx(next_global_vertidx);
+      _tipverts[i-ioff].setCoordinates(x, y, z);
+      next_global_vertidx += 1;
+    }
+
+    // Create quad and tri panels on wingtip, from TE to LE
 
     _tris.resize(ntri);
     tcounter = 0;
-    if (ntri == 2)
+    if (tegap <= 1E-12)
     {
       _tris[tcounter].setIdx(next_global_elemidx);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
       _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+      _tris[tcounter].addVertex(&_tipverts[0]);
+      tcounter += 1;
+      next_global_elemidx += 1;
+
+      _tris[tcounter].setIdx(next_global_elemidx);
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
+      _tris[tcounter].addVertex(&_tipverts[0]);
       _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
       tcounter += 1;
       next_global_elemidx += 1;
@@ -662,6 +698,14 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
       _quads[qcounter].setIdx(next_global_elemidx);
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+      _quads[qcounter].addVertex(&_tipverts[1]);
+      _quads[qcounter].addVertex(&_tipverts[0]);
+      qcounter += 1;
+      next_global_elemidx += 1;
+
+      _quads[qcounter].setIdx(next_global_elemidx);
+      _quads[qcounter].addVertex(&_tipverts[0]);
+      _quads[qcounter].addVertex(&_tipverts[1]);
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(1));
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(0));
       qcounter += 1;
@@ -672,6 +716,14 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
       _quads[qcounter].setIdx(next_global_elemidx);
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2-i));
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3-i));
+      _quads[qcounter].addVertex(&_tipverts[i+1-ioff]);
+      _quads[qcounter].addVertex(&_tipverts[i-ioff]);
+      qcounter += 1;
+      next_global_elemidx += 1;
+
+      _quads[qcounter].setIdx(next_global_elemidx);
+      _quads[qcounter].addVertex(&_tipverts[i-ioff]);
+      _quads[qcounter].addVertex(&_tipverts[i+1-ioff]);
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i+1));
       _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i));
       qcounter += 1;
@@ -679,6 +731,13 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
     }
     _tris[tcounter].setIdx(next_global_elemidx);
     _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord));
+    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
+    _tris[tcounter].addVertex(&_tipverts[ntipverts-1]);
+    next_global_elemidx += 1;
+    tcounter += 1;
+
+    _tris[tcounter].setIdx(next_global_elemidx);
+    _tris[tcounter].addVertex(&_tipverts[ntipverts-1]);
     _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
     _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2));
     next_global_elemidx += 1;
@@ -693,7 +752,8 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
 void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
                        bool include_tips )
 {
-  unsigned int i, j, tlquad, blquad, trquad, brquad, tiptri, tipquad, nvorts;
+  unsigned int i, j, tlquad, blquad, trquad, brquad;
+  unsigned int tiptri1, tiptri2, tipquad1, tipquad2, nvorts;
   std::vector<Vertex> teverts;
   double xt, yt, zt, xb, yb, zb, xm, ym, zm, dx, dy, dz, tegap;
 
@@ -732,11 +792,15 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
       {
         tlquad = (_nspan-2)*(2*_nchord-2);
         blquad = (_nspan-1)*(2*_nchord-2) - 1;
-        tiptri = 0; 
         teverts[i].addElement(&_quads[tlquad]);
         teverts[i].addElement(&_quads[blquad]);
         if (include_tips)
-          teverts[i].addElement(&_tris[tiptri]);
+        {
+          tiptri1 = 0;
+          tiptri2 = 1;
+          teverts[i].addElement(&_tris[tiptri1]);
+          teverts[i].addElement(&_tris[tiptri2]);
+        }
       }
       else
       {
@@ -754,8 +818,10 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
     {
       if ( (i == _nspan-1) && (include_tips) )
       {
-        tipquad = (_nspan-1)*(2*_nchord-2);
-        teverts[i].addElement(&_quads[tipquad]);
+        tipquad1 = (_nspan-1)*(2*_nchord-2);
+        tipquad2 = (_nspan-1)*(2*_nchord-2)+1;
+        teverts[i].addElement(&_quads[tipquad1]);
+        teverts[i].addElement(&_quads[tipquad2]);
       }
     }
   }
@@ -786,17 +852,25 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
 // Access to verts and panels
 //
 /******************************************************************************/
-unsigned int Wing::nVerts () const { return _verts.size(); }
+unsigned int Wing::nVerts () const { return _verts.size() + _tipverts.size(); }
 unsigned int Wing::nQuads () const { return _quads.size(); }
 unsigned int Wing::nTris () const { return _tris.size(); }
 Vertex * Wing::vert ( unsigned int vidx )
 {
+  unsigned int nsurf, ntip;
+
+  nsurf = _verts.size();
+  ntip = _tipverts.size();
+
 #ifdef DEBUG
-  if (vidx >= _verts.size())
+  if (vidx >= nsurf + ntip)
     conditional_stop(1, "Wing::vert", "Index out of range.");
 #endif
 
-  return _verts[vidx];
+  if (vidx < nsurf)
+    return _verts[vidx];
+  else
+    return &_tipverts[vidx-nsurf];
 }
 
 QuadPanel * Wing::quadPanel ( unsigned int qidx )
