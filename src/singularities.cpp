@@ -400,8 +400,8 @@ double tri_doublet_potential (
 
   if (onpanel)
   {
-    if (side == "top") { phi = -1./2.; }
-    else { phi = 1./2.; }
+    if (side == "top") { phi = -0.5; }
+    else { phi = 0.5; }
   }
 
   else

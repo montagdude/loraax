@@ -18,13 +18,14 @@ TRIDOUBLET=test_tri_doublet
 ROTDOUBLET=test_doublet_rotation
 ROTDOUBLET2=test_doublet_rotation2
 POINTDOUBLET=test_point_doublet
+ONPANDOUBLET=test_doublet_onpanel
 SOURCE=test_source
 ROTSOURCE=test_source_rotation
 MIRROR=test_mirror
 SRCDIR=../../src
-INCLUDE=-I../../include -I/usr/include/eigen3
-#INCLUDE=-I../../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
-#LDFLAGS=-L/data/dprosser/locally_installed/lib64
+#INCLUDE=-I../../include -I/usr/include/eigen3
+INCLUDE=-I../../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
+LDFLAGS=-L/data/dprosser/locally_installed/lib64
 
 ################################################################################
 
@@ -38,7 +39,7 @@ endif
 
 ################################################################################
 
-all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(SOURCE) $(ROTSOURCE) $(MIRROR)
+all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(ONPANDOUBLET) $(SOURCE) $(ROTSOURCE) $(MIRROR)
 
 $(HSHOE): $(OBJ) test_hshoe.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(HSHOE) $(OBJ) test_hshoe.o
@@ -60,6 +61,9 @@ $(ROTDOUBLET2): $(OBJ) test_doublet_rotation2.o
 
 $(POINTDOUBLET): $(OBJ) test_point_doublet.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(POINTDOUBLET) $(OBJ) test_point_doublet.o
+
+$(ONPANDOUBLET): $(OBJ) test_doublet_onpanel.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ONPANDOUBLET) $(OBJ) test_doublet_onpanel.o
 
 $(SOURCE): $(OBJ) test_source.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(SOURCE) $(OBJ) test_source.o
@@ -153,6 +157,9 @@ test_doublet_rotation2.o: test_doublet_rotation2.cpp
 
 test_point_doublet.o: test_point_doublet.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_point_doublet.cpp
+
+test_doublet_onpanel.o: test_doublet_onpanel.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_doublet_onpanel.cpp
 
 test_source.o: test_source.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_source.cpp
