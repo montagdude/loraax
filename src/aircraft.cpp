@@ -847,7 +847,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 /******************************************************************************/
 void Aircraft::setSourceStrengths ()
 {
-  unsigned int i, j, npanels;
+  unsigned int i, npanels;
   Eigen::Vector3d norm;
 
   npanels = _panels.size();
@@ -871,7 +871,7 @@ void Aircraft::setSourceStrengths ()
 /******************************************************************************/
 void Aircraft::setDoubletStrengths ()
 {
-  unsigned int i, j, npanels;
+  unsigned int i, npanels;
 
   npanels = _panels.size();
 #ifdef DEBUG
@@ -940,9 +940,39 @@ void Aircraft::constructSystem ()
 #endif
   nwings = _wings.size();
 
+  if (_sourceic.size() == 0)
+  {
+    // Compute surface velocity influence matrices first
+
+    _sourceic.resize(npanels);
+    _doubletic.resize(npanels);
+    for ( i = 0; i < npanels; i++ )
+    {
+      _sourceic[i].resize(npanels);
+      _doubletic[i].resize(npanels);
+    }
+
+#pragma omp parallel for private(i,cen,j,onpanel)
+    for ( i = 0; i < npanels; i++ )
+    {
+      cen = _panels[i]->centroid();
+      for ( j = 0; j < npanels; j++ )
+      { 
+        if (i == j)
+          onpanel = true;
+        else
+          onpanel = false;
+        _sourceic[i][j] = _panels[j]->sourceVCoeff(cen(0), cen(1), cen(2),
+                                                   onpanel, "top", true);
+        _doubletic[i][j] = _panels[j]->doubletVCoeff(cen(0), cen(1), cen(2),
+                                                     onpanel, "top", true);
+      }
+    }
+  }
+
   _aic.resize(npanels,npanels);
   _rhs.resize(npanels);
-#pragma omp parallel for private(i,cen,norm,j,onpanel,k,nstrips,l,strip,nvorts,\
+#pragma omp parallel for private(i,cen,norm,j,k,nstrips,l,strip,nvorts,\
                                  stripvel,m,stripic,toptepan,bottepan)
   for ( i = 0; i < npanels; i++ )
   {
@@ -958,12 +988,7 @@ void Aircraft::constructSystem ()
 
     for ( j = 0; j < npanels; j++ )
     {
-      if (i == j)
-        onpanel = true;
-      else
-        onpanel = false;
-      _aic(i,j) = _panels[j]->doubletVCoeff(cen(0), cen(1), cen(2), onpanel,
-                                            "top", true).transpose() * norm;
+      _aic(i,j) = _doubletic[i][j].transpose() * norm;
     }
 
     // Wake influence coefficients applied to TE panels
@@ -996,13 +1021,8 @@ void Aircraft::constructSystem ()
     _rhs(i) = -uinfvec.transpose() * norm;
     for ( j = 0; j < npanels; j++ )
     {
-      if (i == j)
-        onpanel = true;
-      else
-        onpanel = false;
       _rhs(i) -= _panels[j]->sourceStrength()
-               * _panels[j]->sourceVCoeff(cen(0), cen(1), cen(2), onpanel,
-                                          "top", true).transpose() * norm;
+               * _sourceic[i][j].transpose() * norm;
     }
   }
 }
@@ -1029,43 +1049,11 @@ unsigned int Aircraft::systemSize () const { return _panels.size(); }
 /******************************************************************************/
 void Aircraft::computeVelocities ()
 {
-  unsigned int i, j, nverts, npanels, nwakeverts, nvorts;
-  bool onpanel;
+  unsigned int i, j, npanels, nvorts;
   Eigen::Vector3d cen, vel;
 
   npanels = _panels.size();
   nvorts = _vorts.size();
-
-  if (_sourceic.size() == 0)
-  {
-    // Compute surface velocity influence matrices first
-//FIXME: this should be done before computing _aic
-
-    _sourceic.resize(npanels);
-    _doubletic.resize(npanels);
-    for ( i = 0; i < npanels; i++ )
-    {
-      _sourceic[i].resize(npanels);
-      _doubletic[i].resize(npanels);
-    }
-
-#pragma omp parallel for private(i,cen,j,onpanel)
-    for ( i = 0; i < npanels; i++ )
-    {
-      cen = _panels[i]->centroid();
-      for ( j = 0; j < npanels; j++ )
-      { 
-        if (i == j)
-          onpanel = true;
-        else
-          onpanel = false;
-        _sourceic[i][j] = _panels[j]->sourceVCoeff(cen(0), cen(1), cen(2),
-                                                   onpanel, "top", true);
-        _doubletic[i][j] = _panels[j]->doubletVCoeff(cen(0), cen(1), cen(2),
-                                                     onpanel, "top", true);
-      }
-    }
-  }
 
   // Velocity on surface panels
 
