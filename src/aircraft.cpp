@@ -280,6 +280,32 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
     f << std::setprecision(14) << std::setw(25) << std::left
       << _verts[i]->data(4) << std::endl;
   }
+
+  f << "SCALARS pressure double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(5) << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(5) << std::endl;
+  }
+
+  f << "SCALARS cp double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(6) << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(6) << std::endl;
+  }
 }
 
 /******************************************************************************/
@@ -1091,7 +1117,7 @@ void Aircraft::computeVertexData ()
 #pragma omp parallel for private(i)
   for ( i = 0; i < nverts; i++ )
   {
-    _verts[i]->computeSurfaceData();
+    _verts[i]->computeSurfaceData(uinf, pinf, rhoinf);
   }
 }
 

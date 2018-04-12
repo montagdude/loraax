@@ -181,10 +181,11 @@ const double & Vertex::data ( unsigned int idx ) const
 // velocity using Bernoulli equation and compressibility corrections.
 //
 /******************************************************************************/
-void Vertex::computeSurfaceData ()
+void Vertex::computeSurfaceData ( const double & uinf, const double & pinf,
+                                  const double & rhoinf )
 {
   unsigned int i;
-  double dx, dy, dz, dist, weightsum;
+  double dx, dy, dz, dist, weightsum, vmag2, uinf2;
   Eigen::Vector3d cen;
 
   // Compute source strength, doublet strength, and velocity by interpolation
@@ -215,4 +216,11 @@ void Vertex::computeSurfaceData ()
   _data[2] /= weightsum;
   _data[3] /= weightsum;
   _data[4] /= weightsum;
+
+  // Pressure and pressure coefficient
+
+  vmag2 = std::pow(_data[2],2.) + std::pow(_data[3],2.) + std::pow(_data[4],2.);
+  uinf2 = std::pow(uinf,2.);
+  _data[5] = pinf + 0.5*rhoinf*(uinf2 - vmag2);
+  _data[6] = (_data[5] - pinf) / (0.5*rhoinf*uinf2);
 }

@@ -20,6 +20,7 @@ using namespace tinyxml2;
 std::string casename;
 double uinf;
 Eigen::Vector3d uinfvec;
+double pinf;
 double rhoinf;
 double muinf;
 double alpha;
@@ -133,6 +134,8 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
   if (read_setting(main, "GeometryFile", geom_file) != 0)
     return 2;
   if (read_setting(main, "FreestreamSpeed", uinf) != 0)
+    return 2;
+  if (read_setting(main, "FreestreamStaticPressure", pinf) != 0)
     return 2;
   if (read_setting(main, "FreestreamDensity", rhoinf) != 0)
     return 2;

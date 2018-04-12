@@ -66,7 +66,8 @@ class Vertex {
 
     // Computes data for surface vertices
 
-    void computeSurfaceData ();
+    void computeSurfaceData ( const double & uinf, const double & pinf,
+                              const double & rhoinf );
 };
 
 #endif

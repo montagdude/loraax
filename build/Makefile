@@ -13,9 +13,9 @@ CXXFLAGS=$(GPPFLAGS)
 OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o element.o panel.o tripanel.o quadpanel.o sectional_object.o airfoil.o section.o vortex.o vortex_ring.o horseshoe_vortex.o wake_strip.o wake.o wing.o aircraft.o loraax.o
 EXE=loraax
 SRCDIR=../src
-#INCLUDE=-I../include -I/usr/include/eigen3
-INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
-LDFLAGS=-L/data/dprosser/locally_installed/lib64
+INCLUDE=-I../include -I/usr/include/eigen3
+#INCLUDE=-I../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
+#LDFLAGS=-L/data/dprosser/locally_installed/lib64
 LIBS=-lxfoil -ltinyxml2
 
 ################################################################################
