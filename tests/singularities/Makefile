@@ -22,10 +22,12 @@ ONPANDOUBLET=test_doublet_onpanel
 SOURCE=test_source
 ROTSOURCE=test_source_rotation
 MIRROR=test_mirror
+POTENTIAL=test_quad_potential
+POTENTIAL2=test_tri_potential
 SRCDIR=../../src
-#INCLUDE=-I../../include -I/usr/include/eigen3
-INCLUDE=-I../../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
-LDFLAGS=-L/data/dprosser/locally_installed/lib64
+INCLUDE=-I../../include -I/usr/include/eigen3
+#INCLUDE=-I../../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
+#LDFLAGS=-L/data/dprosser/locally_installed/lib64
 
 ################################################################################
 
@@ -39,7 +41,7 @@ endif
 
 ################################################################################
 
-all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(ONPANDOUBLET) $(SOURCE) $(ROTSOURCE) $(MIRROR)
+all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(ONPANDOUBLET) $(SOURCE) $(ROTSOURCE) $(MIRROR) $(POTENTIAL) $(POTENTIAL2)
 
 $(HSHOE): $(OBJ) test_hshoe.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(HSHOE) $(OBJ) test_hshoe.o
@@ -73,6 +75,12 @@ $(ROTSOURCE): $(OBJ) test_source_rotation.o
 
 $(MIRROR): $(OBJ) test_mirror.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(MIRROR) $(OBJ) test_mirror.o
+
+$(POTENTIAL): $(OBJ) test_quad_potential.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(POTENTIAL) $(OBJ) test_quad_potential.o
+
+$(POTENTIAL2): $(OBJ) test_tri_potential.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(POTENTIAL2) $(OBJ) test_tri_potential.o
 
 clean: 
 	rm -f *.o
@@ -169,3 +177,9 @@ test_source_rotation.o: test_source_rotation.cpp
 
 test_mirror.o: test_mirror.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_mirror.cpp
+
+test_quad_potential.o: test_quad_potential.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_quad_potential.cpp
+
+test_tri_potential.o: test_tri_potential.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_tri_potential.cpp

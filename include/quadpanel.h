@@ -40,14 +40,16 @@ class QuadPanel: public Panel {
 
     double sourcePhiCoeff ( const double & x, const double & y,
                             const double & z, bool onpanel,
-                            const std::string & side ) const;
+                            const std::string & side,
+                            bool mirror_y=false ) const;
     Eigen::Vector3d sourceVCoeff ( const double & x, const double & y,
                                    const double & z, bool onpanel,
                                    const std::string & side,
                                    bool mirror_y=false ) const;
     double doubletPhiCoeff ( const double & x, const double & y,
                              const double & z, bool onpanel,
-                             const std::string & side ) const;
+                             const std::string & side,
+                             bool mirror_y=false ) const;
     Eigen::Vector3d doubletVCoeff ( const double & x, const double & y,
                                     const double & z, bool onpanel,
                                     const std::string & side,
@@ -57,12 +59,12 @@ class QuadPanel: public Panel {
 
     double inducedPotential ( const double & x, const double & y,
                               const double & z, bool onpanel,
-                              const std::string & side ) const;
+                              const std::string & side,
+                              bool mirror_y=false ) const;
     Eigen::Vector3d inducedVelocity ( const double & x, const double & y,
                                       const double & z, bool onpanel,
                                       const std::string & side,
                                       bool mirror_y=false ) const;
-
 };
 
 #endif

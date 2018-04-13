@@ -161,10 +161,12 @@ void QuadPanel::computeTransform ()
 //
 /******************************************************************************/
 double QuadPanel::sourcePhiCoeff ( const double & x, const double & y, 
-                                  const double & z, bool onpanel,
-                                  const std::string & side ) const
+                                   const double & z, bool onpanel,
+                                   const std::string & side,
+                                   bool mirror_y ) const
 {
   Eigen::Vector3d vec, transvec;
+  double coeff;
 
   // Vector from centroid to point
 
@@ -178,10 +180,27 @@ double QuadPanel::sourcePhiCoeff ( const double & x, const double & y,
   
   // Source potential -- panel endpoints given in clockwise order
   
-  return quad_source_potential(transvec(0), transvec(1), transvec(2),
-                               _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3], 
-                               _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
-                               onpanel, side);
+  coeff = quad_source_potential(transvec(0), transvec(1), transvec(2),
+                                _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3], 
+                                _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
+                                onpanel, side);
+
+  // Compute mirror image contribution if requested. Alwas assume the mirror
+  // image is not on the panel.
+
+  if (mirror_y)
+  {
+    vec(0) =  x - _cen[0];
+    vec(1) = -y - _cen[1];
+    vec(2) =  z - _cen[2];
+    transvec = _trans*vec;
+    coeff += quad_source_potential(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
+                                 _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
+                                 false, side);
+  }
+
+  return coeff;
 }
 
 /******************************************************************************/
@@ -245,10 +264,12 @@ Eigen::Vector3d QuadPanel::sourceVCoeff ( const double & x, const double & y,
 //
 /******************************************************************************/
 double QuadPanel::doubletPhiCoeff ( const double & x, const double & y, 
-                                   const double & z, bool onpanel,
-                                   const std::string & side ) const
+                                    const double & z, bool onpanel,
+                                    const std::string & side,
+                                    bool mirror_y ) const
 {
   Eigen::Vector3d vec, transvec;
+  double coeff;
 
   // Transform point to panel frame
 
@@ -259,10 +280,27 @@ double QuadPanel::doubletPhiCoeff ( const double & x, const double & y,
 
   // Doublet potential -- points given in clockwise order
   
-  return quad_doublet_potential(transvec(0), transvec(1), transvec(2),
-                               _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
-                               _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
-                               onpanel, side);
+  coeff = quad_doublet_potential(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
+                                 _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
+                                 onpanel, side);
+
+  // Compute mirror image contribution if requested. Always assume the mirror
+  // image point is not on the panel.
+
+  if (mirror_y)
+  {
+    vec(0) =  x - _cen[0];
+    vec(1) = -y - _cen[1];
+    vec(2) =  z - _cen[2];
+    transvec = _trans*vec;
+    coeff += quad_doublet_potential(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
+                                 _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
+                                 false, side);
+  }
+
+  return coeff;
 }
 
 /******************************************************************************/
@@ -324,12 +362,13 @@ Eigen::Vector3d QuadPanel::doubletVCoeff ( const double & x, const double & y,
 /******************************************************************************/
 double QuadPanel::inducedPotential ( const double & x, const double & y, 
                                      const double & z, bool onpanel,
-                                     const std::string & side ) const
+                                     const std::string & side,
+                                     bool mirror_y ) const
 {
   double potential;
 
-  potential = ( sourcePhiCoeff(x, y, z, onpanel, side)*_sigma
-            +   doubletPhiCoeff(x, y, z, onpanel, side)*_mu );
+  potential = ( sourcePhiCoeff(x, y, z, onpanel, side, mirror_y)*_sigma
+            +   doubletPhiCoeff(x, y, z, onpanel, side, mirror_y)*_mu );
   
   return potential;
 }

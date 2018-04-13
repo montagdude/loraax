@@ -61,21 +61,24 @@ class Panel: public Element {
     
     virtual double sourcePhiCoeff ( const double & x, const double & y,
                                     const double & z, bool onpanel,
-                                    const std::string & side ) const = 0;
+                                    const std::string & side,
+                                    bool mirror_y=false ) const = 0;
     virtual Eigen::Vector3d sourceVCoeff ( const double & x, const double & y,
                                            const double & z, bool onpanel,
                                            const std::string & side,
                                            bool mirror_y=false ) const = 0;
     virtual double doubletPhiCoeff ( const double & x, const double & y,
                                      const double & z, bool onpanel,
-                                     const std::string & side ) const = 0;
+                                     const std::string & side,
+                                     bool mirror_y=false ) const = 0;
     virtual Eigen::Vector3d doubletVCoeff ( const double & x, const double & y,
                                            const double & z, bool onpanel,
                                            const std::string & side,
                                            bool mirror_y=false ) const = 0;
     virtual double inducedPotential ( const double & x, const double & y,
                                       const double & z, bool onpanel,
-                                      const std::string & side ) const = 0;
+                                      const std::string & side,
+                                      bool mirror_y=false ) const = 0;
     virtual Eigen::Vector3d inducedVelocity ( const double & x,
                                            const double & y, const double & z,
                                            bool onpanel,
