@@ -6,12 +6,11 @@
 #include <vector>
 
 class Panel;
-class Vortex;
 
 /******************************************************************************/
 //
 // WakeStrip class. Stores pointers to connect trailing edge panels and the
-// wake vortices that they shed into, for the purpose of setting BCs correctly
+// wake panels that they shed into, for the purpose of setting BCs correctly
 // in the linear system.
 //
 /******************************************************************************/
@@ -20,7 +19,7 @@ class WakeStrip {
   private:
 
     Panel * _toptepan, * _bottepan;	// TE panels
-    std::vector<Vortex *> _vorts;	// Strip of trailing vortex elements
+    std::vector<Panel *> _panels;	// Strip of trailing vortex elements
 
   public:
 
@@ -28,21 +27,21 @@ class WakeStrip {
 
     WakeStrip ();
 
-    // Add vortex elements in a strip
+    // Add panels in a strip
 
-    void setNVortices ( unsigned int nvorts );
-    int setVortexPointer ( unsigned int vidx, Vortex * vort );
+    void setNPanels ( unsigned int npanels );
+    int setPanelPointer ( unsigned int pidx, Panel * panel );
 
     // Set trailing edge panel pointers
 
     void setTEPanels ( Panel * toptepan, Panel * bottepan );
 
-    // Access panels and vortices
+    // Access panels
 
-    unsigned int nVortices () const;
+    unsigned int nPanels () const;
     Panel * topTEPan ();
     Panel * botTEPan ();
-    Vortex * vortex ( unsigned int vidx );
+    Panel * panel ( unsigned int pidx );
 };
 
 #endif

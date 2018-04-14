@@ -1,13 +1,12 @@
 #include <vector>
 #include "util.h"
 #include "panel.h"
-#include "vortex.h"
 #include "wake_strip.h"
 
 /******************************************************************************/
 //
 // WakeStrip class. Stores pointers to connect trailing edge panels and the wake
-// vortices that they shed into, for the purpose of setting BCs correctly in the
+// panels that they shed into, for the purpose of setting BCs correctly in the
 // linear system.
 //
 /******************************************************************************/
@@ -21,36 +20,36 @@ WakeStrip::WakeStrip ()
 {
   _toptepan = NULL;
   _bottepan = NULL;
-  _vorts.resize(0);
+  _panels.resize(0);
 }
 
 /******************************************************************************/
 //
-// Add vortex elements in a strip
+// Add panels in a strip
 //
 /******************************************************************************/
-void WakeStrip::setNVortices ( unsigned int nvorts )
+void WakeStrip::setNPanels ( unsigned int npanels )
 {
 #ifdef DEBUG
-  if (_vorts.size() != 0)
-    print_warning("WakeStrip::setNVortices", "Clearing existing wake strip.");
+  if (_panels.size() != 0)
+    print_warning("WakeStrip::setNPanels", "Clearing existing wake strip.");
 #endif
 
-  _vorts.clear();
-  _vorts.resize(nvorts);
+  _panels.clear();
+  _panels.resize(npanels);
 }
 
-int WakeStrip::setVortexPointer ( unsigned int vidx, Vortex * vort )
+int WakeStrip::setPanelPointer ( unsigned int pidx, Panel * panel )
 {
 #ifdef DEBUG
-  if (vidx >= _vorts.size())
+  if (pidx >= _panels.size())
   {
-    conditional_stop(1, "WakeStrip::setVortexPointer", "Index out of range.");
+    conditional_stop(1, "WakeStrip::setPanelPointer", "Index out of range.");
     return 1;
   }
 #endif
 
-  _vorts[vidx] = vort;
+  _panels[pidx] = panel;
 
   return 0;
 } 
@@ -81,15 +80,15 @@ void WakeStrip::setTEPanels ( Panel * toptepan, Panel * bottepan )
 // Access to panels and vortces
 //
 /******************************************************************************/
-unsigned int WakeStrip::nVortices () const { return _vorts.size(); }
+unsigned int WakeStrip::nPanels () const { return _panels.size(); }
 Panel * WakeStrip::topTEPan () { return _toptepan; }
 Panel * WakeStrip::botTEPan () { return _bottepan; }
-Vortex * WakeStrip::vortex ( unsigned int vidx )
+Panel * WakeStrip::panel ( unsigned int pidx )
 {
 #ifdef DEBUG
-  if (vidx >= _vorts.size())
-    conditional_stop(1, "WakeStrip::vortex", "Index out of range.");
+  if (pidx >= _panels.size())
+    conditional_stop(1, "WakeStrip::panel", "Index out of range.");
 #endif
 
-  return _vorts[vidx];
+  return _panels[pidx];
 }

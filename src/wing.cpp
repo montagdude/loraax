@@ -16,8 +16,6 @@
 #include "wake_strip.h"
 #include "wing.h"
 
-#include <iostream>
-
 // Data for optimizing spanwise spacing
 
 std::vector<double> nom_stations, new_stations, s_wing;
@@ -759,7 +757,7 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
                        bool include_tips )
 {
   unsigned int i, j, tlquad, blquad, trquad, brquad;
-  unsigned int tiptri1, tiptri2, nvorts;
+  unsigned int tiptri1, tiptri2, nstream;
   std::vector<Vertex> teverts;
   double xt, yt, zt;
 
@@ -815,18 +813,20 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
 
   // Create wake strips
 
-  nvorts = int(ceil(wakelen/(dt*uinf)));
+  nstream = int(ceil(rollupdist/(dt*uinf)));
   _wakestrips.resize(_nspan-1);
   for ( i = 0; i < _nspan-1; i++ )
   {
-    _wakestrips[i].setNVortices(nvorts);
+    _wakestrips[i].setNPanels((nstream-1)*2+1);
     _wakestrips[i].setTEPanels(&_quads[i*(2*_nchord-2)],
                                &_quads[(i+1)*(2*_nchord-2)-1]);
-    for ( j = 0; j < nvorts-1; j++ )
+    for ( j = 0; j < nstream-1; j++ )
     {
-      _wakestrips[i].setVortexPointer(j, _wake.vRing(i*(nvorts-1)+j));
+      _wakestrips[i].setPanelPointer(j*2, _wake.triPanel(i*(nstream-1)*2+j*2));
+      _wakestrips[i].setPanelPointer(j*2+1,
+                                         _wake.triPanel(i*(nstream-1)*2+j*2+1));
     }
-    _wakestrips[i].setVortexPointer(nvorts-1, _wake.hShoe(i));
+    _wakestrips[i].setPanelPointer((nstream-1)*2, _wake.quadPanel(i));
   }
 }
 

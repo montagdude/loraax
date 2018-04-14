@@ -5,8 +5,8 @@
 #include "util.h"
 #include "settings.h"
 #include "vertex.h"
-#include "vortex_ring.h"
-#include "horseshoe_vortex.h"
+#include "tripanel.h"
+#include "quadpanel.h"
 #include "wake.h"
 
 /******************************************************************************/
@@ -23,8 +23,8 @@
 Wake::Wake ()
 {
   _verts.resize(0);
-  _vrings.resize(0); 
-  _hshoes.resize(0); 
+  _tris.resize(0); 
+  _quads.resize(0); 
 }
 
 /******************************************************************************/
@@ -35,7 +35,7 @@ Wake::Wake ()
 void Wake::initialize ( const std::vector<Vertex> & teverts,
                         int & next_global_vertidx, int & next_global_elemidx )
 {
-  int nstream, nspan, nvring, nhshoe;
+  int nstream, nspan, ntris, nquads;
   unsigned int i, j, blvert, brvert, trvert, tlvert;
   std::vector<double> uinfdir;
   double x, y, z;
@@ -43,9 +43,9 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
   // Determine number of rows to store based on inputs
 
   nspan = teverts.size();
-  nstream = int(ceil(wakelen/(dt*uinf))); // Number of relaxable streamwise
-                                          // points. One more will be added for
-                                          // the trailing horseshoe.
+  nstream = int(ceil(rollupdist/(dt*uinf))); // Number of relaxable streamwise
+                                             // points. One more will be added
+                                             // for the trailing horseshoe.
   _verts.resize(nspan*(nstream+1));
 
   // Add vertices along freestream direction
@@ -61,11 +61,20 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
     {
       if (j == 0)
         _verts[i*(nstream+1)] = teverts[i];
-      else   
+      else if (int(j) < nstream)
       {
+        // Vertices that will roll up
         x = _verts[i*(nstream+1)].x() + uinfdir[0]*double(j)*dt*uinf;
         y = _verts[i*(nstream+1)].y();
         z = _verts[i*(nstream+1)].z() + uinfdir[2]*double(j)*dt*uinf;
+        _verts[i*(nstream+1)+j].setCoordinates(x, y, z);
+      }
+      else
+      {
+        // Trailing vertex at "infinity"
+        x = _verts[i*(nstream+1)].x() + uinfdir[0]*1001.*rollupdist;
+        y = _verts[i*(nstream+1)].y();
+        z = _verts[i*(nstream+1)].z() + uinfdir[2]*1001.*rollupdist;
         _verts[i*(nstream+1)+j].setCoordinates(x, y, z);
       }
       _verts[i*(nstream+1)+j].setIdx(next_global_vertidx);
@@ -73,10 +82,12 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
     }
   }
 
-  // Create vortex rings
+  // Create tri doublets (which can roll up). Tri doublets are used for this
+  // portion of the wake because doublet panels are required to be planar, and
+  // with quads there would be significant distortion.
 
-  nvring = (nspan-1)*(nstream-1);
-  _vrings.resize(nvring);
+  ntris = (nspan-1)*(nstream-1)*2;
+  _tris.resize(ntris);
   for ( i = 0; int(i) < nspan-1; i++ )
   {
     for ( j = 0; int(j) < nstream-1; j++ )
@@ -85,30 +96,36 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
       brvert = (i+1)*(nstream+1)+j+1;
       trvert = (i+1)*(nstream+1)+j;
       tlvert = i*(nstream+1)+j;
-      _vrings[i*(nstream-1)+j].setIdx(next_global_elemidx);
-      _vrings[i*(nstream-1)+j].addVertex(&_verts[blvert]);
-      _vrings[i*(nstream-1)+j].addVertex(&_verts[tlvert]);
-      _vrings[i*(nstream-1)+j].addVertex(&_verts[trvert]);
-      _vrings[i*(nstream-1)+j].addVertex(&_verts[brvert]);
+
+      _tris[i*(nstream-1)*2+j*2].setIdx(next_global_elemidx);
+      _tris[i*(nstream-1)*2+j*2].addVertex(&_verts[tlvert]);
+      _tris[i*(nstream-1)*2+j*2].addVertex(&_verts[blvert]);
+      _tris[i*(nstream-1)*2+j*2].addVertex(&_verts[brvert]);
+      next_global_elemidx += 1;
+
+      _tris[i*(nstream-1)*2+j*2+1].setIdx(next_global_elemidx);
+      _tris[i*(nstream-1)*2+j*2+1].addVertex(&_verts[brvert]);
+      _tris[i*(nstream-1)*2+j*2+1].addVertex(&_verts[trvert]);
+      _tris[i*(nstream-1)*2+j*2+1].addVertex(&_verts[tlvert]);
       next_global_elemidx += 1;
     }
   }
 
-  // Create horseshoe vortices
+  // Create quad doublets which extend to 1000*rollupdist
 
-  nhshoe = nspan-1;
-  _hshoes.resize(nhshoe);
+  nquads = nspan-1;
+  _quads.resize(nquads);
   for ( i = 0; int(i) < nspan-1; i++ )
   {
     blvert = i*(nstream+1)+nstream;
     tlvert = i*(nstream+1)+nstream-1;
     trvert = (i+1)*(nstream+1)+nstream-1;
     brvert = (i+1)*(nstream+1)+nstream;
-    _hshoes[i].setIdx(next_global_elemidx);
-    _hshoes[i].addVertex(&_verts[blvert]);
-    _hshoes[i].addVertex(&_verts[tlvert]);
-    _hshoes[i].addVertex(&_verts[trvert]);
-    _hshoes[i].addVertex(&_verts[brvert]);
+    _quads[i].setIdx(next_global_elemidx);
+    _quads[i].addVertex(&_verts[tlvert]);
+    _quads[i].addVertex(&_verts[blvert]);
+    _quads[i].addVertex(&_verts[brvert]);
+    _quads[i].addVertex(&_verts[trvert]);
     next_global_elemidx += 1;
   }
 }
@@ -119,8 +136,8 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
 //
 /******************************************************************************/
 unsigned int Wake::nVerts () const { return _verts.size(); }
-unsigned int Wake::nVRings () const { return _vrings.size(); }
-unsigned int Wake::nHShoes () const { return _hshoes.size(); }
+unsigned int Wake::nTris () const { return _tris.size(); }
+unsigned int Wake::nQuads () const { return _quads.size(); }
 Vertex * Wake::vert ( unsigned int vidx )
 {
 #ifdef DEBUG
@@ -131,22 +148,22 @@ Vertex * Wake::vert ( unsigned int vidx )
   return &_verts[vidx];
 }
 
-VortexRing * Wake::vRing ( unsigned int vridx )
+TriPanel * Wake::triPanel ( unsigned int tidx )
 {
 #ifdef DEBUG
-  if (vridx >= _vrings.size())
-    conditional_stop(1, "Wake::vRing", "Index out of range.");
+  if (tidx >= _tris.size())
+    conditional_stop(1, "Wake::triPanel", "Index out of range.");
 #endif
 
-  return &_vrings[vridx];
+  return &_tris[tidx];
 }
 
-HorseshoeVortex * Wake::hShoe ( unsigned int hsidx )
+QuadPanel * Wake::quadPanel ( unsigned int qidx )
 {
 #ifdef DEBUG
-  if (hsidx >= _hshoes.size())
-    conditional_stop(1, "Wake::hShoe", "Index out of range.");
+  if (qidx >= _quads.size())
+    conditional_stop(1, "Wake::quadPanel", "Index out of range.");
 #endif
 
-  return &_hshoes[hsidx];
+  return &_quads[qidx];
 }

@@ -39,14 +39,19 @@ double tri_source_potential (
                         const double & x, const double & y, const double & z,
                         const double & x0, const double & y0, const double & x1,
                         const double & y1, const double & x2, const double & y2,
-                        const bool onpanel, const std::string & side )
+                        bool onpanel, const std::string & side )
 {
   double d01, d12, d20;
   double r0, r1, r2;
   double dx01, dx12, dx20, m01, m12, m20;
   double e0, e1, e2;
   double h0, h1, h2;
-  double phi;
+  double phi, myz;
+
+  if (onpanel)
+    myz = 0.;
+  else
+    myz = z;
 
   // Geometric quantities needed
 
@@ -55,11 +60,11 @@ double tri_source_potential (
   d20 = std::sqrt(std::pow(x0 - x2, 2.) + std::pow(y0 - y2, 2.));
 
   r0 = std::sqrt(std::pow(x - x0, 2.) + std::pow(y - y0, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r1 = std::sqrt(std::pow(x - x1, 2.) + std::pow(y - y1, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r2 = std::sqrt(std::pow(x - x2, 2.) + std::pow(y - y2, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
 
   dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
   dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
@@ -68,9 +73,9 @@ double tri_source_potential (
   m12 = (y2 - y1)/dx12;
   m20 = (y0 - y2)/dx20;
 
-  e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
-  e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
-  e2 = std::pow(x - x2, 2.) + std::pow(z, 2.);
+  e0 = std::pow(x - x0, 2.) + std::pow(myz, 2.);
+  e1 = std::pow(x - x1, 2.) + std::pow(myz, 2.);
+  e2 = std::pow(x - x2, 2.) + std::pow(myz, 2.);
 
   h0 = (x - x0)*(y - y0);
   h1 = (x - x1)*(y - y1);
@@ -109,14 +114,19 @@ double quad_source_potential (
                         const double & x0, const double & y0, const double & x1,
                         const double & y1, const double & x2, const double & y2,
                         const double & x3, const double & y3,
-                        const bool onpanel, const std::string & side )
+                        bool onpanel, const std::string & side )
 {
   double d01, d12, d23, d30;
   double r0, r1, r2, r3;
   double dx01, dx12, dx23, dx30, m01, m12, m23, m30;
   double e0, e1, e2, e3;
   double h0, h1, h2, h3;
-  double phi;
+  double phi, myz;
+
+  if (onpanel)
+    myz = 0.;
+  else
+    myz = z;
 
   // Geometric quantities needed
 
@@ -126,13 +136,13 @@ double quad_source_potential (
   d30 = std::sqrt(std::pow(x0 - x3, 2.) + std::pow(y0 - y3, 2.));
 
   r0 = std::sqrt(std::pow(x - x0, 2.) + std::pow(y - y0, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r1 = std::sqrt(std::pow(x - x1, 2.) + std::pow(y - y1, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r2 = std::sqrt(std::pow(x - x2, 2.) + std::pow(y - y2, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r3 = std::sqrt(std::pow(x - x3, 2.) + std::pow(y - y3, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
 
   dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
   dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
@@ -143,10 +153,10 @@ double quad_source_potential (
   m23 = (y3 - y2)/dx23;
   m30 = (y0 - y3)/dx30;
 
-  e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
-  e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
-  e2 = std::pow(x - x2, 2.) + std::pow(z, 2.);
-  e3 = std::pow(x - x3, 2.) + std::pow(z, 2.);
+  e0 = std::pow(x - x0, 2.) + std::pow(myz, 2.);
+  e1 = std::pow(x - x1, 2.) + std::pow(myz, 2.);
+  e2 = std::pow(x - x2, 2.) + std::pow(myz, 2.);
+  e3 = std::pow(x - x3, 2.) + std::pow(myz, 2.);
 
   h0 = (x - x0)*(y - y0);
   h1 = (x - x1)*(y - y1);
@@ -209,14 +219,20 @@ Eigen::Vector3d tri_source_velocity (
                         const double & x, const double & y, const double & z,
                         const double & x0, const double & y0, const double & x1,
                         const double & y1, const double & x2, const double & y2,
-                        const bool onpanel, const std::string & side )
+                        bool onpanel, const std::string & side )
 {
   double d01, d12, d20;
   double r0, r1, r2;
   double dx01, dx12, dx20, m01, m12, m20;
   double e0, e1, e2;
   double h0, h1, h2;
+  double myz;
   Eigen::Vector3d velpf;
+
+  if (onpanel)
+    myz = 0.;
+  else
+    myz = z;
 
   // Geometric quantities needed
 
@@ -225,11 +241,11 @@ Eigen::Vector3d tri_source_velocity (
   d20 = std::sqrt(std::pow(x0 - x2, 2.) + std::pow(y0 - y2, 2.));
 
   r0 = std::sqrt(std::pow(x - x0, 2.) + std::pow(y - y0, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r1 = std::sqrt(std::pow(x - x1, 2.) + std::pow(y - y1, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r2 = std::sqrt(std::pow(x - x2, 2.) + std::pow(y - y2, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
 
   if (not onpanel)
   {
@@ -289,14 +305,20 @@ Eigen::Vector3d quad_source_velocity (
                         const double & x0, const double & y0, const double & x1,
                         const double & y1, const double & x2, const double & y2,
                         const double & x3, const double & y3, 
-                        const bool onpanel, const std::string & side )
+                        bool onpanel, const std::string & side )
 {
   double d01, d12, d23, d30;
   double r0, r1, r2, r3;
   double dx01, dx12, dx23, dx30, m01, m12, m23, m30;
   double e0, e1, e2, e3;
   double h0, h1, h2, h3;
+  double myz;
   Eigen::Vector3d velpf;
+
+  if (onpanel)
+    myz = 0.;
+  else
+    myz = z;
 
   // Geometric quantities needed
 
@@ -306,13 +328,13 @@ Eigen::Vector3d quad_source_velocity (
   d30 = std::sqrt(std::pow(x0 - x3, 2.) + std::pow(y0 - y3, 2.));
 
   r0 = std::sqrt(std::pow(x - x0, 2.) + std::pow(y - y0, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r1 = std::sqrt(std::pow(x - x1, 2.) + std::pow(y - y1, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r2 = std::sqrt(std::pow(x - x2, 2.) + std::pow(y - y2, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r3 = std::sqrt(std::pow(x - x3, 2.) + std::pow(y - y3, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
 
   if (not onpanel)
   {
@@ -390,7 +412,7 @@ double tri_doublet_potential (
                         const double & x, const double & y, const double & z,
                         const double & x0, const double & y0, const double & x1,
                         const double & y1, const double & x2, const double & y2,
-                        const bool onpanel, const std::string & side )
+                        bool onpanel, const std::string & side )
 {
   double r0, r1, r2;
   double dx01, dx12, dx20, m01, m12, m20;
@@ -452,7 +474,7 @@ double quad_doublet_potential (
                         const double & x0, const double & y0, const double & x1,
                         const double & y1, const double & x2, const double & y2,
                         const double & x3, const double & y3, 
-                        const bool onpanel, const std::string & side )
+                        bool onpanel, const std::string & side )
 {
   double r0, r1, r2, r3;
   double dx01, dx12, dx23, dx30, m01, m12, m23, m30;
@@ -541,7 +563,7 @@ Eigen::Vector3d tri_doublet_velocity (
                         const double & x, const double & y, const double & z,
                         const double & x0, const double & y0, const double & x1,
                         const double & y1, const double & x2, const double & y2,
-                        const bool onpanel, const std::string & side )
+                        bool onpanel, const std::string & side )
 {
   double r0, r1, r2;
   double dx01, dx12, dx20, m01, m12, m20;
@@ -556,16 +578,22 @@ Eigen::Vector3d tri_doublet_velocity (
   double dh0dy, dh1dy, dh2dy;
   double den0, den1, den2, den3, den4, den5;
   double term1, term2, term3, term4, term5, term6;
+  double myz;
   Eigen::Vector3d velpf;
+
+  if (onpanel)
+    myz = 0.;
+  else
+    myz = z;
 
   // Geometric quantities needed
 
   r0 = std::sqrt(std::pow(x - x0, 2.) + std::pow(y - y0, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r1 = std::sqrt(std::pow(x - x1, 2.) + std::pow(y - y1, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r2 = std::sqrt(std::pow(x - x2, 2.) + std::pow(y - y2, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
 
   dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
   dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
@@ -574,9 +602,9 @@ Eigen::Vector3d tri_doublet_velocity (
   m12 = (y2 - y1)/dx12;
   m20 = (y0 - y2)/dx20;
 
-  e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
-  e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
-  e2 = std::pow(x - x2, 2.) + std::pow(z, 2.);
+  e0 = std::pow(x - x0, 2.) + std::pow(myz, 2.);
+  e1 = std::pow(x - x1, 2.) + std::pow(myz, 2.);
+  e2 = std::pow(x - x2, 2.) + std::pow(myz, 2.);
 
   h0 = (x - x0)*(y - y0);
   h1 = (x - x1)*(y - y1);
@@ -681,7 +709,7 @@ Eigen::Vector3d quad_doublet_velocity (
                         const double & x0, const double & y0, const double & x1,
                         const double & y1, const double & x2, const double & y2,
                         const double & x3, const double & y3, 
-                        const bool onpanel, const std::string & side )
+                        bool onpanel, const std::string & side )
 {
   double r0, r1, r2, r3;
   double dx01, dx12, dx23, dx30, m01, m12, m23, m30;
@@ -696,18 +724,24 @@ Eigen::Vector3d quad_doublet_velocity (
   double dh0dy, dh1dy, dh2dy, dh3dy;
   double den0, den1, den2, den3, den4, den5, den6, den7;
   double term1, term2, term3, term4, term5, term6, term7, term8;
+  double myz;
   Eigen::Vector3d velpf;
+
+  if (onpanel)
+    myz = 0.;
+  else
+    myz = z;
 
   // Geometric quantities needed
 
   r0 = std::sqrt(std::pow(x - x0, 2.) + std::pow(y - y0, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r1 = std::sqrt(std::pow(x - x1, 2.) + std::pow(y - y1, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r2 = std::sqrt(std::pow(x - x2, 2.) + std::pow(y - y2, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
   r3 = std::sqrt(std::pow(x - x3, 2.) + std::pow(y - y3, 2.) + 
-                 std::pow(z, 2.));
+                 std::pow(myz, 2.));
 
   dx01 = sign(x1-x0)*std::max(std::abs(x1-x0), eps);
   dx12 = sign(x2-x1)*std::max(std::abs(x2-x1), eps);
@@ -718,10 +752,10 @@ Eigen::Vector3d quad_doublet_velocity (
   m23 = (y3 - y2)/dx23;
   m30 = (y0 - y3)/dx30;
 
-  e0 = std::pow(x - x0, 2.) + std::pow(z, 2.);
-  e1 = std::pow(x - x1, 2.) + std::pow(z, 2.);
-  e2 = std::pow(x - x2, 2.) + std::pow(z, 2.);
-  e3 = std::pow(x - x3, 2.) + std::pow(z, 2.);
+  e0 = std::pow(x - x0, 2.) + std::pow(myz, 2.);
+  e1 = std::pow(x - x1, 2.) + std::pow(myz, 2.);
+  e2 = std::pow(x - x2, 2.) + std::pow(myz, 2.);
+  e3 = std::pow(x - x3, 2.) + std::pow(myz, 2.);
 
   h0 = (x - x0)*(y - y0);
   h1 = (x - x1)*(y - y1);

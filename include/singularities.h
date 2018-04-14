@@ -20,14 +20,14 @@ double point_source_potential ( const double &, const double &,
 double tri_source_potential ( const double &, const double &, const double &,
                               const double &, const double &, const double &, 
                               const double &, const double &, const double &, 
-                              const bool, const std::string & );
+                              bool, const std::string & );
                         // Source potential at a point due to triangular
                         //   source panel at z = 0 with unit strength
 
 double quad_source_potential ( const double &, const double &, const double &,
                                const double &, const double &, const double &, 
                                const double &, const double &, const double &, 
-                               const double &, const double &, const bool,
+                               const double &, const double &, bool,
                                const std::string & );
                         // Source potential at a point due to quadrilateral
                         //   source panel at z = 0 with unit strength
@@ -41,7 +41,7 @@ Eigen::Vector3d tri_source_velocity ( const double &, const double &,
                                       const double &, const double &, 
                                       const double &, const double &, 
                                       const double &, const double &, 
-                                      const double &, const bool, 
+                                      const double &, bool, 
                                       const std::string & );
                         // Source velocity at a point due to triangular
                         //   source panel at z = 0 with unit strength
@@ -51,7 +51,7 @@ Eigen::Vector3d quad_source_velocity ( const double &, const double &,
                                        const double &, const double &, 
                                        const double &, const double &, 
                                        const double &, const double &, 
-                                       const double &, const bool, 
+                                       const double &, bool, 
                                        const std::string & );
                         // Source velocity at a point due to quadrilateral
                         //   source panel at z = 0 with unit strength
@@ -64,14 +64,14 @@ double point_doublet_potential ( const double &, const double &,
 double tri_doublet_potential ( const double &, const double &, const double &,
                                const double &, const double &, const double &, 
                                const double &, const double &, const double &, 
-                               const bool, const std::string & );
+                               bool, const std::string & );
                         // Doublet potential at a point due to triangular
                         //   doublet panel at z = 0 with unit strength
 
 double quad_doublet_potential ( const double &, const double &, const double &,
                                 const double &, const double &, const double &, 
                                 const double &, const double &, const double &, 
-                                const double &, const double &, const bool,
+                                const double &, const double &, bool,
                                 const std::string & );
                         // Doublet potential at a point due to quadrilateral
                         //   doublet panel at z = 0 with unit strength
@@ -85,7 +85,7 @@ Eigen::Vector3d tri_doublet_velocity ( const double &, const double &,
                                        const double &, const double &, 
                                        const double &, const double &, 
                                        const double &, const double &, 
-                                       const double &, const bool, 
+                                       const double &, bool, 
                                        const std::string & );
                         // Doublet velocity at a point due to triangular
                         //   doublet panel at z = 0 with unit strength
@@ -95,7 +95,7 @@ Eigen::Vector3d quad_doublet_velocity ( const double &, const double &,
                                         const double &, const double &, 
                                         const double &, const double &, 
                                         const double &, const double &, 
-                                        const double &, const bool, 
+                                        const double &, bool, 
                                         const std::string & );
                         // Doublet velocity at a point due to quadrilateral
                         //   doublet panel at z = 0 with unit strength

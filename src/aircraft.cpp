@@ -10,7 +10,6 @@
 #include "wake.h"
 #include "element.h"
 #include "panel.h"
-#include "vortex.h"
 #include "wing.h"
 #include "aircraft.h"
 
@@ -35,7 +34,8 @@ void Aircraft::setGeometryPointers ()
   unsigned int nwings, nverts_total, nquads_total, ntris_total;
   unsigned int i, j, nverts, nquads, ntris, vcounter, pcounter;
   unsigned int nverts_wake_total, nverts_wake, vwcounter;
-  unsigned int nvrings_total, nhshoes_total, nvrings, nhshoes, vortcounter;
+  unsigned int nwaketris_total, nwakequads_total, nwaketris, nwakequads;
+  unsigned int wakecounter;
 
   // Get sizes first (don't use push_back, because it invalidates pointers)
 
@@ -44,28 +44,28 @@ void Aircraft::setGeometryPointers ()
   nquads_total = 0;
   ntris_total = 0;
   nverts_wake_total = 0;
-  nvrings_total = 0;
-  nhshoes_total = 0;
+  nwaketris_total = 0;
+  nwakequads_total = 0;
   for ( i = 0; i < nwings; i++ )
   {
     nverts_total += _wings[i].nVerts();
     nquads_total += _wings[i].nQuads();
     ntris_total += _wings[i].nTris();
     nverts_wake_total += _wings[i].wake().nVerts();
-    nvrings_total += _wings[i].wake().nVRings();
-    nhshoes_total += _wings[i].wake().nHShoes();
+    nwaketris_total += _wings[i].wake().nTris();
+    nwakequads_total += _wings[i].wake().nQuads();
   }
   _verts.resize(nverts_total);
   _panels.resize(nquads_total + ntris_total);
   _wakeverts.resize(nverts_wake_total);
-  _vorts.resize(nvrings_total + nhshoes_total);
+  _wakepanels.resize(nwaketris_total + nwakequads_total);
 
   // Store geometry pointers
 
   vcounter = 0;
   pcounter = 0;
   vwcounter = 0;
-  vortcounter = 0;
+  wakecounter = 0;
   for ( i = 0; i < nwings; i++ ) 
   {
     nverts = _wings[i].nVerts();
@@ -96,18 +96,18 @@ void Aircraft::setGeometryPointers ()
       vwcounter += 1;
     }
 
-    nvrings = _wings[i].wake().nVRings();
-    for ( j = 0; j < nvrings; j++ )
+    nwaketris = _wings[i].wake().nTris();
+    for ( j = 0; j < nwaketris; j++ )
     {
-      _vorts[vortcounter] = _wings[i].wake().vRing(j);
-      vortcounter += 1;
+      _wakepanels[wakecounter] = _wings[i].wake().triPanel(j);
+      wakecounter += 1;
     }
 
-    nhshoes = _wings[i].wake().nHShoes();
-    for ( j = 0; j < nhshoes; j++ )
+    nwakequads = _wings[i].wake().nQuads();
+    for ( j = 0; j < nwakequads; j++ )
     {
-      _vorts[vortcounter] = _wings[i].wake().hShoe(j);
-      vortcounter += 1;
+      _wakepanels[wakecounter] = _wings[i].wake().quadPanel(j);
+      wakecounter += 1;
     } 
   }
 }
@@ -214,7 +214,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
 
   // Surface data at vertices
 
-  writeSurfaceData(f);
+  //writeSurfaceData(f);
 
   f.close();
 
@@ -316,8 +316,7 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
 int Aircraft::writeWakeViz ( const std::string & fname ) const
 {
   std::ofstream f;
-  unsigned int i, j, nverts, nvorts, nsurf_verts;
-  std::string type;
+  unsigned int i, j, nverts, npanels, nsurf_verts, cellsize, ncellverts;
 
   f.open(fname.c_str());
   if (! f.is_open())
@@ -358,65 +357,71 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
       << _wakeverts[i]->z() << std::endl;
   } 
 
-  // Write vortex elements and mirror element
+  // Write wake panels and mirror panels
 
-  nvorts = _vorts.size();
-  f << "CELLS " << nvorts*2 << " " << 5*nvorts*2 << std::endl;
-  for ( i = 0; i < nvorts; i++ )
+  npanels = _wakepanels.size();
+  cellsize = 0;
+  for ( i = 0; i < npanels; i++ )
   {
-    type = _vorts[i]->type();
-    if ( (type != "vortexring") && (type != "horseshoevortex") )
+    cellsize += 1 + _wakepanels[i]->nVertices();
+  }
+  f << "CELLS " << npanels*2 << " " << cellsize*2 << std::endl;
+  for ( i = 0; i < npanels; i++ )
+  {
+    ncellverts = _wakepanels[i]->nVertices();
+    if ( (ncellverts != 4) && (ncellverts != 3) )
     {
       conditional_stop(1, "Aircraft::writeWakeViz",
-                   "Wake elements must be vortex rings or horseshoe vortices.");
+                       "Wake panels must all be quad- or tri-type.");
       return 1;
     }
-    f << 4;
-    for ( j = 0; j < 4; j++ )
+    f << ncellverts;
+    for ( j = 0; j < ncellverts; j++ )
     {
-      f << " " << _vorts[i]->vertex(j).idx()-nsurf_verts;
+      f << " " << _wakepanels[i]->vertex(j).idx()-nsurf_verts;
     }
     f << std::endl;
   }
-  for ( i = 0; i < nvorts; i++ )
+  for ( i = 0; i < npanels; i++ )
   {
-    f << 4;
-    for ( j = 0; j < 4; j++ )
+    ncellverts = _wakepanels[i]->nVertices();
+    f << ncellverts;
+    for ( j = 0; j < ncellverts; j++ )
     {
-      f << " " << _vorts[i]->vertex(j).idx()-nsurf_verts+nverts;
+      f << " " << _wakepanels[i]->vertex(j).idx()-nsurf_verts+nverts;
     }
     f << std::endl;
   }
 
-  // Cell types for vortex elements and mirror elements
+  // Cell types for doublet panels and mirror panels
 
-  f << "CELL_TYPES " << nvorts*2 << std::endl;
-  for ( i = 0; i < nvorts; i++ )
+  f << "CELL_TYPES " << npanels*2 << std::endl;
+  for ( i = 0; i < npanels; i++ )
   {
-    type = _vorts[i]->type();
-    if (type == "vortexring")
+    ncellverts = _wakepanels[i]->nVertices();
+    if (ncellverts == 4)
       f << 9 << std::endl;
-    else if (type == "horseshoevortex")
-      f << 4 << std::endl;
+    else if (ncellverts == 3) 
+      f << 5 << std::endl;
   }
-  for ( i = 0; i < nvorts; i++ )
+  for ( i = 0; i < npanels; i++ )
   {
-    type = _vorts[i]->type();
-    if (type == "vortexring")
+    if (ncellverts == 4)
       f << 9 << std::endl;
-    else if (type == "horseshoevortex")
-      f << 4 << std::endl;
+    else if (ncellverts == 3) 
+      f << 5 << std::endl;
   }
 
   // Wake data at elements
 
-  writeWakeData(f);
+  //writeWakeData(f);
 
   f.close();
 
   return 0;
 }
 
+#if 0
 /******************************************************************************/
 //
 // Writes wake data to VTK viz file
@@ -444,7 +449,9 @@ void Aircraft::writeWakeData ( std::ofstream & f ) const
       << _vorts[i]->circulation() << std::endl;
   }
 }
+#endif
 
+#if 0
 /******************************************************************************/
 //
 // Writes legacy VTK wake strip viz (for checking purposes). One file is written
@@ -564,6 +571,7 @@ int Aircraft::writeWakeStripViz ( const std::string & prefix )
 
   return 0;
 }
+#endif
 
 /******************************************************************************/
 //
@@ -579,7 +587,7 @@ Aircraft::Aircraft ()
   _verts.resize(0);
   _panels.resize(0);
   _wakeverts.resize(0);
-  _vorts.resize(0);
+  _wakepanels.resize(0);
   _aic.resize(0,0);
   _mu.resize(0);
   _rhs.resize(0);
@@ -915,6 +923,7 @@ void Aircraft::setDoubletStrengths ()
   }
 }
 
+#if 0
 /******************************************************************************/
 //
 // Sets vortex wake circulation strengths
@@ -944,7 +953,9 @@ void Aircraft::setWakeCirculation ()
     }
   }
 }
+#endif
 
+#if 0
 /******************************************************************************/
 //
 // Constructs AIC matrix and RHS vector
@@ -1052,7 +1063,9 @@ void Aircraft::constructSystem ()
     }
   }
 }
+#endif
 
+#if 0
 /******************************************************************************/
 //
 // Factorizes the AIC matrix and solves the system
@@ -1060,6 +1073,7 @@ void Aircraft::constructSystem ()
 /******************************************************************************/
 void Aircraft::factorize () { _lu.compute(_aic); }
 void Aircraft::solveSystem () { _mu = _lu.solve(_rhs); }
+#endif
 
 /******************************************************************************/
 //
@@ -1068,6 +1082,7 @@ void Aircraft::solveSystem () { _mu = _lu.solve(_rhs); }
 /******************************************************************************/
 unsigned int Aircraft::systemSize () const { return _panels.size(); }
 
+#if 0
 /******************************************************************************/
 //
 // Computes velocities at cell centroids
@@ -1103,7 +1118,9 @@ void Aircraft::computeVelocities ()
     _panels[i]->setVelocity(vel);
   }
 }
+#endif
 
+#if 0
 /******************************************************************************/
 //
 // Computes vertex quantities from solution
@@ -1120,6 +1137,7 @@ void Aircraft::computeVertexData ()
     _verts[i]->computeSurfaceData(uinf, pinf, rhoinf);
   }
 }
+#endif
 
 /******************************************************************************/
 //

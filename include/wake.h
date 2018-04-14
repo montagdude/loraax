@@ -5,8 +5,8 @@
 
 #include <vector>
 #include "vertex.h"
-#include "vortex_ring.h"
-#include "horseshoe_vortex.h"
+#include "tripanel.h"
+#include "quadpanel.h"
 
 /******************************************************************************/
 //
@@ -18,8 +18,9 @@ class Wake {
   private:
 
     std::vector<Vertex> _verts;			// Vertices
-    std::vector<VortexRing> _vrings;		// Vortex rings
-    std::vector<HorseshoeVortex> _hshoes;	// Horseshoe vortices
+    std::vector<TriPanel> _tris;		// Tri doublet panels
+    std::vector<QuadPanel> _quads;		// Quad doublet panels (trailing
+                                                //   to near-infinity)
 
   public:
 
@@ -32,14 +33,14 @@ class Wake {
     void initialize ( const std::vector<Vertex> & teverts,
                       int & next_global_vertidx, int & next_global_elemidx );
 
-    // Access vertices, vortex rings, horseshoe vortices
+    // Access vertices and panels
 
     unsigned int nVerts () const;
-    unsigned int nVRings () const;
-    unsigned int nHShoes () const;
+    unsigned int nTris () const;
+    unsigned int nQuads () const;
     Vertex * vert ( unsigned int vidx );
-    VortexRing * vRing ( unsigned int vridx );
-    HorseshoeVortex * hShoe ( unsigned int hsidx );
+    TriPanel * triPanel ( unsigned int tidx );
+    QuadPanel * quadPanel ( unsigned int qidx );
 };
 
 #endif

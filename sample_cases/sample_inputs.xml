@@ -39,9 +39,11 @@
      inviscid coupling. -->
   <TimeStep>0.2</TimeStep>
 
-<!-- The wake extends to infinity, but this length will roll up with the local
-     flow velocity. -->
-  <WakeLength>7</WakeLength>
+<!-- The distance behind a wing over which the wake will convect with the
+     local flow velocity. Behind this, the wake is aligned with the freestream
+     over a distance of 1000 * RollupDist. (So make sure RollupDist is long
+     enough!) -->
+  <RollupDist>7</RollupDist>
 
 <!-- Whether to run Xfoil for a coupled viscous solution. -->
   <Viscous>true</Viscous>

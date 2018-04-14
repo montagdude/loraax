@@ -11,7 +11,6 @@
 
 class Vertex;
 class Panel;
-class Vortex;
 
 /******************************************************************************/
 //
@@ -31,8 +30,7 @@ class Aircraft {
     std::vector<Vertex *> _verts;	// Pointers to vertices
     std::vector<Panel *> _panels;	// Pointers to panels 
     std::vector<Vertex *> _wakeverts;   // Pointers to wake vertices
-    std::vector<Vortex *> _vorts;	// Pointers to wake vortex panels and
-                                        //   horseshoes
+    std::vector<Panel *> _wakepanels;	// Pointers to wake doublet panels
 
     Eigen::MatrixXd _aic;		// Aero influence coefficients matrix
     Eigen::VectorXd _mu;		// Unknown doublet strengths vector
@@ -65,11 +63,11 @@ class Aircraft {
 
     int readXML ( const std::string & geom_file );
 
-    // Set source, doublet, and vortex strengths
+    // Set source and doublet strengths
 
     void setSourceStrengths ();
     void setDoubletStrengths ();
-    void setWakeCirculation ();
+    void setWakeDoubletStrength ();
 
     // Construct AIC matrix and RHS vector, factorize, and solve
 

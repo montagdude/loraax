@@ -39,6 +39,7 @@ int main (int argc, char* argv[])
   std::cout << "Setting source strengths ..." << std::endl;
   ac.setSourceStrengths();
 
+#if 0
   // Construct, factorize, and solve the system
 
   std::cout << "Constructing the linear system ..." << std::endl;
@@ -68,6 +69,7 @@ int main (int argc, char* argv[])
 
   std::cout << "Computing vertex data ..." << std::endl;
   ac.computeVertexData();
+#endif
 
   // Write viz
 
