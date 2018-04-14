@@ -143,17 +143,21 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
   f << "POINTS " << nverts*2 << " double" << std::endl;
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->x();
-    f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->y();
-    f << std::setprecision(14) << std::setw(25) << std::left << _verts[i]->z()
-      << std::endl;
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->xViz();
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->yViz();
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->zViz() << std::endl;
   } 
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left <<  _verts[i]->x();
-    f << std::setprecision(14) << std::setw(25) << std::left << -_verts[i]->y();
-    f << std::setprecision(14) << std::setw(25) << std::left <<  _verts[i]->z()
-      << std::endl;
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->xViz();
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << -_verts[i]->yViz();
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->zViz() << std::endl;
   } 
 
   // Write panels and mirror panels
@@ -341,20 +345,20 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
   for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->x();
+      << _wakeverts[i]->xViz();
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->y();
+      << _wakeverts[i]->yViz();
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->z() << std::endl;
+      << _wakeverts[i]->zViz() << std::endl;
   } 
   for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->x();
+      << _wakeverts[i]->xViz();
     f << std::setprecision(14) << std::setw(25) << std::left
-      << -_wakeverts[i]->y();
+      << -_wakeverts[i]->yViz();
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->z() << std::endl;
+      << _wakeverts[i]->zViz() << std::endl;
   } 
 
   // Write wake panels and mirror panels

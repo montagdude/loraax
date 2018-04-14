@@ -27,6 +27,10 @@ Vertex::Vertex ()
   _z = 0.0;
   _npanels = 0;
   _panels.resize(0);
+  _vizcoords = false;
+  _xviz = 0.;
+  _yviz = 0.;
+  _zviz = 0.;
   _data.resize(7);
   for ( i = 0; i < 7; i++ ) { _data[i] = 0.; }
 }
@@ -55,6 +59,39 @@ void Vertex::setCoordinates ( const double & x, const double & y,
 const double & Vertex::x () const { return _x; }
 const double & Vertex::y () const { return _y; }
 const double & Vertex::z () const { return _z; }
+
+void Vertex::setVizCoordinates ( const double & x, const double & y,
+                                 const double & z )
+{
+  _xviz = x;
+  _yviz = y;
+  _zviz = z;
+  _vizcoords = true;
+}
+
+const double & Vertex::xViz () const
+{
+  if (_vizcoords)
+    return _xviz;
+  else
+    return _x;
+}
+
+const double & Vertex::yViz () const
+{
+  if (_vizcoords)
+    return _yviz;
+  else
+    return _y;
+}
+
+const double & Vertex::zViz () const
+{
+  if (_vizcoords)
+    return _zviz;
+  else
+    return _z;
+}
 
 /******************************************************************************/
 //

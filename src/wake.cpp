@@ -38,7 +38,7 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
   int nstream, nspan, ntris, nquads;
   unsigned int i, j, blvert, brvert, trvert, tlvert;
   std::vector<double> uinfdir;
-  double x, y, z;
+  double x, y, z, xviz, yviz, zviz;
 
   // Determine number of rows to store based on inputs
 
@@ -75,7 +75,10 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
         x = _verts[i*(nstream+1)].x() + uinfdir[0]*1001.*rollupdist;
         y = _verts[i*(nstream+1)].y();
         z = _verts[i*(nstream+1)].z() + uinfdir[2]*1001.*rollupdist;
-        _verts[i*(nstream+1)+j].setCoordinates(x, y, z);
+        xviz = _verts[i*(nstream+1)].x() + uinfdir[0]*nstream*dt*uinf;
+        yviz = _verts[i*(nstream+1)].y();
+        zviz = _verts[i*(nstream+1)].z() + uinfdir[2]*nstream*dt*uinf;
+        _verts[i*(nstream+1)+j].setVizCoordinates(xviz, yviz, zviz);
       }
       _verts[i*(nstream+1)+j].setIdx(next_global_vertidx);
       next_global_vertidx += 1;

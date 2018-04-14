@@ -20,8 +20,12 @@ class Vertex {
 
     int _idx;
     double _x, _y, _z;
-    std::vector<Panel *> _panels;		// Neighboring panels
+    std::vector<Panel *> _panels;	// Neighboring panels
     unsigned int _npanels;
+    bool _vizcoords;		 	// Separate coordinates for
+    double _xviz, _yviz, _zviz;	 	//   visualization. Used for trailing
+					//   wake vertices that are far
+					//   downstream.
 
     // Vertex data: source strength, doublet strength, Vx, Vy, Vz, pressure, cp
 
@@ -45,6 +49,12 @@ class Vertex {
     const double & x () const;
     const double & y () const;
     const double & z () const;
+
+    void setVizCoordinates ( const double & x, const double & y,
+                             const double & z );
+    const double & xViz () const;
+    const double & yViz () const;
+    const double & zViz () const;
 
     // Transformations
 
