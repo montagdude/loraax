@@ -219,7 +219,7 @@ const double & Vertex::data ( unsigned int idx ) const
 void Vertex::interpFromPanels ()
 {
   unsigned int i;
-  double dx, dy, dz, dist, weightsum, vmag2, uinf2;
+  double dx, dy, dz, dist, weightsum;
   Eigen::Vector3d cen;
 
   _data[0] = 0.;

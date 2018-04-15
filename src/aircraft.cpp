@@ -994,8 +994,6 @@ void Aircraft::constructSystem ()
 
     // Surface doublet influence coefficients
 
-//FIXME: I think these are supposed to be evaluated on the bottom of the panel,
-//  but the results look wrong if I do that.
     for ( j = 0; j < npanels; j++ )
     {
       if (i == j)
@@ -1003,7 +1001,7 @@ void Aircraft::constructSystem ()
       else
         onpanel = false;
       _aic(i,j) = _panels[j]->doubletPhiCoeff(cen(0), cen(1), cen(2), onpanel,
-                                              "top", true);
+                                              "bottom", true);
     }
 
     // Wake influence coefficients applied to TE panels
@@ -1019,7 +1017,7 @@ void Aircraft::constructSystem ()
         for ( m = 0; m < nwakepans; m++ )
         {
           stripic += strip->panel(m)->doubletPhiCoeff(cen(0), cen(1), cen(2),
-                                                      false, "top", true);
+                                                      false, "bottom", true);
         }
         toptepan = strip->topTEPan()->idx();
         bottepan = strip->botTEPan()->idx();
@@ -1039,7 +1037,7 @@ void Aircraft::constructSystem ()
         onpanel = false;
       _rhs(i) -= _panels[j]->sourceStrength()
                * _panels[j]->sourcePhiCoeff(cen(0), cen(1), cen(2), onpanel,
-                                            "top", true);
+                                            "bottom", true);
     }
   }
 }

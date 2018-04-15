@@ -20,7 +20,7 @@ class TriPanel: public Panel {
 
     // Computing geometric quantities
 
-    void computeCharacteristicLength();
+    void computeCharacteristicLength ();
     void computeArea ();
     void computeNormal ();
     void computeCentroid ();
@@ -35,6 +35,10 @@ class TriPanel: public Panel {
     // Add vertices and comput geometric quantities when 4 are set
 
     int addVertex ( Vertex * vert );
+
+    // Recomputes all geometric quantities
+
+    int recomputeGeometry ();
 
     // Computing source and doublet influence coefficients at a point
 

@@ -50,13 +50,32 @@ int TriPanel::addVertex ( Vertex * vert )
   _currverts += 1;
 
   if (_currverts == 3)
+    recomputeGeometry();
+
+  return 0;
+}
+
+/******************************************************************************/
+//
+// Recomputes all geometric quantities
+//
+/******************************************************************************/
+int TriPanel::recomputeGeometry ()
+{
+#ifdef DEBUG
+  if (_currverts != 3)
   {
-    computeCharacteristicLength();
-    computeArea();
-    computeNormal();
-    computeCentroid();
-    computeTransform();
+    conditional_stop(1, "TriPanel::recomputeGeometry",
+                     "3 vertices are required.");
+    return 1;
   }
+#endif
+
+  computeCharacteristicLength();
+  computeArea();
+  computeNormal();
+  computeCentroid();
+  computeTransform();
 
   return 0;
 }

@@ -424,8 +424,12 @@ double tri_doublet_potential (
 
   if (onpanel)
   {
-    if (side == "top") { phi = -0.5; }
-    else { phi = 0.5; }
+    // Note: signs are different from Katz & Plotkin; either an error in the
+    // book or sign convention difference. But these are correct for this
+    // formulation.
+
+    if (side == "top") { phi = 0.5; }
+    else { phi = -0.5; }
   }
 
   else
@@ -486,8 +490,12 @@ double quad_doublet_potential (
 
   if (onpanel)
   {
-    if (side == "top") { phi = -0.5; }
-    else { phi = 0.5; }
+    // Note: signs are different from Katz & Plotkin; either an error in the
+    // book or sign convention difference. But these are correct for this
+    // formulation.
+
+    if (side == "top") { phi = 0.5; }
+    else { phi = -0.5; }
   }
 
   else

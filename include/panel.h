@@ -32,11 +32,23 @@ class Panel: public Element {
                                    // Panel endpoint coordinates in panel frame
     Eigen::Vector3d _vel;	   // Flow velocity at centroid
 
+    // Computing geometric quantities
+
+    virtual void computeCharacteristicLength () = 0;
+    virtual void computeArea () = 0;
+    virtual void computeNormal () = 0;
+    virtual void computeCentroid () = 0;
+    virtual void computeTransform () = 0;
+
   public:
 
     // Constructor
 
     Panel ();
+
+    // Recomputes all geometric quantities
+
+    virtual int recomputeGeometry () = 0;
 
     // Setting and accessing source and doublet strength
 

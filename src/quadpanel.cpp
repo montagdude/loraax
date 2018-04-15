@@ -49,13 +49,32 @@ int QuadPanel::addVertex ( Vertex * vert )
   _currverts += 1;
 
   if (_currverts == 4)
+    recomputeGeometry();
+
+  return 0;
+}
+
+/******************************************************************************/
+//
+// Recomputes all geometric quantities
+//
+/******************************************************************************/
+int QuadPanel::recomputeGeometry ()
+{
+#ifdef DEBUG
+  if (_currverts != 4)
   {
-    computeCharacteristicLength();
-    computeArea();
-    computeNormal();
-    computeCentroid();
-    computeTransform();
+    conditional_stop(1, "QuadPanel::recomputeGeometry",
+                     "4 vertices are required.");
+    return 1;
   }
+#endif
+
+  computeCharacteristicLength();
+  computeArea();
+  computeNormal();
+  computeCentroid();
+  computeTransform();
 
   return 0;
 }

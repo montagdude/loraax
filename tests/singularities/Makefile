@@ -19,6 +19,7 @@ ROTDOUBLET=test_doublet_rotation
 ROTDOUBLET2=test_doublet_rotation2
 POINTDOUBLET=test_point_doublet
 ONPANDOUBLET=test_doublet_onpanel
+ONPANDOUBLET2=test_doublet_onpanel2
 SOURCE=test_source
 ROTSOURCE=test_source_rotation
 MIRROR=test_mirror
@@ -41,7 +42,7 @@ endif
 
 ################################################################################
 
-all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(ONPANDOUBLET) $(SOURCE) $(ROTSOURCE) $(MIRROR) $(POTENTIAL) $(POTENTIAL2)
+all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(ONPANDOUBLET) $(ONPANDOUBLET2) $(SOURCE) $(ROTSOURCE) $(MIRROR) $(POTENTIAL) $(POTENTIAL2)
 
 $(HSHOE): $(OBJ) test_hshoe.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(HSHOE) $(OBJ) test_hshoe.o
@@ -66,6 +67,9 @@ $(POINTDOUBLET): $(OBJ) test_point_doublet.o
 
 $(ONPANDOUBLET): $(OBJ) test_doublet_onpanel.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ONPANDOUBLET) $(OBJ) test_doublet_onpanel.o
+
+$(ONPANDOUBLET2): $(OBJ) test_doublet_onpanel2.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ONPANDOUBLET2) $(OBJ) test_doublet_onpanel2.o
 
 $(SOURCE): $(OBJ) test_source.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(SOURCE) $(OBJ) test_source.o
@@ -168,6 +172,9 @@ test_point_doublet.o: test_point_doublet.cpp
 
 test_doublet_onpanel.o: test_doublet_onpanel.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_doublet_onpanel.cpp
+
+test_doublet_onpanel2.o: test_doublet_onpanel2.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_doublet_onpanel2.cpp
 
 test_source.o: test_source.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_source.cpp
