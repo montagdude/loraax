@@ -20,77 +20,116 @@
 
 \section{Boundary Conditions}\label{sec:bcs}
 
-LORAAX uses Neumann-type boundary conditions on wing surfaces, which specify 0
-normal flow through a panel:
+The Neumann-type boundary condition specifies 0 normal flow through a panel:
 
 \begin{equation}
-\mathbf{V}\cdot{\mathbf{\hat{n}}} = 0.
+\mathbf{V}\cdot{\mathbf{\hat{n}}} = 0,
 \label{eq:bc1}
 \end{equation}
 
-The velocity is the sum of all sources, doublets, and vortices, plus the freestream
-influence, as follows:
+\noindent where $\mathbf{\hat{n}}$ is the outward-facing normal vector at the centroid of
+the panel. The velocity is the sum of contributions from all source and doublet panels on
+wing surfaces, doublet panels in the wake, plus the freestream influence, as follows:
 
 \begin{equation}
-\mathbf{V} = \sum_{i=1}^{N_{\text{pan}}}\left(\mathbf{a}_i\mu_i + \mathbf{b}_i\sigma_i\right)
-           + \sum_{j=1}^{N_{\text{vort}}}\mathbf{c}_i\gamma_i + \mathbf{V}_\infty,
+\mathbf{V}(x,y,z) = \mathbf{V}_\infty
+                  + \sum_{i=1}^{\text{pan}}\left(\mathbf{a}_i(x,y,z)\mu_i
+                  +                              \mathbf{b}_i(x,y,z)\sigma_i\right)
+                  + \sum_{i=\text{pan}+1}^{\text{wakepan}}\mathbf{a}_i(x,y,z)\mu_i,
 \label{eq:vel1}
 \end{equation}
 
 \noindent where $\mathbf{a}_i$ and $\mathbf{b}_i$ are the influence
 coefficients due to the
-doublet panel $i$ and source panel $i$, respectively, $\mathbf{c}_j$ is the
-influence
-coefficient due to wake vortex ring or horseshoe $j$, and $\mu$, $\sigma$, and
-$\gamma$ are distributed doublet, source, and circulation strengths of these
-elements, respectively.
+doublet panel $i$ and source panel $i$, respectively, and $\mu$ and $\sigma$ are
+the strengths of these elements, assumed constant on a panel.
 
-\section{System of Equations}
-
-Following from the boundary conditions, a system of equations can be formed to
-solve for the unknown doublet, source, and circulation strengths. However, the
-system is underconstrained if each of these is considered an unknown. First, one
-of the source or doublet strengths on each panel must be specified. Typically,
-the source strength is specified as
+Equation \ref{eq:vel1} gives the boundary condition in the Neumann form. For the purpose
+of evaluating it numerically, it is sometimes preferred to represent the boundary
+condition in Dirichlet form. In this case, it is recognized that Eq. \ref{eq:vel1} is
+equivalent to the velocity potential, $\Phi$, being constant inside the body. $\Phi$ is
+related to the velocity as follows:
 
 \begin{equation}
-\sigma_i = -\mathbf{V}_\infty\cdot\mathbf{\hat{n}}.
+\Phi = \nabla\mathbf{V}.
+\label{eq:phi1}
+\end{equation}
+
+For the source-doublet panel formulation,
+
+\begin{equation}
+\Phi(x,y,z) = \Phi_\infty
+            + \sum_{i=1}^{\text{pan}}\left[c_i(x,y,z)\mu_i + d_i(x,y,z)\sigma_i\right]
+            + \sum_{i=\text{pan}+1}^{\text{wakepan}+\text{pan}}c_i(x,y,z)\mu_i,
+\label{eq:phi2}
+\end{equation}
+
+\noindent where $c_i$ and $d_i$ are the influence coefficients for the velocity potential
+of doublet and source panels $i$, respectively acting on the point $(x,y,z)$. Note that in
+this formulation, the influence coefficients are scalars instead of vectors as in Eq.
+\ref{eq:vel1}. The boundary
+condition states that $\Phi$ is constant inside the body, so
+
+\begin{equation}
+   \Phi_\infty
+ + \sum_{i=1}^{\text{pan}}\left[c_i(x,y,z)\mu_i + d_i(x,y,z)\sigma_i\right]
+ + \sum_{i=\text{pan}+1}^{\text{wakepan}+\text{pan}}c_i(x,y,z)\mu_i = \text{const},
+\label{eq:phi3}
+\end{equation}
+
+\noindent where it is assumed that the point $(x,y,z)$ lies inside the body. Different
+values for the constant are possible, but a popular choice is $\text{const} =
+\Phi_\infty$, which results in the boundary condition
+
+\begin{equation}
+\sum_{i=1}^{\text{pan}}\left[c_i(x,y,z)\mu_i + d_i(x,y,z)\sigma_i\right]
+\sum_{i=\text{pan}+1}^{\text{wakepan}+\text{pan}}c_i(x,y,z)\mu_i = 0.
+\label{eq:phi4}
+\end{equation}
+
+This choice of the internal potential requires the source strengths to be
+
+\begin{equation}
+\sigma_i = -\mathbf{V}_\infty\cdot\mathbf{\hat{n}}_i,
 \label{eq:sigma1}
 \end{equation}
 
-This form takes care of the ``zeroth-order'' freestream portion of the boundary
-condition, allowing for smaller doublet strengths. During the first iteration
-prior to unsteady wake rollup, the entire line of wake vortices behind a set of
-top- and bottom-surface trailing edge panels is
+\noindent where $\mathbf{\hat{n}}_i$ is the outward-pointing normal direction at
+the centroid of panel $i$ \textcolor{red}{(cite Katz \& Plotkin)}.
+
+Finally, the Kutta condition must be enforced, which states that no jump in $\Phi$ is
+allowed at the trailing edge. This is done by setting the doublet strength in the wake
+panels along the trailing edge as
 
 \begin{equation}
-\gamma_{\text{te}} = \mu_{\text{te,top}} - \mu_{\text{te,bot}},
-\label{eq:wake_circ}
+\mu_{\text{te}} = \mu_{\text{te,top}} - \mu_{\text{te,bot}},
+\label{eq:wake_strength}
 \end{equation}
 
 \noindent where \emph{te} represents the portion of the wing's trailing edge
-spanned by a given column of panels and wake vortices. This relation is required
-by the Kutta condition; it results in no jump in singularity strength across the
-trailing edge. Rewriting the equations above, the boundary condition for a given
-panel can be represented as
+spanned by a given column of surface and trailing wake panels.
+
+\section{System of Equations}
+
+Applying Eq. \ref{eq:phi4} at every surface panel, and substituting in Eqs.
+\ref{eq:sigma1} and \ref{eq:wake_strength}, Eq. \ref{eq:system1} is obtained.
+Here, the identifier $(x,y,z)$ has been removed, as it is implicit that this equation is
+to be applied at the centroid of a panel, just inside the body.
 
 \begin{equation}
-  \sum_{i=1}^{N_{\text{pan}}}\mathbf{a}_i\mu_i\cdot\mathbf{\hat{n}}
-+ \sum_{k=1}^{N_{\text{te}}}\mathbf{d}_k
-    \left(\mu_{k,\text{top}} - \mu_{k,\text{bot}}\right)\cdot\mathbf{\hat{n}}
-= -\mathbf{V}_\infty\cdot\mathbf{\hat{n}}
-+ \sum_{i=1}^{N_{\text{pan}}}\left(\mathbf{V}_\infty\cdot\mathbf{\hat{n}}_i\right)
-    \left(\mathbf{b}_i\cdot\mathbf{\hat{n}}\right).
+  \sum_{i=1}^{\text{pan}}c_i\mu_i 
++ \sum_{k=1}^{N_\text{te}}e_k\left(\mu_{k,\text{top}} - \mu_{k,\text{bot}}\right)
+= \sum_{i=1}^{\text{pan}}d_i\mathbf{V}_\infty\cdot\mathbf{\hat{n}}_i
 \label{eq:system1}
 \end{equation}
 
 \noindent Note that the unknowns are the doublet strengths $\mu$ only, while the
 known quantities have been moved to the right hand side. The influence
-coefficients $\mathbf{d}_k$ represent the velocity due to the strip of wake
-vortices behind the trailing edge spanwise location $k$ with unit circulation
-strength. Equation \ref{eq:system1} can be
+coefficients $e_k$ represent the potential due to the strip of wake doublets
+behind the trailing edge spanwise location $k$ with unit strength
+Equation \ref{eq:system1} can be
 applied to each of the surface panels, with only the influence coefficients
-$\mathbf{a}$, $\mathbf{b}$, and $\mathbf{d}$ changing. The result is a system of
+$c$, $e$, and $d$ changing. The result is a system of
 $N_{\text{pan}}$ equations with $N_{\text{pan}}$ unknown doublet strengths. It
 can be represented in matrix form as follows:
 

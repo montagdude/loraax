@@ -39,7 +39,6 @@ int main (int argc, char* argv[])
   std::cout << "Setting source strengths ..." << std::endl;
   ac.setSourceStrengths();
 
-#if 0
   // Construct, factorize, and solve the system
 
   std::cout << "Constructing the linear system ..." << std::endl;
@@ -50,16 +49,13 @@ int main (int argc, char* argv[])
             << " unknowns ..." << std::endl;
   ac.solveSystem();
 
-  // Set doublet strengths
+  // Set doublet strengths on surface and wake
 
   std::cout << "Setting doublet strengths ..." << std::endl;
   ac.setDoubletStrengths();
+  ac.setWakeDoubletStrengths();
 
-  // Set wake circulation
-
-  std::cout << "Setting wake circulation ..." << std::endl;
-  ac.setWakeCirculation();
-
+#if 0
   // Compute panel velocities
 
   std::cout << "Computing velocities ..." << std::endl;

@@ -77,12 +77,12 @@ class Wing {
     // Creates panels and surface vertex pointers
 
     void createPanels ( int & next_global_vertidx, int & next_global_elemid,
-                        bool include_tips=false );
+                        bool include_tips=true );
 
     // Set up wake
 
     void setupWake ( int & next_global_vertidx, int & next_global_elemidx,
-                     bool include_tips=false );
+                     bool include_tips=true );
 
     // Access to verts and panels
 

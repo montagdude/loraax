@@ -75,6 +75,7 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
         x = _verts[i*(nstream+1)].x() + uinfdir[0]*1001.*rollupdist;
         y = _verts[i*(nstream+1)].y();
         z = _verts[i*(nstream+1)].z() + uinfdir[2]*1001.*rollupdist;
+        _verts[i*(nstream+1)+j].setCoordinates(x, y, z);
         xviz = _verts[i*(nstream+1)].x() + uinfdir[0]*nstream*dt*uinf;
         yviz = _verts[i*(nstream+1)].y();
         zviz = _verts[i*(nstream+1)].z() + uinfdir[2]*nstream*dt*uinf;

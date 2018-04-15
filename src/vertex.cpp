@@ -213,26 +213,17 @@ const double & Vertex::data ( unsigned int idx ) const
 
 /******************************************************************************/
 //
-// Computes data for surface vertices. Source strength, doublet strength, and
-// velocity are interpolated from panels. Pressure and cp are computed from
-// velocity using Bernoulli equation and compressibility corrections.
+// Interpolates source and doublet strength from panel centroids to vertex
 //
 /******************************************************************************/
-void Vertex::computeSurfaceData ( const double & uinf, const double & pinf,
-                                  const double & rhoinf )
+void Vertex::interpFromPanels ()
 {
   unsigned int i;
   double dx, dy, dz, dist, weightsum, vmag2, uinf2;
   Eigen::Vector3d cen;
 
-  // Compute source strength, doublet strength, and velocity by interpolation
-  // from panels
-
   _data[0] = 0.;
   _data[1] = 0.;
-  _data[2] = 0.;
-  _data[3] = 0.;
-  _data[4] = 0.;
   weightsum = 0.;
   for ( i = 0; i < _npanels; i++ )
   {
@@ -243,21 +234,8 @@ void Vertex::computeSurfaceData ( const double & uinf, const double & pinf,
     dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
     _data[0] += _panels[i]->sourceStrength()/dist;
     _data[1] += _panels[i]->doubletStrength()/dist;
-    _data[2] += _panels[i]->velocity()(0)/dist;
-    _data[3] += _panels[i]->velocity()(1)/dist;
-    _data[4] += _panels[i]->velocity()(2)/dist;
     weightsum += 1./dist;
   }
   _data[0] /= weightsum;
   _data[1] /= weightsum;
-  _data[2] /= weightsum;
-  _data[3] /= weightsum;
-  _data[4] /= weightsum;
-
-  // Pressure and pressure coefficient
-
-  vmag2 = std::pow(_data[2],2.) + std::pow(_data[3],2.) + std::pow(_data[4],2.);
-  uinf2 = std::pow(uinf,2.);
-  _data[5] = pinf + 0.5*rhoinf*(uinf2 - vmag2);
-  _data[6] = (_data[5] - pinf) / (0.5*rhoinf*uinf2);
 }

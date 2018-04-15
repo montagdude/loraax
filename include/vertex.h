@@ -74,10 +74,9 @@ class Vertex {
     int setData ( unsigned int idx, const double & var );
     const double & data ( unsigned int idx ) const;
 
-    // Computes data for surface vertices
+    // Interpolates source and doublet strength from panel centroids to vertex
 
-    void computeSurfaceData ( const double & uinf, const double & pinf,
-                              const double & rhoinf );
+    void interpFromPanels ();
 };
 
 #endif

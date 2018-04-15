@@ -38,9 +38,6 @@ class Aircraft {
     Eigen::PartialPivLU<Eigen::MatrixXd> _lu;
 					// LU factorization of AIC matrix
 
-    std::vector<std::vector<Eigen::Vector3d> > _sourceic, _doubletic;
-					// Surface velocity influence coeffs
-
     // Set up pointers to vertices, panels, and wake elements
 
     void setGeometryPointers ();
@@ -67,7 +64,7 @@ class Aircraft {
 
     void setSourceStrengths ();
     void setDoubletStrengths ();
-    void setWakeDoubletStrength ();
+    void setWakeDoubletStrengths ();
 
     // Construct AIC matrix and RHS vector, factorize, and solve
 

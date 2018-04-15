@@ -218,7 +218,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
 
   // Surface data at vertices
 
-  //writeSurfaceData(f);
+  writeSurfaceData(f);
 
   f.close();
 
@@ -265,51 +265,51 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
       << _verts[i]->data(1) << std::endl;
   }
 
-  f << "Vectors velocity double" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(2);
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(3);
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(4) << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(2);
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << -_verts[i]->data(3);
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(4) << std::endl;
-  }
+  //f << "Vectors velocity double" << std::endl;
+  //for ( i = 0; i < nverts; i++ )
+  //{
+  //  f << std::setprecision(14) << std::setw(25) << std::left
+  //    << _verts[i]->data(2);
+  //  f << std::setprecision(14) << std::setw(25) << std::left
+  //    << _verts[i]->data(3);
+  //  f << std::setprecision(14) << std::setw(25) << std::left
+  //    << _verts[i]->data(4) << std::endl;
+  //}
+  //for ( i = 0; i < nverts; i++ )
+  //{
+  //  f << std::setprecision(14) << std::setw(25) << std::left
+  //    << _verts[i]->data(2);
+  //  f << std::setprecision(14) << std::setw(25) << std::left
+  //    << -_verts[i]->data(3);
+  //  f << std::setprecision(14) << std::setw(25) << std::left
+  //    << _verts[i]->data(4) << std::endl;
+  //}
 
-  f << "SCALARS pressure double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(5) << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(5) << std::endl;
-  }
+  //f << "SCALARS pressure double 1" << std::endl;
+  //f << "LOOKUP_TABLE default" << std::endl;
+  //for ( i = 0; i < nverts; i++ )
+  //{
+  //  f << std::setprecision(14) << std::setw(25) << std::left
+  //    << _verts[i]->data(5) << std::endl;
+  //}
+  //for ( i = 0; i < nverts; i++ )
+  //{
+  //  f << std::setprecision(14) << std::setw(25) << std::left
+  //    << _verts[i]->data(5) << std::endl;
+  //}
 
-  f << "SCALARS cp double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(6) << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(6) << std::endl;
-  }
+  //f << "SCALARS cp double 1" << std::endl;
+  //f << "LOOKUP_TABLE default" << std::endl;
+  //for ( i = 0; i < nverts; i++ )
+  //{
+  //  f << std::setprecision(14) << std::setw(25) << std::left
+  //    << _verts[i]->data(6) << std::endl;
+  //}
+  //for ( i = 0; i < nverts; i++ )
+  //{
+  //  f << std::setprecision(14) << std::setw(25) << std::left
+  //    << _verts[i]->data(6) << std::endl;
+  //}
 }
 
 /******************************************************************************/
@@ -418,14 +418,13 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
 
   // Wake data at elements
 
-  //writeWakeData(f);
+  writeWakeData(f);
 
   f.close();
 
   return 0;
 }
 
-#if 0
 /******************************************************************************/
 //
 // Writes wake data to VTK viz file
@@ -433,27 +432,26 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
 /******************************************************************************/
 void Aircraft::writeWakeData ( std::ofstream & f ) const
 {
-  unsigned int i, nvorts;
+  unsigned int i, nwakepans;
 
-  nvorts = _vorts.size();
+  nwakepans = _wakepanels.size();
   
   // Element data (incl. mirror elements)
 
-  f << "CELL_DATA " << nvorts*2 << std::endl;
-  f << "SCALARS circulation double 1" << std::endl;
+  f << "CELL_DATA " << nwakepans*2 << std::endl;
+  f << "SCALARS doublet_strength double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nvorts; i++ )
+  for ( i = 0; i < nwakepans; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _vorts[i]->circulation() << std::endl;
+      << _wakepanels[i]->doubletStrength() << std::endl;
   }
-  for ( i = 0; i < nvorts; i++ )
+  for ( i = 0; i < nwakepans; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _vorts[i]->circulation() << std::endl;
+      << _wakepanels[i]->doubletStrength() << std::endl;
   }
 }
-#endif
 
 #if 0
 /******************************************************************************/
@@ -595,8 +593,6 @@ Aircraft::Aircraft ()
   _aic.resize(0,0);
   _mu.resize(0);
   _rhs.resize(0);
-  _sourceic.resize(0);
-  _doubletic.resize(0);
 }
 
 /******************************************************************************/
@@ -904,12 +900,13 @@ void Aircraft::setSourceStrengths ()
 
 /******************************************************************************/
 //
-// Sets doublet strengths from solution vector
+// Sets doublet strengths from solution vector. Also interpolates doublet
+// strengths to vertices.
 //
 /******************************************************************************/
 void Aircraft::setDoubletStrengths ()
 {
-  unsigned int i, npanels;
+  unsigned int i, npanels, nverts;
 
   npanels = _panels.size();
 #ifdef DEBUG
@@ -925,41 +922,45 @@ void Aircraft::setDoubletStrengths ()
   {
     _panels[i]->setDoubletStrength(_mu(i));
   }
+
+  nverts = _verts.size();
+#pragma omp parallel for private(i)
+  for ( i = 0; i < nverts; i++ )
+  {
+    _verts[i]->interpFromPanels();
+  }
 }
 
-#if 0
 /******************************************************************************/
 //
-// Sets vortex wake circulation strengths
+// Sets wake doublet strength
 //
 /******************************************************************************/
-void Aircraft::setWakeCirculation ()
+void Aircraft::setWakeDoubletStrengths ()
 {
-  unsigned int i, j, k, nwings, nstrips, nvorts;
-  double gamma; 
+  unsigned int i, j, k, nwings, nstrips, nwakepans;
+  double mu; 
   WakeStrip *strip;
 
   nwings = _wings.size();
   for ( i = 0; i < nwings; i++ )
   {
     nstrips = _wings[i].nWStrips();
-#pragma omp parallel for private(j,strip,gamma,nvorts,k)
+#pragma omp parallel for private(j,strip,mu,nwakepans,k)
     for ( j = 0; j < nstrips; j++ )
     { 
       strip = _wings[i].wStrip(j);
-      gamma = strip->topTEPan()->doubletStrength()
-            - strip->botTEPan()->doubletStrength();
-      nvorts = strip->nVortices();
-      for ( k = 0; k < nvorts; k++ )
+      mu = strip->topTEPan()->doubletStrength()
+         - strip->botTEPan()->doubletStrength();
+      nwakepans = strip->nPanels();
+      for ( k = 0; k < nwakepans; k++ )
       {
-        strip->vortex(k)->setCirculation(gamma);
+        strip->panel(k)->setDoubletStrength(mu);
       }
     }
   }
 }
-#endif
 
-#if 0
 /******************************************************************************/
 //
 // Constructs AIC matrix and RHS vector
@@ -967,9 +968,9 @@ void Aircraft::setWakeCirculation ()
 /******************************************************************************/
 void Aircraft::constructSystem ()
 {
-  unsigned int i, j, k, l, m, nwings, npanels, nstrips, nvorts;
+  unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans;
   int toptepan, bottepan;
-  Eigen::Vector3d cen, norm, stripvel;
+  Eigen::Vector3d cen;
   WakeStrip * strip;
   double stripic; 
   bool onpanel;
@@ -981,55 +982,28 @@ void Aircraft::constructSystem ()
 #endif
   nwings = _wings.size();
 
-  if (_sourceic.size() == 0)
-  {
-    // Compute surface velocity influence matrices first
-
-    _sourceic.resize(npanels);
-    _doubletic.resize(npanels);
-    for ( i = 0; i < npanels; i++ )
-    {
-      _sourceic[i].resize(npanels);
-      _doubletic[i].resize(npanels);
-    }
-
-#pragma omp parallel for private(i,cen,j,onpanel)
-    for ( i = 0; i < npanels; i++ )
-    {
-      cen = _panels[i]->centroid();
-      for ( j = 0; j < npanels; j++ )
-      { 
-        if (i == j)
-          onpanel = true;
-        else
-          onpanel = false;
-        _sourceic[i][j] = _panels[j]->sourceVCoeff(cen(0), cen(1), cen(2),
-                                                   onpanel, "top", true);
-        _doubletic[i][j] = _panels[j]->doubletVCoeff(cen(0), cen(1), cen(2),
-                                                     onpanel, "top", true);
-      }
-    }
-  }
-
   _aic.resize(npanels,npanels);
   _rhs.resize(npanels);
-#pragma omp parallel for private(i,cen,norm,j,k,nstrips,l,strip,nvorts,\
-                                 stripvel,m,stripic,toptepan,bottepan)
+#pragma omp parallel for private(i,cen,j,onpanel,k,nstrips,l,strip,nwakepans,\
+                                 stripic,m,toptepan,bottepan)
   for ( i = 0; i < npanels; i++ )
   {
     // Collocation point at centroid of panel (point of BC application)
 
     cen = _panels[i]->centroid();
 
-    // Panel normal vector
-
-    norm = _panels[i]->normal();
-
     // Surface doublet influence coefficients
 
+//FIXME: I think these are supposed to be evaluated on the bottom of the panel,
+//  but the results look wrong if I do that.
     for ( j = 0; j < npanels; j++ )
     {
-      _aic(i,j) = _doubletic[i][j].transpose() * norm;
+      if (i == j)
+        onpanel = true;
+      else
+        onpanel = false;
+      _aic(i,j) = _panels[j]->doubletPhiCoeff(cen(0), cen(1), cen(2), onpanel,
+                                              "top", true);
     }
 
     // Wake influence coefficients applied to TE panels
@@ -1040,16 +1014,13 @@ void Aircraft::constructSystem ()
       for ( l = 0; l < nstrips; l++ )
       {
         strip = _wings[k].wStrip(l);
-        nvorts = strip->nVortices();
-        stripvel(0) = 0.;
-        stripvel(1) = 0.;
-        stripvel(2) = 0.;
-        for ( m = 0; m < nvorts; m++ )
+        nwakepans = strip->nPanels();
+        stripic = 0.;
+        for ( m = 0; m < nwakepans; m++ )
         {
-          stripvel += strip->vortex(m)->VCoeff(cen(0), cen(1), cen(2), rcore,
-                                               true);
+          stripic += strip->panel(m)->doubletPhiCoeff(cen(0), cen(1), cen(2),
+                                                      false, "top", true);
         }
-        stripic = stripvel.transpose() * norm;
         toptepan = strip->topTEPan()->idx();
         bottepan = strip->botTEPan()->idx();
         _aic(i,toptepan) += stripic;
@@ -1057,19 +1028,22 @@ void Aircraft::constructSystem ()
       }
     }
 
-    // Right hand side: source and freestream influence
+    // Right hand side: source panels
 
-    _rhs(i) = -uinfvec.transpose() * norm;
+    _rhs(i) = 0.;
     for ( j = 0; j < npanels; j++ )
     {
+      if (i == j)
+        onpanel = true;
+      else
+        onpanel = false;
       _rhs(i) -= _panels[j]->sourceStrength()
-               * _sourceic[i][j].transpose() * norm;
+               * _panels[j]->sourcePhiCoeff(cen(0), cen(1), cen(2), onpanel,
+                                            "top", true);
     }
   }
 }
-#endif
 
-#if 0
 /******************************************************************************/
 //
 // Factorizes the AIC matrix and solves the system
@@ -1077,7 +1051,6 @@ void Aircraft::constructSystem ()
 /******************************************************************************/
 void Aircraft::factorize () { _lu.compute(_aic); }
 void Aircraft::solveSystem () { _mu = _lu.solve(_rhs); }
-#endif
 
 /******************************************************************************/
 //
