@@ -32,6 +32,9 @@ class Aircraft {
     std::vector<Vertex *> _wakeverts;   // Pointers to wake vertices
     std::vector<Panel *> _wakepanels;	// Pointers to wake doublet panels
 
+    Eigen::MatrixXd _sourceic, _doubletic;
+					// Aero influence coefficients due to
+					//   sources and doublets on surface
     Eigen::MatrixXd _aic;		// Aero influence coefficients matrix
     Eigen::VectorXd _mu;		// Unknown doublet strengths vector
     Eigen::VectorXd _rhs;		// Right hand side vector

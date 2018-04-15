@@ -590,6 +590,8 @@ Aircraft::Aircraft ()
   _panels.resize(0);
   _wakeverts.resize(0);
   _wakepanels.resize(0);
+  _sourceic.resize(0,0);
+  _doubletic.resize(0,0);
   _aic.resize(0,0);
   _mu.resize(0);
   _rhs.resize(0);
@@ -982,29 +984,58 @@ void Aircraft::constructSystem ()
 #endif
   nwings = _wings.size();
 
-  _aic.resize(npanels,npanels);
-  _rhs.resize(npanels);
-#pragma omp parallel for private(i,cen,j,onpanel,k,nstrips,l,strip,nwakepans,\
-                                 stripic,m,toptepan,bottepan)
+  // Compute influence coefficient matrices the first time through
+
+  if (_sourceic.rows() != npanels)
+  {
+    _sourceic.resize(npanels,npanels);
+    _doubletic.resize(npanels,npanels);
+    _aic.resize(npanels,npanels);
+    _rhs.resize(npanels);
+
+#pragma omp parallel for private(i,cen,j,onpanel)
+    for ( i = 0; i < npanels; i++ )
+    {
+      // Collocation point at centroid of panel (point of BC application)
+
+      cen = _panels[i]->centroid();
+
+      // Influence coefficients
+
+      for ( j = 0; j < npanels; j++ )
+      {
+        if (i == j)
+          onpanel = true;
+        else
+          onpanel = false;
+        _sourceic(i,j) = _panels[j]->sourcePhiCoeff(cen(0), cen(1), cen(2),
+                                                    onpanel, "bottom", true);
+        _doubletic(i,j) = _panels[j]->doubletPhiCoeff(cen(0), cen(1), cen(2),
+                                                      onpanel, "bottom", true);
+      }
+    }
+  }
+
+  // Compute AIC and RHS
+
+#pragma omp parallel for private(i,cen,j,k,nstrips,l,strip,nwakepans,stripic,m,\
+                                 toptepan,bottepan)
   for ( i = 0; i < npanels; i++ )
   {
     // Collocation point at centroid of panel (point of BC application)
 
     cen = _panels[i]->centroid();
 
-    // Surface doublet influence coefficients
+    // Surface panel contribution to AIC and RHS
 
+    _rhs(i) = 0.;
     for ( j = 0; j < npanels; j++ )
     {
-      if (i == j)
-        onpanel = true;
-      else
-        onpanel = false;
-      _aic(i,j) = _panels[j]->doubletPhiCoeff(cen(0), cen(1), cen(2), onpanel,
-                                              "bottom", true);
+      _aic(i,j) = _doubletic(i,j);
+      _rhs(i) -= _panels[j]->sourceStrength()*_sourceic(i,j);
     }
 
-    // Wake influence coefficients applied to TE panels
+    // Wake contribution to AIC
 
     for ( k = 0; k < nwings; k++ )
     {
@@ -1025,20 +1056,6 @@ void Aircraft::constructSystem ()
         _aic(i,bottepan) -= stripic;
       }
     }
-
-    // Right hand side: source panels
-
-    _rhs(i) = 0.;
-    for ( j = 0; j < npanels; j++ )
-    {
-      if (i == j)
-        onpanel = true;
-      else
-        onpanel = false;
-      _rhs(i) -= _panels[j]->sourceStrength()
-               * _panels[j]->sourcePhiCoeff(cen(0), cen(1), cen(2), onpanel,
-                                            "bottom", true);
-    }
   }
 }
 
@@ -1056,63 +1073,6 @@ void Aircraft::solveSystem () { _mu = _lu.solve(_rhs); }
 //
 /******************************************************************************/
 unsigned int Aircraft::systemSize () const { return _panels.size(); }
-
-#if 0
-/******************************************************************************/
-//
-// Computes velocities at cell centroids
-//
-/******************************************************************************/
-void Aircraft::computeVelocities ()
-{
-  unsigned int i, j, npanels, nvorts;
-  Eigen::Vector3d cen, vel;
-
-  npanels = _panels.size();
-  nvorts = _vorts.size();
-
-  // Velocity on surface panels
-
-#pragma omp parallel for private(i,cen,vel,j)
-  for ( i = 0; i < npanels; i++ )
-  {
-    cen = _panels[i]->centroid();
-
-    // Velocity made up of freestream, surface, and wake contribution
- 
-    vel = uinfvec;
-    for ( j = 0; j < npanels; j++ )
-    {
-      vel += _sourceic[i][j]*_panels[j]->sourceStrength()
-          +  _doubletic[i][j]*_panels[j]->doubletStrength();
-    }
-    for ( j = 0; j < nvorts; j++ )
-    {
-      vel += _vorts[j]->inducedVelocity(cen(0), cen(1), cen(2), rcore, true);
-    }
-    _panels[i]->setVelocity(vel);
-  }
-}
-#endif
-
-#if 0
-/******************************************************************************/
-//
-// Computes vertex quantities from solution
-//
-/******************************************************************************/
-void Aircraft::computeVertexData ()
-{
-  unsigned int i, nverts;
-
-  nverts = _verts.size();
-#pragma omp parallel for private(i)
-  for ( i = 0; i < nverts; i++ )
-  {
-    _verts[i]->computeSurfaceData(uinf, pinf, rhoinf);
-  }
-}
-#endif
 
 /******************************************************************************/
 //
