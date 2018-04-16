@@ -756,8 +756,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
 void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
                        bool include_tips )
 {
-  unsigned int i, j, tlquad, blquad, trquad, brquad;
-  unsigned int tiptri1, tiptri2, nstream;
+  unsigned int i, j, nstream;
   std::vector<Vertex> teverts;
   double xt, yt, zt;
 
@@ -770,41 +769,6 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
     yt = _sections[i].vert(0).y();
     zt = _sections[i].vert(0).z(); 
     teverts[i].setCoordinates(xt, yt, zt);
-
-    // "Connect" TE panels to wake vertices
-
-    if (i == 0)
-    {
-      trquad = 0;
-      brquad = 2*_nchord-3;
-      teverts[i].addPanel(&_quads[trquad]);
-      teverts[i].addPanel(&_quads[brquad]);
-    }
-    else if (i == _nspan-1)
-    {
-      tlquad = (_nspan-2)*(2*_nchord-2);
-      blquad = (_nspan-1)*(2*_nchord-2) - 1;
-      teverts[i].addPanel(&_quads[tlquad]);
-      teverts[i].addPanel(&_quads[blquad]);
-      if (include_tips)
-      {
-        tiptri1 = 0;
-        tiptri2 = 1;
-        teverts[i].addPanel(&_tris[tiptri1]);
-        teverts[i].addPanel(&_tris[tiptri2]);
-      }
-    }
-    else
-    {
-      tlquad = (i-1)*(2*_nchord-2);
-      blquad = i*(2*_nchord-2) - 1;
-      trquad = i*(2*_nchord-2);
-      brquad = (i+1)*(2*_nchord-2) - 1;
-      teverts[i].addPanel(&_quads[tlquad]);
-      teverts[i].addPanel(&_quads[blquad]);
-      teverts[i].addPanel(&_quads[trquad]);
-      teverts[i].addPanel(&_quads[brquad]);
-    }
   }
 
   // Initialize wake

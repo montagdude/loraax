@@ -432,24 +432,24 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
 /******************************************************************************/
 void Aircraft::writeWakeData ( std::ofstream & f ) const
 {
-  unsigned int i, nwakepans;
+  unsigned int i, nwakeverts;
 
-  nwakepans = _wakepanels.size();
+  nwakeverts = _wakeverts.size();
   
-  // Element data (incl. mirror elements)
+  // Point data (incl. mirror elements)
 
-  f << "CELL_DATA " << nwakepans*2 << std::endl;
+  f << "POINT_DATA " << nwakeverts*2 << std::endl;
   f << "SCALARS doublet_strength double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nwakepans; i++ )
+  for ( i = 0; i < nwakeverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakepanels[i]->doubletStrength() << std::endl;
+      << _wakeverts[i]->data(1) << std::endl;
   }
-  for ( i = 0; i < nwakepans; i++ )
+  for ( i = 0; i < nwakeverts; i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakepanels[i]->doubletStrength() << std::endl;
+      << _wakeverts[i]->data(1) << std::endl;
   }
 }
 
@@ -949,7 +949,7 @@ void Aircraft::setDoubletStrengths ()
 /******************************************************************************/
 void Aircraft::setWakeDoubletStrengths ()
 {
-  unsigned int i, j, k, nwings, nstrips, nwakepans;
+  unsigned int i, j, k, nwings, nstrips, nwakepans, nwakeverts;
   double mu; 
   WakeStrip *strip;
 
@@ -969,6 +969,14 @@ void Aircraft::setWakeDoubletStrengths ()
         strip->panel(k)->setDoubletStrength(mu);
       }
     }
+  }
+
+
+  nwakeverts = _wakeverts.size();
+#pragma omp parallel for private(i)
+  for ( i = 0; i < nwakeverts; i++ )
+  {
+    _wakeverts[i]->interpFromPanels();
   }
 }
 
