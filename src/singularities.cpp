@@ -91,7 +91,6 @@ double tri_source_potential (
         + ((x-x2)*(y0-y2) - (y-y2)*(x0-x2))/d20 * 
                                           std::log((r2+r0+d20) / (r2+r0-d20)) );
     
-//FIXME: check if this is correct outside the edges of the panel
   if ( (not onpanel) && (std::abs(z) > eps) )
   {
     phi += z / (4.*M_PI) * (
@@ -176,7 +175,6 @@ double quad_source_potential (
         + ((x-x3)*(y0-y3) - (y-y3)*(x0-x3))/d30 * 
                                           std::log((r3+r0+d30) / (r3+r0-d30)) );
     
-//FIXME: check if this is correct outside the edges of the panel
   if ( (not onpanel) && (std::abs(z) > eps) )
   {
     phi += z / (4.*M_PI) * (
@@ -289,8 +287,8 @@ Eigen::Vector3d tri_source_velocity (
   }
   else 
   { 
-    if (side == "top") { velpf(2) = 1./2.; }
-    else { velpf(2) = -1./2.; }
+    if (side == "top") { velpf(2) = 0.5; }
+    else { velpf(2) = -0.5; }
   }
 
   return velpf;
@@ -385,8 +383,8 @@ Eigen::Vector3d quad_source_velocity (
   }
   else 
   { 
-    if (side == "top") { velpf(2) = 1./2.; }
-    else { velpf(2) = -1./2.; }
+    if (side == "top") { velpf(2) = 0.5; }
+    else { velpf(2) = -0.5; }
   }
 
   return velpf;

@@ -22,6 +22,7 @@ ONPANDOUBLET=test_doublet_onpanel
 ONPANDOUBLET2=test_doublet_onpanel2
 SOURCE=test_source
 ROTSOURCE=test_source_rotation
+ONPANSOURCE=test_source_onpanel
 MIRROR=test_mirror
 POTENTIAL=test_quad_potential
 POTENTIAL2=test_tri_potential
@@ -42,7 +43,7 @@ endif
 
 ################################################################################
 
-all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(ONPANDOUBLET) $(ONPANDOUBLET2) $(SOURCE) $(ROTSOURCE) $(MIRROR) $(POTENTIAL) $(POTENTIAL2)
+all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(ONPANDOUBLET) $(ONPANDOUBLET2) $(SOURCE) $(ROTSOURCE) $(ONPANSOURCE) $(MIRROR) $(POTENTIAL) $(POTENTIAL2)
 
 $(HSHOE): $(OBJ) test_hshoe.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(HSHOE) $(OBJ) test_hshoe.o
@@ -76,6 +77,9 @@ $(SOURCE): $(OBJ) test_source.o
 
 $(ROTSOURCE): $(OBJ) test_source_rotation.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ROTSOURCE) $(OBJ) test_source_rotation.o
+
+$(ONPANSOURCE): $(OBJ) test_source_onpanel.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(ONPANSOURCE) $(OBJ) test_source_onpanel.o
 
 $(MIRROR): $(OBJ) test_mirror.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(MIRROR) $(OBJ) test_mirror.o
@@ -181,6 +185,9 @@ test_source.o: test_source.cpp
 
 test_source_rotation.o: test_source_rotation.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_source_rotation.cpp
+
+test_source_onpanel.o: test_source_onpanel.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_source_onpanel.cpp
 
 test_mirror.o: test_mirror.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_mirror.cpp
