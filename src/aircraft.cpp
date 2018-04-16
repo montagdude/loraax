@@ -745,6 +745,15 @@ int Aircraft::readXML ( const std::string & geom_file )
       if (read_setting(secelem, "Twist", twist) != 0)
         return 2;
 
+      // Some geometry checks
+
+      if (chord <= 0.)
+        conditional_stop(1, "Aircraft::readXML",
+                         "Chord must be greater than 0.");
+      if ( (twist <= -90.) || (twist >= 90.) )
+        conditional_stop(1, "Aircraft::readXML",
+                    "Twist must be between greater than -90 and less than 90.");
+
       newsection.setGeometry(xle, y, zle, chord, twist, 0.0);
       user_sections.push_back(newsection);
     }
