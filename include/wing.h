@@ -36,7 +36,8 @@ class Wing {
 					//   root & tip spacing rations
     std::vector<Airfoil> _foils;  	// User-specified airfoils
     std::vector<Vertex *> _verts;	// Pointers to vertices on wing and wake
-    std::vector<Vertex> _tipverts;       // Vertices on MCL of wingtip
+    std::vector<Vertex> _tipverts;      // Vertices on MCL of wingtip
+    std::vector<Vertex> _sectipverts;   // Vertices along wing tip section edges
     std::vector<QuadPanel> _quads;	// Quad panels
     std::vector<TriPanel> _tris;	// Tri panels at tip
     Wake _wake;				// Wake
@@ -83,6 +84,10 @@ class Wing {
 
     void setupWake ( int & next_global_vertidx, int & next_global_elemidx,
                      bool include_tips=true );
+
+    // Computes velocities on surface vertices
+
+    void computeVelocities ( bool include_tips=true );
 
     // Access to verts and panels
 

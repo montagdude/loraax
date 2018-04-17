@@ -55,17 +55,10 @@ int main (int argc, char* argv[])
   ac.setDoubletStrengths();
   ac.setWakeDoubletStrengths();
 
-#if 0
   // Compute panel velocities
 
   std::cout << "Computing velocities ..." << std::endl;
   ac.computeVelocities();
-
-  // Compute vertex data
-
-  std::cout << "Computing vertex data ..." << std::endl;
-  ac.computeVertexData();
-#endif
 
   // Write viz
 

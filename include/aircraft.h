@@ -79,13 +79,9 @@ class Aircraft {
 
     unsigned int systemSize () const;
 
-    // Computes panel and wake velocities
+    // Computes surface velocities
 
     void computeVelocities ();
-
-    // Computes data at vertices
-
-    void computeVertexData ();
 
     // Write VTK viz
 

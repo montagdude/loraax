@@ -265,25 +265,25 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
       << _verts[i]->data(1) << std::endl;
   }
 
-  //f << "Vectors velocity double" << std::endl;
-  //for ( i = 0; i < nverts; i++ )
-  //{
-  //  f << std::setprecision(14) << std::setw(25) << std::left
-  //    << _verts[i]->data(2);
-  //  f << std::setprecision(14) << std::setw(25) << std::left
-  //    << _verts[i]->data(3);
-  //  f << std::setprecision(14) << std::setw(25) << std::left
-  //    << _verts[i]->data(4) << std::endl;
-  //}
-  //for ( i = 0; i < nverts; i++ )
-  //{
-  //  f << std::setprecision(14) << std::setw(25) << std::left
-  //    << _verts[i]->data(2);
-  //  f << std::setprecision(14) << std::setw(25) << std::left
-  //    << -_verts[i]->data(3);
-  //  f << std::setprecision(14) << std::setw(25) << std::left
-  //    << _verts[i]->data(4) << std::endl;
-  //}
+  f << "Vectors velocity double" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(2);
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(3);
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(4) << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(2);
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << -_verts[i]->data(3);
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(4) << std::endl;
+  }
 
   //f << "SCALARS pressure double 1" << std::endl;
   //f << "LOOKUP_TABLE default" << std::endl;
@@ -1090,6 +1090,22 @@ void Aircraft::solveSystem () { _mu = _lu.solve(_rhs); }
 //
 /******************************************************************************/
 unsigned int Aircraft::systemSize () const { return _panels.size(); }
+
+/******************************************************************************/
+//
+// Computes surface velocities
+//
+/******************************************************************************/
+void Aircraft::computeVelocities ()
+{
+  unsigned int i, nwings;
+
+  nwings = _wings.size();
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].computeVelocities();
+  }
+}
 
 /******************************************************************************/
 //

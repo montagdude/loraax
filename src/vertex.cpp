@@ -239,3 +239,35 @@ void Vertex::interpFromPanels ()
   _data[0] /= weightsum;
   _data[1] /= weightsum;
 }
+
+/******************************************************************************/
+//
+// Distance to another vertex
+//
+/******************************************************************************/
+double Vertex::distance ( const Vertex & vert ) const
+{
+  double dx, dy, dz;
+
+  dx = vert.x() - _x;
+  dy = vert.y() - _y;
+  dz = vert.z() - _z;
+ 
+  return std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
+}
+
+/******************************************************************************/
+//
+// Vector from this vertex to another vertex
+//
+/******************************************************************************/
+Eigen::Vector3d Vertex::vectorTo ( const Vertex & vert ) const
+{
+  Eigen::Vector3d vec;
+
+  vec(0) = vert.x() - _x;
+  vec(1) = vert.y() - _y;
+  vec(2) = vert.z() - _z;
+ 
+  return vec;
+}

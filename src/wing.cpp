@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include <Eigen/Core>
+#include <Eigen/Dense>
 #include "algorithms.h"
 #include "util.h"
 #include "settings.h"
@@ -585,10 +586,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
                           bool include_tips )
 {
   unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, ntipverts;
-  unsigned int tlquad, trquad, blquad, brquad;
-  unsigned int tiptri1, tiptri2;
   double x, y, z;
-  Vertex * toptevert, * bottevert;
 
   // Set vertex pointers on surface
 
@@ -605,6 +603,22 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
     }
   }
 
+  // Create new set of vertices along wing tip section. This is because we don't
+  // want to "connect" top and bottom surface vertices with the flat tip panels
+
+  if (include_tips)
+  {
+    _sectipverts.resize(2*_nchord-1);
+    for ( j = 0; j < 2*_nchord-1; j++ )
+    {
+      _sectipverts[j].setIdx(next_global_vertidx);
+      _sectipverts[j] = _sections[_nspan-1].vert(j);
+      next_global_vertidx += 1;
+    }
+  }
+  else
+    _sectipverts.resize(0);
+
   // Determine number of quad and tri panels on surface
 
   if (include_tips)
@@ -618,6 +632,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
   {
     ntri = 0;
     nquad = (_nspan-1)*(2*_nchord-2);
+    _tipverts.resize(0);
   }
 
   // Create quad panels on wing surface
@@ -661,24 +676,24 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
     tcounter = 0;
 
     _tris[tcounter].setIdx(next_global_elemidx);
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+    _tris[tcounter].addVertex(&_sectipverts[2*_nchord-2]);
+    _tris[tcounter].addVertex(&_sectipverts[2*_nchord-3]);
     _tris[tcounter].addVertex(&_tipverts[0]);
     tcounter += 1;
     next_global_elemidx += 1;
 
     _tris[tcounter].setIdx(next_global_elemidx);
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
+    _tris[tcounter].addVertex(&_sectipverts[0]);
     _tris[tcounter].addVertex(&_tipverts[0]);
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
+    _tris[tcounter].addVertex(&_sectipverts[1]);
     tcounter += 1;
     next_global_elemidx += 1;
 
     for ( i = 1; i < _nchord-2; i++ ) 
     {
       _quads[qcounter].setIdx(next_global_elemidx);
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2-i));
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3-i));
+      _quads[qcounter].addVertex(&_sectipverts[2*_nchord-2-i]);
+      _quads[qcounter].addVertex(&_sectipverts[2*_nchord-3-i]);
       _quads[qcounter].addVertex(&_tipverts[i]);
       _quads[qcounter].addVertex(&_tipverts[i-1]);
       qcounter += 1;
@@ -687,64 +702,24 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx,
       _quads[qcounter].setIdx(next_global_elemidx);
       _quads[qcounter].addVertex(&_tipverts[i-1]);
       _quads[qcounter].addVertex(&_tipverts[i+1-1]);
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i+1));
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(i));
+      _quads[qcounter].addVertex(&_sectipverts[i+1]);
+      _quads[qcounter].addVertex(&_sectipverts[i]);
       qcounter += 1;
       next_global_elemidx += 1;
     }
 
     _tris[tcounter].setIdx(next_global_elemidx);
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord));
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
+    _tris[tcounter].addVertex(&_sectipverts[_nchord]);
+    _tris[tcounter].addVertex(&_sectipverts[_nchord-1]);
     _tris[tcounter].addVertex(&_tipverts[ntipverts-1]);
     next_global_elemidx += 1;
     tcounter += 1;
 
     _tris[tcounter].setIdx(next_global_elemidx);
     _tris[tcounter].addVertex(&_tipverts[ntipverts-1]);
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
-    _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2));
+    _tris[tcounter].addVertex(&_sectipverts[_nchord-1]);
+    _tris[tcounter].addVertex(&_sectipverts[_nchord-2]);
     next_global_elemidx += 1;
-  }
-
-  // "Connect" TE vertices to TE panels on opposite side
-  
-  for ( i = 0; i < _nspan; i++ )
-  {
-    toptevert = &_sections[i].vert(0);
-    bottevert = &_sections[i].vert(2*_nchord-2);
-    if (i == 0)
-    {
-      trquad = 0;
-      brquad = 2*_nchord-3;
-      toptevert->addPanel(&_quads[brquad]);
-      bottevert->addPanel(&_quads[trquad]);
-    }
-    else if (i == _nspan-1)
-    {
-      tlquad = (_nspan-2)*(2*_nchord-2);
-      blquad = (_nspan-1)*(2*_nchord-2) - 1;
-      toptevert->addPanel(&_quads[blquad]);
-      bottevert->addPanel(&_quads[tlquad]);
-      if (include_tips)
-      {
-        tiptri1 = 0;
-        tiptri2 = 1;
-        toptevert->addPanel(&_tris[tiptri1]);
-        bottevert->addPanel(&_tris[tiptri2]);
-      }
-    }
-    else
-    {
-      tlquad = (i-1)*(2*_nchord-2);
-      blquad = i*(2*_nchord-2) - 1;
-      trquad = i*(2*_nchord-2);
-      brquad = (i+1)*(2*_nchord-2) - 1; 
-      toptevert->addPanel(&_quads[blquad]);
-      toptevert->addPanel(&_quads[brquad]);
-      bottevert->addPanel(&_quads[tlquad]);
-      bottevert->addPanel(&_quads[trquad]);
-    }
   }
 }
 
@@ -796,28 +771,173 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
 
 /******************************************************************************/
 //
+// Computes surface velocities by finite differences
+//
+/******************************************************************************/
+void Wing::computeVelocities ( bool include_tips )
+{
+  unsigned int i, j, k, nneigh;
+  double dlr, dll, dsf, dsb;
+  double mu, mur, mul, muf, mub;
+  double y2, y1, y0, x2, x1, a, b;
+  double dmudl, dmuds;
+  double lcount, scount;
+  Eigen::Vector3d lhat, shat, Vl, Vs, Vn;
+  Vertex * vert, * fvert, * bvert, * rvert, *lvert;
+  Panel * neigh;
+
+  // Velocities on top and bottom surfaces
+
+//FIXME: do this in parallel
+  for ( i = 0; i < _nspan; i++ )
+  {
+    for ( j = 0; j < 2*_nchord-1; j++ )
+    {
+      vert = _verts[i*(2*_nchord-1)+j];
+      mu = vert->data(1);
+      fvert = NULL;
+      bvert = NULL;
+      rvert = NULL;
+      lvert = NULL;
+      lhat << 0., 0., 0.;
+      shat << 0., 0., 0.;
+      lcount = 0.;
+      scount = 0.;
+
+      // Get neighbors, distances, and tangential direction vectors
+
+      if (j > 0)
+      {
+        bvert = _verts[i*(2*_nchord-1)+j-1];
+        dsb = vert->distance(*bvert);
+        mub = bvert->data(1);
+        shat += bvert->vectorTo(*vert)/dsb;
+        scount += 1.;
+      }
+      if (j < 2*_nchord-2)
+      {
+        fvert = _verts[i*(2*_nchord-1)+j+1];
+        dsf = vert->distance(*fvert);
+        muf = fvert->data(1);
+        shat += vert->vectorTo(*fvert)/dsf;
+        scount += 1.;
+      }
+      if (i > 0)
+      {
+        lvert = _verts[(i-1)*(2*_nchord-1)+j];
+        dll = vert->distance(*lvert);
+        mul = lvert->data(1);
+        lhat += lvert->vectorTo(*vert)/dll;
+        lcount += 1.;
+      }
+      if (i < _nspan-1)
+      {
+        rvert = _verts[(i+1)*(2*_nchord-1)+j];
+        dlr = vert->distance(*rvert);
+        mur = rvert->data(1);
+        lhat += vert->vectorTo(*rvert)/dlr;
+        lcount += 1.;
+      }
+      shat /= scount;
+      shat /= shat.norm();
+      lhat /= lcount;
+      lhat /= lhat.norm();
+
+      // Use quadratic fit for gradients on interior points; one-sided
+      // differences at edges
+
+      if ( (fvert != NULL) && (bvert != NULL) )
+      {
+        y2 = muf;
+        y1 = mub;
+        y0 = mu;
+        x2 = dsf;
+        x1 = -dsb;
+        a = (y2-y0-(y1-y0)*x2/x1) / (x2*x2-x2*x1);
+        b = (y1-y0)/x1 - a*x1;
+        dmuds = b;
+      }
+      else if (fvert == NULL)
+        dmuds = (mu - mub)/dsb; 
+      else
+        dmuds = (muf - mu)/dsf;
+
+      if ( (rvert != NULL) && (lvert != NULL) )
+      {
+        y2 = mur;
+        y1 = mul;
+        y0 = mu;
+        x2 = dlr;
+        x1 = -dll;
+        a = (y2-y0-(y1-y0)*x2/x1) / (x2*x2-x2*x1);
+        b = (y1-y0)/x1 - a*x1;
+        dmudl = b;
+      }
+      else if (rvert == NULL)
+        dmudl = (mu - mul)/dll;
+      else
+        dmudl = (mur - mu)/dlr;
+
+      // Compute surface velocity
+//FIXME: This method doesn't make sense when shat and lhat are not orthogonal
+//       (like for a swept wing)
+
+      Vs = (dmuds + uinfvec.transpose()*shat)*shat;
+      Vl = (dmudl + uinfvec.transpose()*lhat)*lhat;
+
+      // Compute normal velocity at panel centroids and interpolate to vertices
+//FIXME: Shouldn't do this at the tips because the normal vectors for neighbors
+//       on the flat tip are completely different. Can maybe get around this by
+//       creating new set of vertices for profile around tip that are not
+//       connected to the tip panels.
+
+      Vn << 0., 0., 0.;
+      nneigh = vert->nPanels();
+      for ( k = 0; k < nneigh; k++ )
+      {
+        neigh = vert->panel(k);
+        Vn += (neigh->sourceStrength() + uinfvec.transpose()*neigh->normal()) \
+           *  neigh->normal();
+      }
+      Vn /= double(nneigh);
+      
+      vert->setData(2, Vs(0) + Vl(0) + Vn(0));
+      vert->setData(3, Vs(1) + Vl(1) + Vn(1));
+      vert->setData(4, Vs(2) + Vl(2) + Vn(2));
+    }
+  }
+}
+
+/******************************************************************************/
+//
 // Access to verts and panels
 //
 /******************************************************************************/
-unsigned int Wing::nVerts () const { return _verts.size() + _tipverts.size(); }
+unsigned int Wing::nVerts () const
+{
+  return _verts.size() + _sectipverts.size() + _tipverts.size();
+}
 unsigned int Wing::nQuads () const { return _quads.size(); }
 unsigned int Wing::nTris () const { return _tris.size(); }
 Vertex * Wing::vert ( unsigned int vidx )
 {
-  unsigned int nsurf, ntip;
+  unsigned int nsurf, nsectip, ntip;
 
   nsurf = _verts.size();
+  nsectip = 2*_nchord-1;
   ntip = _tipverts.size();
 
 #ifdef DEBUG
-  if (vidx >= nsurf + ntip)
+  if (vidx >= nsurf + nsectip + ntip)
     conditional_stop(1, "Wing::vert", "Index out of range.");
 #endif
 
   if (vidx < nsurf)
     return _verts[vidx];
+  else if (vidx < nsurf+nsectip)
+    return &_sectipverts[vidx-nsurf];
   else
-    return &_tipverts[vidx-nsurf];
+    return &_tipverts[vidx-nsurf-nsectip];
 }
 
 QuadPanel * Wing::quadPanel ( unsigned int qidx )

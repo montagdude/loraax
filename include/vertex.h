@@ -77,6 +77,11 @@ class Vertex {
     // Interpolates source and doublet strength from panel centroids to vertex
 
     void interpFromPanels ();
+
+    // Distance and vector to another vertex
+
+    double distance ( const Vertex & vert ) const;
+    Eigen::Vector3d vectorTo ( const Vertex & vertex ) const;
 };
 
 #endif
