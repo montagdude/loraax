@@ -8,6 +8,7 @@
 #include "section.h"
 #include "airfoil.h"
 #include "vertex.h"
+#include "panel.h"
 #include "quadpanel.h"
 #include "tripanel.h"
 #include "wake.h"
@@ -26,6 +27,8 @@ class Wing {
     unsigned int _nchord, _nspan;	// Number of points along chord and
 					//   span. nchord is on each side (top
 					//   and bottom); total is 2*nchord-1.
+    unsigned int _ntipcap;		// Number of points along the arc
+                                        //   forming the tip cap
     double _lesprat, _tesprat;		// LE and TE spacing ratios relative to
 					//   uniform
     double _rootsprat, _tipsprat;	// Root and tip spacing ratios relative
@@ -35,11 +38,14 @@ class Wing {
 					//   calculations, set by _nspan and
 					//   root & tip spacing rations
     std::vector<Airfoil> _foils;  	// User-specified airfoils
-    std::vector<Vertex *> _verts;	// Pointers to vertices on wing and wake
-    std::vector<Vertex> _tipverts;      // Vertices on MCL of wingtip
-    std::vector<Vertex> _sectipverts;   // Vertices along wing tip section edges
+    std::vector<Vertex *> _verts;	// Pointers to vertices on wing
+    std::vector<std::vector<Vertex> > _tipverts;
+                                        // Vertices on interior of wing cap
     std::vector<QuadPanel> _quads;	// Quad panels
     std::vector<TriPanel> _tris;	// Tri panels at tip
+    std::vector<std::vector<Panel *> > _panels;
+                                        // Pointers to panels arranged in i-j
+                                        //   coordinate directions
     Wake _wake;				// Wake
     std::vector<WakeStrip> _wakestrips;	// Wake strips behind TE panels
 
@@ -59,10 +65,10 @@ class Wing {
 
     // Set discretization and spacing info
 
-    void setDiscretization ( unsigned int nchord, unsigned int nspan,
-                             const double & lesprat, const double & tesprat,
-                             const double & rootsprat,
-                             const double & tipsprat );
+    int setDiscretization ( unsigned int nchord, unsigned int nspan,
+                            const double & lesprat, const double & tesprat,
+                            const double & rootsprat,
+                            const double & tipsprat, unsigned int ntipcap );
 
     // Set airfoils. Section airfoils are interpolated from these airfoils.
     // Airfoils do not need to be given in sorted order.
@@ -77,17 +83,15 @@ class Wing {
 
     // Creates panels and surface vertex pointers
 
-    void createPanels ( int & next_global_vertidx, int & next_global_elemid,
-                        bool include_tips=true );
+    void createPanels ( int & next_global_vertidx, int & next_global_elemid );
 
     // Set up wake
 
-    void setupWake ( int & next_global_vertidx, int & next_global_elemidx,
-                     bool include_tips=true );
+    void setupWake ( int & next_global_vertidx, int & next_global_elemidx );
 
     // Computes velocities on surface vertices
 
-    void computeVelocities ( bool include_tips=true );
+    void computeVelocities ();
 
     // Access to verts and panels
 

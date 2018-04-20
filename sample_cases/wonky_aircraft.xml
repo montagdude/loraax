@@ -14,6 +14,7 @@
       <TESpaceRat>0.4</TESpaceRat>
       <RootSpaceRat>0.75</RootSpaceRat>
       <TipSpaceRat>0.4</TipSpaceRat>
+      <TipCapPoints>9</TipCapPoints>
     </Paneling>
     <Sections>
       <!-- Note that sections do not need to be given in order -->
@@ -90,6 +91,7 @@
       <TESpaceRat>0.4</TESpaceRat>
       <RootSpaceRat>0.75</RootSpaceRat>
       <TipSpaceRat>0.4</TipSpaceRat>
+      <TipCapPoints>7</TipCapPoints>
     </Paneling>
     <Sections>
       <Section name="Root">
@@ -102,9 +104,9 @@
       <Section>
         <XLE>24.</XLE>
         <Y>6.</Y>
-        <ZLE>-3.</ZLE>
+        <ZLE>-1.</ZLE>
         <Chord>3.</Chord>
-        <Twist>0.</Twist>
+        <Twist>5.</Twist>
       </Section>
     </Sections>
     <Airfoils>

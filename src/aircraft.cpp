@@ -606,7 +606,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 {
   XMLDocument doc;
   unsigned int i, nwings;
-  int nchord, nspan, check;
+  int nchord, nspan, ntipcap, check;
   double lesprat, tesprat, rootsprat, tipsprat;
   std::vector<Section> user_sections;
   std::vector<Airfoil> foils;
@@ -702,8 +702,11 @@ int Aircraft::readXML ( const std::string & geom_file )
       return 2;
     if (read_setting(pan, "TipSpaceRat", tipsprat) != 0)
       return 2;
-    _wings[nwings].setDiscretization(nchord, nspan, lesprat, tesprat, rootsprat,
-                                     tipsprat);
+    if (read_setting(pan, "TipCapPoints", ntipcap) != 0)
+      return 2;
+    if (_wings[nwings].setDiscretization(nchord, nspan, lesprat, tesprat,
+                                         rootsprat, tipsprat, ntipcap) != 0 )
+      return 2;
 
     // Sections
 
@@ -971,7 +974,6 @@ void Aircraft::setWakeDoubletStrengths ()
     }
   }
 
-
   nwakeverts = _wakeverts.size();
 #pragma omp parallel for private(i)
   for ( i = 0; i < nwakeverts; i++ )
@@ -1091,6 +1093,7 @@ void Aircraft::solveSystem () { _mu = _lu.solve(_rhs); }
 /******************************************************************************/
 unsigned int Aircraft::systemSize () const { return _panels.size(); }
 
+#if 0
 /******************************************************************************/
 //
 // Computes surface velocities
@@ -1106,6 +1109,7 @@ void Aircraft::computeVelocities ()
     _wings[i].computeVelocities();
   }
 }
+#endif
 
 /******************************************************************************/
 //
