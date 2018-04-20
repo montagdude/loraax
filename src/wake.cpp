@@ -50,8 +50,8 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
 
   // Add vertices along freestream direction
 //FIXME: allow user-defined initial wake angle, because if it is too high,
-// solution can go unstable. May also want to check if another linear solver can
-// stabilize it.
+// solution can go unstable. Checked one case with full pivoting LU instead of
+// partial pivoting, but it was still unstable.
 
   uinfdir.resize(3);
   uinfdir[0] = cos(alpha*M_PI/180.);

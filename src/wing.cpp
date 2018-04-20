@@ -8,6 +8,7 @@
 #include "util.h"
 #include "settings.h"
 #include "transformations.h"
+#include "geometry.h"
 #include "sectional_object.h"
 #include "airfoil.h"
 #include "section.h"
@@ -600,9 +601,10 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 {
   unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad;
-  double phin, theta, phi, r, alpha, psi;
-  Eigen::Matrix3d T1, T2, T3, T4, T5;
-  Eigen::Vector3d cen, r0, r0p, rb, ri, l, lp, point;
+  double phin, phi, r;
+  Eigen::Matrix3d trans, T1;
+  Eigen::Vector3d cen, r0, rb, ri, point, norm, tang, tangb;
+  double x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4;
 
   // Set vertex pointers on top and bottom surfaces
 
@@ -646,13 +648,10 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
   }
 
   // Create tip cap vertices
+//FIXME: It would be better to loop over j first to avoid recomputing
+//  transforms, but it's a negligible computational expense anyway
 
   _tipverts.resize(_ntipcap-2);
-  phin = _sections[_nspan-1].roll();
-  alpha = _sections[_nspan-1].twist();
-  T1 = inverse_euler_rotation(phin, 0., 0.);
-  T3 = euler_rotation(phin, 0., 0.);
-  T4 = euler_rotation(0., alpha, 0.);
   for ( i = 1; i < _ntipcap-1; i++ )
   {
     _tipverts[i-1].resize(_nchord-2);
@@ -662,7 +661,40 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 
       phi = double(i)/double(_ntipcap-1)*180.;
 
-      // Vector from center of revolution to top surface vertex
+      // Get normal vector from last spanwise section
+
+      x1 = _sections[_nspan-2].vert(j).x();
+      y1 = _sections[_nspan-2].vert(j).y();
+      z1 = _sections[_nspan-2].vert(j).z();
+      x2 = _sections[_nspan-1].vert(j).x();
+      y2 = _sections[_nspan-1].vert(j).y();
+      z2 = _sections[_nspan-1].vert(j).z();
+      x3 = _sections[_nspan-1].vert(2*_nchord-2-j).x();
+      y3 = _sections[_nspan-1].vert(2*_nchord-2-j).y();
+      z3 = _sections[_nspan-1].vert(2*_nchord-2-j).z();
+      x4 = _sections[_nspan-2].vert(2*_nchord-2-j).x();
+      y4 = _sections[_nspan-2].vert(2*_nchord-2-j).y();
+      z4 = _sections[_nspan-2].vert(2*_nchord-2-j).z();
+      norm = quad_normal(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+
+      // Transform from normal vector
+
+      trans = transform_from_normal(norm(0), norm(1), norm(2));
+
+      // Tangential vector is the projection of the tip section's normal vector
+      // on this plane
+
+      tang(0) = 0.;
+      tang(1) = cos(_sections[_nspan-1].roll()*M_PI/180.);
+      tang(2) = sin(_sections[_nspan-1].roll()*M_PI/180.);
+
+      // Account for local swept dihedral angle
+
+      tangb = trans*tang;
+      phin = atan(tangb(0)/tangb(1))*180./M_PI; 
+      T1 = euler_rotation(0., 0., -phin);
+
+      // Center of revolution and radial vector in x-y plane
 
       cen(0) = 0.5*(_sections[_nspan-1].vert(j).x() + 
                     _sections[_nspan-1].vert(2*_nchord-2-j).x());
@@ -677,28 +709,11 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 
       // Radial vector in y-z plane
 
-      rb << 0., r*sin(phi*M_PI/180.), r*cos(phi*M_PI/180.);
-
-      // Undo dihedral and twist so we can determine the angle theta
-//FIXME: theta and/or psi (I think theta) are still not quite right when there
-//       are both dihedral and sweep
-
-      r0p = T4*T3*r0;
-      theta = atan(r0p(0)/r0p(2))*180./M_PI;
-      T2 = inverse_euler_rotation(0., theta, 0.);
-
-      // Adjustment due to local sweep
-
-      l(0) = _sections[_nspan-1].vert(j).x() - _sections[_nspan-2].vert(j).x();
-      l(1) = _sections[_nspan-1].vert(j).y() - _sections[_nspan-2].vert(j).y();
-      l(2) = _sections[_nspan-1].vert(j).z() - _sections[_nspan-2].vert(j).z();
-      lp = T4*T3*l;
-      psi = atan(lp(0)/lp(1))*180./M_PI;
-      T5 = inverse_euler_rotation(0., 0., -psi);
+      rb << r*cos(phi*M_PI/180.), r*sin(phi*M_PI/180.), 0.;
 
       // Compute vertex location and create vertex
 
-      ri = T5*T2*T1*rb; 
+      ri = (T1*trans).transpose()*rb;
       point = cen + ri;
       _tipverts[i-1][j-1].setIdx(next_global_vertidx);
       _tipverts[i-1][j-1].setCoordinates(point(0), point(1), point(2));

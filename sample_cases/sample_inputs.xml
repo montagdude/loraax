@@ -1,9 +1,9 @@
 <Main>
 <!-- Case name -->
-  <CaseName>wortmann_ar4</CaseName>
+  <CaseName>wonky</CaseName>
 
 <!-- Aircraft definition. -->
-  <GeometryFile>wortmann_ar4.xml</GeometryFile>
+  <GeometryFile>wonky_aircraft.xml</GeometryFile>
 
 <!-- Freestream reference conditions. Freestream speed must be given in units of
      length/sec, where length is the length unit inherent in your aircraft
@@ -33,7 +33,7 @@
   <FreestreamViscosity>1.81e-05</FreestreamViscosity>
 
 <!-- Angle of attack, in degrees. -->
-  <AngleOfAttack>10.0</AngleOfAttack>
+  <AngleOfAttack>5.0</AngleOfAttack>
 
 <!-- Time step size, in seconds, for wake rollup and iterative viscous -
      inviscid coupling. -->
