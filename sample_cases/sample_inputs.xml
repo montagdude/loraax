@@ -1,9 +1,9 @@
 <Main>
 <!-- Case name -->
-  <CaseName>wonky</CaseName>
+  <CaseName>wortmann_ar4</CaseName>
 
 <!-- Aircraft definition. -->
-  <GeometryFile>wonky_aircraft.xml</GeometryFile>
+  <GeometryFile>wortmann_ar4.xml</GeometryFile>
 
 <!-- Freestream reference conditions. Freestream speed must be given in units of
      length/sec, where length is the length unit inherent in your aircraft

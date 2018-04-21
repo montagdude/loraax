@@ -120,7 +120,8 @@ void Aircraft::setGeometryPointers ()
 int Aircraft::writeSurfaceViz ( const std::string & fname ) const
 {
   std::ofstream f;
-  unsigned int i, j, nverts, npanels, cellsize, ncellverts;
+  int i, j;
+  unsigned int nverts, npanels, cellsize, ncellverts;
 
   f.open(fname.c_str());
   if (! f.is_open())
@@ -141,7 +142,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
 
   nverts = _verts.size();
   f << "POINTS " << nverts*2 << " double" << std::endl;
-  for ( i = 0; i < nverts; i++ )
+  for ( i = 0; i < int(nverts); i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
       << _verts[i]->xViz();
@@ -150,7 +151,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
     f << std::setprecision(14) << std::setw(25) << std::left
       << _verts[i]->zViz() << std::endl;
   } 
-  for ( i = 0; i < nverts; i++ )
+  for ( i = 0; i < int(nverts); i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
       << _verts[i]->xViz();
@@ -164,12 +165,12 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
 
   npanels = _panels.size();
   cellsize = 0;
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < int(npanels); i++ )
   {
     cellsize += 1 + _panels[i]->nVertices();
   }
   f << "CELLS " << npanels*2 << " " << cellsize*2 << std::endl;
-  for ( i = 0; i < npanels; i++ )
+  for ( i = npanels-1; i >= 0; i-- )
   {
     ncellverts = _panels[i]->nVertices();    
     if ( (ncellverts != 4) && (ncellverts != 3) )
@@ -179,17 +180,17 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
       return 1;
     }
     f << ncellverts;
-    for ( j = 0; j < ncellverts; j++ )
+    for ( j = 0; j < int(ncellverts); j++ )
     {
       f << " " << _panels[i]->vertex(j).idx();
     }
     f << std::endl;
   }
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < int(npanels); i++ )
   {
     ncellverts = _panels[i]->nVertices();    
     f << ncellverts;
-    for ( j = 0; j < ncellverts; j++ )
+    for ( j = ncellverts-1; j >= 0; j-- )
     {
       f << " " << _panels[i]->vertex(j).idx()+nverts;
     }
@@ -199,7 +200,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
   // Cell types for panels and mirror panels
 
   f << "CELL_TYPES " << npanels*2 << std::endl;
-  for ( i = 0; i < npanels; i++ )
+  for ( i = npanels-1; i >= 0; i-- )
   {
     ncellverts = _panels[i]->nVertices();    
     if (ncellverts == 4)
@@ -207,7 +208,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
     else if (ncellverts == 3)
       f << 5 << std::endl;
   }
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < int(npanels); i++ )
   {
     ncellverts = _panels[i]->nVertices();    
     if (ncellverts == 4)
@@ -320,7 +321,8 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
 int Aircraft::writeWakeViz ( const std::string & fname ) const
 {
   std::ofstream f;
-  unsigned int i, j, nverts, npanels, nsurf_verts, cellsize, ncellverts;
+  int i, j;
+  unsigned int nverts, npanels, nsurf_verts, cellsize, ncellverts;
 
   f.open(fname.c_str());
   if (! f.is_open())
@@ -342,7 +344,7 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
   nverts = _wakeverts.size();
   nsurf_verts = _verts.size();
   f << "POINTS " << nverts*2 << " double" << std::endl;
-  for ( i = 0; i < nverts; i++ )
+  for ( i = 0; i < int(nverts); i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
       << _wakeverts[i]->xViz();
@@ -351,7 +353,7 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
     f << std::setprecision(14) << std::setw(25) << std::left
       << _wakeverts[i]->zViz() << std::endl;
   } 
-  for ( i = 0; i < nverts; i++ )
+  for ( i = 0; i < int(nverts); i++ )
   {
     f << std::setprecision(14) << std::setw(25) << std::left
       << _wakeverts[i]->xViz();
@@ -365,12 +367,12 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
 
   npanels = _wakepanels.size();
   cellsize = 0;
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < int(npanels); i++ )
   {
     cellsize += 1 + _wakepanels[i]->nVertices();
   }
   f << "CELLS " << npanels*2 << " " << cellsize*2 << std::endl;
-  for ( i = 0; i < npanels; i++ )
+  for ( i = npanels-1; i >= 0; i-- )
   {
     ncellverts = _wakepanels[i]->nVertices();
     if ( (ncellverts != 4) && (ncellverts != 3) )
@@ -380,17 +382,17 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
       return 1;
     }
     f << ncellverts;
-    for ( j = 0; j < ncellverts; j++ )
+    for ( j = 0; j < int(ncellverts); j++ )
     {
       f << " " << _wakepanels[i]->vertex(j).idx()-nsurf_verts;
     }
     f << std::endl;
   }
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < int(npanels); i++ )
   {
     ncellverts = _wakepanels[i]->nVertices();
     f << ncellverts;
-    for ( j = 0; j < ncellverts; j++ )
+    for ( j = ncellverts-1; j >= 0; j-- )
     {
       f << " " << _wakepanels[i]->vertex(j).idx()-nsurf_verts+nverts;
     }
@@ -400,7 +402,7 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
   // Cell types for doublet panels and mirror panels
 
   f << "CELL_TYPES " << npanels*2 << std::endl;
-  for ( i = 0; i < npanels; i++ )
+  for ( i = npanels-1; i >= 0; i-- )
   {
     ncellverts = _wakepanels[i]->nVertices();
     if (ncellverts == 4)
@@ -408,7 +410,7 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
     else if (ncellverts == 3) 
       f << 5 << std::endl;
   }
-  for ( i = 0; i < npanels; i++ )
+  for ( i = 0; i < int(npanels); i++ )
   {
     if (ncellverts == 4)
       f << 9 << std::endl;
@@ -416,7 +418,7 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
       f << 5 << std::endl;
   }
 
-  // Wake data at elements
+  // Wake data
 
   writeWakeData(f);
 
