@@ -37,7 +37,6 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
 {
   int nstream, nspan, ntris, nquads;
   unsigned int i, j, blvert, brvert, trvert, tlvert;
-  std::vector<double> uinfdir;
   double x, y, z, xviz, yviz, zviz;
 
   // Determine number of rows to store based on inputs
@@ -53,11 +52,6 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
 // solution can go unstable. Checked one case with full pivoting LU instead of
 // partial pivoting, but it was still unstable.
 
-  uinfdir.resize(3);
-  uinfdir[0] = cos(alpha*M_PI/180.);
-  uinfdir[1] = 0.;
-  uinfdir[2] = sin(alpha*M_PI/180.);
-
   for ( i = 0; int(i) < nspan; i++ )
   {
     for ( j = 0; int(j) < nstream+1; j++ )
@@ -67,21 +61,21 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
       else if (int(j) < nstream)
       {
         // Vertices that will roll up
-        x = _verts[i*(nstream+1)].x() + uinfdir[0]*double(j)*dt*uinf;
+        x = _verts[i*(nstream+1)].x() + uinfvec(0)*double(j)*dt
         y = _verts[i*(nstream+1)].y();
-        z = _verts[i*(nstream+1)].z() + uinfdir[2]*double(j)*dt*uinf;
+        z = _verts[i*(nstream+1)].z() + uinfvec(2)*double(j)*dt
         _verts[i*(nstream+1)+j].setCoordinates(x, y, z);
       }
       else
       {
         // Trailing vertex at "infinity"
-        x = _verts[i*(nstream+1)].x() + uinfdir[0]*1001.*rollupdist;
+        x = _verts[i*(nstream+1)].x() + uinfvec(0)*1001.*rollupdist/uinf;
         y = _verts[i*(nstream+1)].y();
-        z = _verts[i*(nstream+1)].z() + uinfdir[2]*1001.*rollupdist;
+        z = _verts[i*(nstream+1)].z() + uinfvec(2)*1001.*rollupdist/uinf;
         _verts[i*(nstream+1)+j].setCoordinates(x, y, z);
-        xviz = _verts[i*(nstream+1)].x() + uinfdir[0]*nstream*dt*uinf;
+        xviz = _verts[i*(nstream+1)].x() + uinfvec(0)*nstream*dt;
         yviz = _verts[i*(nstream+1)].y();
-        zviz = _verts[i*(nstream+1)].z() + uinfdir[2]*nstream*dt*uinf;
+        zviz = _verts[i*(nstream+1)].z() + uinfvec(2)*nstream*dt;
         _verts[i*(nstream+1)+j].setVizCoordinates(xviz, yviz, zviz);
       }
       _verts[i*(nstream+1)+j].setIdx(next_global_vertidx);
