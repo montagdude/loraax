@@ -74,7 +74,7 @@ class Vertex {
     int setData ( unsigned int idx, const double & var );
     const double & data ( unsigned int idx ) const;
 
-    // Interpolates source and doublet strength from panel centroids to vertex
+    // Interpolates panel quantities to vertex
 
     void interpFromPanels ();
 

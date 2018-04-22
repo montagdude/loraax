@@ -600,7 +600,7 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 /******************************************************************************/
 void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 {
-  unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad;
+  unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, right;
   double phin, phi, r;
   Eigen::Matrix3d trans, T1;
   Eigen::Vector3d cen, r0, rb, ri, point, norm, tang, tangb;
@@ -876,6 +876,62 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       }
     }
   }
+
+  // Set panel neighbors (top and bottom surfaces only for now)
+  // We don't add panel neighbors from top/bottom to tip caps, because there can
+  // be very large changes in sizing across that boundary, which would produce
+  // error in gradient calculations.
+
+  for ( i = 0; i < _nspan-1; i++ )
+  {
+    for ( j = 0; j < 2*_nchord-2; j++ )
+    {
+      if (i > 0)
+        _panels[i][j]->setLeftNeighbor(_panels[i-1][j]);
+      if (i < _nspan-2)
+        _panels[i][j]->setRightNeighbor(_panels[i+1][j]);
+      if (j > 0)
+        _panels[i][j]->setBackNeighbor(_panels[i][j-1]);
+      if (j < 2*_nchord-3)
+        _panels[i][j]->setFrontNeighbor(_panels[i][j+1]);
+    }
+  }
+
+  // Neighbor panels on tip caps
+
+  for ( i = 0; i < (_ntipcap-1)/2; i++ )
+  {
+    for ( j = 0; j < 2*_nchord-2; j++ )
+    {
+      if (i > 0)
+        _panels[_nspan-1+i][j]->setLeftNeighbor(_panels[_nspan-1+i-1][j]);
+      if (i < (_ntipcap-1)/2-1)
+        _panels[_nspan-1+i][j]->setRightNeighbor(_panels[_nspan-1+i+1][j]);
+      if (j > 0)
+        _panels[_nspan-1+i][j]->setBackNeighbor(_panels[_nspan-1+i][j-1]);
+      if (j < 2*_nchord-3)
+        _panels[_nspan-1+i][j]->setFrontNeighbor(_panels[_nspan-1+i][j+1]);
+
+      // Add right neighbor across the tip cut
+
+      if (i == (_ntipcap-1)/2-1)
+      {
+        right = 2*_nchord-3-j;
+        _panels[_nspan-1+i][j]->setRightNeighbor(_panels[_nspan-1+i][right]);
+      }
+    }
+  }
+
+  // Compute grid metrics
+
+#pragma omp parallel for private(i,j)
+  for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
+  {
+    for ( j = 0; j < 2*_nchord-2; j++ )
+    {
+      _panels[i][j]->computeGridTransformation();
+    }
+  }
 }
 
 /******************************************************************************/
@@ -925,140 +981,30 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
 
 /******************************************************************************/
 //
-// Computes surface velocities by finite differences
+// Computes surface velocities by finite differences + grid transformation
 //
 /******************************************************************************/
 void Wing::computeVelocities ()
 {
-  unsigned int i, j, k, nneigh;
-  double dlr, dll, dsf, dsb;
-  double mu, mur, mul, muf, mub;
-  double y2, y1, y0, x2, x1, a, b;
-  double dmudl, dmuds;
-  double lcount, scount;
-  Eigen::Vector3d lhat, shat, Vl, Vs, Vn;
-  Vertex * vert, * fvert, * bvert, * rvert, *lvert;
-  Panel * neigh;
+  unsigned int i, j, nverts;
 
-  // Velocities on top and bottom surfaces
-
-//FIXME: do this in parallel
-  for ( i = 0; i < _nspan; i++ )
+#pragma omp parallel for private(i,j)
+  for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
   {
-    for ( j = 0; j < 2*_nchord-1; j++ )
+    for ( j = 0; j < 2*_nchord-2; j++ )
     {
-      vert = _verts[i*(2*_nchord-1)+j];
-      mu = vert->data(1);
-      fvert = NULL;
-      bvert = NULL;
-      rvert = NULL;
-      lvert = NULL;
-      lhat << 0., 0., 0.;
-      shat << 0., 0., 0.;
-      lcount = 0.;
-      scount = 0.;
-
-      // Get neighbors, distances, and tangential direction vectors
-
-      if (j > 0)
-      {
-        bvert = _verts[i*(2*_nchord-1)+j-1];
-        dsb = vert->distance(*bvert);
-        mub = bvert->data(1);
-        shat += bvert->vectorTo(*vert)/dsb;
-        scount += 1.;
-      }
-      if (j < 2*_nchord-2)
-      {
-        fvert = _verts[i*(2*_nchord-1)+j+1];
-        dsf = vert->distance(*fvert);
-        muf = fvert->data(1);
-        shat += vert->vectorTo(*fvert)/dsf;
-        scount += 1.;
-      }
-      if (i > 0)
-      {
-        lvert = _verts[(i-1)*(2*_nchord-1)+j];
-        dll = vert->distance(*lvert);
-        mul = lvert->data(1);
-        lhat += lvert->vectorTo(*vert)/dll;
-        lcount += 1.;
-      }
-      if (i < _nspan-1)
-      {
-        rvert = _verts[(i+1)*(2*_nchord-1)+j];
-        dlr = vert->distance(*rvert);
-        mur = rvert->data(1);
-        lhat += vert->vectorTo(*rvert)/dlr;
-        lcount += 1.;
-      }
-      shat /= scount;
-      shat /= shat.norm();
-      lhat /= lcount;
-      lhat /= lhat.norm();
-
-      // Use quadratic fit for gradients on interior points; one-sided
-      // differences at edges
-
-      if ( (fvert != NULL) && (bvert != NULL) )
-      {
-        y2 = muf;
-        y1 = mub;
-        y0 = mu;
-        x2 = dsf;
-        x1 = -dsb;
-        a = (y2-y0-(y1-y0)*x2/x1) / (x2*x2-x2*x1);
-        b = (y1-y0)/x1 - a*x1;
-        dmuds = b;
-      }
-      else if (fvert == NULL)
-        dmuds = (mu - mub)/dsb; 
-      else
-        dmuds = (muf - mu)/dsf;
-
-      if ( (rvert != NULL) && (lvert != NULL) )
-      {
-        y2 = mur;
-        y1 = mul;
-        y0 = mu;
-        x2 = dlr;
-        x1 = -dll;
-        a = (y2-y0-(y1-y0)*x2/x1) / (x2*x2-x2*x1);
-        b = (y1-y0)/x1 - a*x1;
-        dmudl = b;
-      }
-      else if (rvert == NULL)
-        dmudl = (mu - mul)/dll;
-      else
-        dmudl = (mur - mu)/dlr;
-
-      // Compute surface velocity
-//FIXME: This method doesn't make sense when shat and lhat are not orthogonal
-//       (like for a swept wing)
-
-      Vs = (dmuds + uinfvec.transpose()*shat)*shat;
-      Vl = (dmudl + uinfvec.transpose()*lhat)*lhat;
-
-      // Compute normal velocity at panel centroids and interpolate to vertices
-//FIXME: Shouldn't do this at the tips because the normal vectors for neighbors
-//       on the flat tip are completely different. Can maybe get around this by
-//       creating new set of vertices for profile around tip that are not
-//       connected to the tip panels.
-
-      Vn << 0., 0., 0.;
-      nneigh = vert->nPanels();
-      for ( k = 0; k < nneigh; k++ )
-      {
-        neigh = vert->panel(k);
-        Vn += (neigh->sourceStrength() + uinfvec.transpose()*neigh->normal()) \
-           *  neigh->normal();
-      }
-      Vn /= double(nneigh);
-      
-      vert->setData(2, Vs(0) + Vl(0) + Vn(0));
-      vert->setData(3, Vs(1) + Vl(1) + Vn(1));
-      vert->setData(4, Vs(2) + Vl(2) + Vn(2));
+      _panels[i][j]->computeVelocity(uinfvec);
     }
+  }
+
+  // Interpolate to vertices
+//FIXME: move this to after computing pressures
+
+  nverts = _verts.size();
+#pragma omp paralle for private(i)
+  for ( i = 0; i < nverts; i++ )
+  {
+    _verts[i]->interpFromPanels();
   }
 }
 

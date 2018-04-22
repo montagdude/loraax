@@ -922,7 +922,7 @@ void Aircraft::setSourceStrengths ()
 /******************************************************************************/
 void Aircraft::setDoubletStrengths ()
 {
-  unsigned int i, npanels, nverts;
+  unsigned int i, npanels;
 
   npanels = _panels.size();
 #ifdef DEBUG
@@ -937,13 +937,6 @@ void Aircraft::setDoubletStrengths ()
   for ( i = 0; i < npanels; i++ )
   {
     _panels[i]->setDoubletStrength(_mu(i));
-  }
-
-  nverts = _verts.size();
-#pragma omp parallel for private(i)
-  for ( i = 0; i < nverts; i++ )
-  {
-    _verts[i]->interpFromPanels();
   }
 }
 
@@ -1095,7 +1088,6 @@ void Aircraft::solveSystem () { _mu = _lu.solve(_rhs); }
 /******************************************************************************/
 unsigned int Aircraft::systemSize () const { return _panels.size(); }
 
-#if 0
 /******************************************************************************/
 //
 // Computes surface velocities
@@ -1111,7 +1103,6 @@ void Aircraft::computeVelocities ()
     _wings[i].computeVelocities();
   }
 }
-#endif
 
 /******************************************************************************/
 //

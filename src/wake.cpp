@@ -61,9 +61,9 @@ void Wake::initialize ( const std::vector<Vertex> & teverts,
       else if (int(j) < nstream)
       {
         // Vertices that will roll up
-        x = _verts[i*(nstream+1)].x() + uinfvec(0)*double(j)*dt
+        x = _verts[i*(nstream+1)].x() + uinfvec(0)*double(j)*dt;
         y = _verts[i*(nstream+1)].y();
-        z = _verts[i*(nstream+1)].z() + uinfvec(2)*double(j)*dt
+        z = _verts[i*(nstream+1)].z() + uinfvec(2)*double(j)*dt;
         _verts[i*(nstream+1)+j].setCoordinates(x, y, z);
       }
       else
