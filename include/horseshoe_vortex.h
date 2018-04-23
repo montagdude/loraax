@@ -24,7 +24,7 @@ class HorseshoeVortex: public Vortex {
 
     // Set vertices
 
-    int addVertex ( Vertex * vert );
+    int addVertex ( Vertex * vert, bool ref_element_to_vert=false );
 
     // Induced velocity coefficient and induced velocity at a point
 

@@ -27,7 +27,7 @@ VortexRing::VortexRing ()
 // Set vertices. Vertices should be given in a clockwise order.
 //
 /******************************************************************************/
-int VortexRing::addVertex ( Vertex * vert )
+int VortexRing::addVertex ( Vertex * vert, bool ref_element_to_vert )
 {
   if (_currverts == 4)
   {

@@ -35,7 +35,7 @@ QuadPanel::QuadPanel ()
 // should be added in a counterclockwise order.
 //
 /******************************************************************************/
-int QuadPanel::addVertex ( Vertex * vert )
+int QuadPanel::addVertex ( Vertex * vert, bool ref_element_to_vert )
 {
   if (_currverts == 4)
   {
@@ -45,7 +45,8 @@ int QuadPanel::addVertex ( Vertex * vert )
   }
 
   _verts[_currverts] = vert;
-  _verts[_currverts]->addPanel(this);
+  if (ref_element_to_vert)
+    _verts[_currverts]->addPanel(this);
   _currverts += 1;
 
   if (_currverts == 4)

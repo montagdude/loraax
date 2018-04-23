@@ -40,7 +40,7 @@ class Element {
 
     // Set / access vertices
 
-    virtual int addVertex ( Vertex * vert ) = 0;
+    virtual int addVertex ( Vertex * vert, bool ref_element_to_vert=true ) = 0;
     Vertex & vertex ( unsigned int vidx ) const;
     unsigned int nVertices () const;
 };

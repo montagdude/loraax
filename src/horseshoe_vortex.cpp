@@ -27,7 +27,7 @@ HorseshoeVortex::HorseshoeVortex ()
 // Set vertices. Vertices should be given in a clockwise order.
 //
 /******************************************************************************/
-int HorseshoeVortex::addVertex ( Vertex * vert )
+int HorseshoeVortex::addVertex ( Vertex * vert, bool ref_element_to_vert )
 {
   if (_currverts == 4)
   {

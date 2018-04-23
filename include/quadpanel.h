@@ -34,7 +34,7 @@ class QuadPanel: public Panel {
 
     // Add vertices and compute geometric quantities when 4 are set
 
-    int addVertex ( Vertex * vert );
+    int addVertex ( Vertex * vert, bool ref_element_to_vert=true );
 
     // Recomputes all geometric quantities
 

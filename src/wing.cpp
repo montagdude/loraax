@@ -705,7 +705,8 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       r0(0) = _sections[_nspan-1].vert(j).x() - cen(0);
       r0(1) = _sections[_nspan-1].vert(j).y() - cen(1);
       r0(2) = _sections[_nspan-1].vert(j).z() - cen(2);
-      r = r0.norm();
+      //r = r0.norm();
+      r = 0.;
 
       // Radial vector in y-z plane
 
@@ -724,7 +725,9 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
   } 
 
   // Create tip panels wrapping around the tip from top TE to bottom TE.
-  // First loop connects to existing vertices on last section
+  // First loop connects to existing vertices on last section. Note: don't
+  // "connect" to vertices on top and bottom surfaces, because we don't want
+  // the tip panels to be included in averaging to those vertices.
 
   _tris.resize(ntri);
   tcounter = 0;
@@ -736,9 +739,9 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
     if (j == 0)
     {
       _tris[tcounter].setIdx(next_global_elemidx);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0),false);
       _tris[tcounter].addVertex(&_tipverts[0][0]);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1));
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1),false);
       _panels[_nspan-1][j] = &_tris[tcounter];
       tcounter += 1;
       next_global_elemidx += 1;
@@ -747,8 +750,8 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
     {
       _tris[tcounter].setIdx(next_global_elemidx);
       _tris[tcounter].addVertex(&_tipverts[0][_nchord-3]);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2));
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),false);
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2),false);
       _panels[_nspan-1][j] = &_tris[tcounter];
       tcounter += 1;
       next_global_elemidx += 1;
@@ -756,9 +759,9 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
     else if (j == _nchord-1)
     {
       _tris[tcounter].setIdx(next_global_elemidx);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),false);
       _tris[tcounter].addVertex(&_tipverts[_ntipcap-3][_nchord-3]);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord));
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord),false);
       _panels[_nspan-1][j] = &_tris[tcounter];
       tcounter += 1;
       next_global_elemidx += 1;
@@ -767,8 +770,8 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
     {
       _tris[tcounter].setIdx(next_global_elemidx);
       _tris[tcounter].addVertex(&_tipverts[_ntipcap-3][0]);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3));
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2),false);
+      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3),false);
       _panels[_nspan-1][j] = &_tris[tcounter];
       tcounter += 1;
       next_global_elemidx += 1;
@@ -781,8 +784,8 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       _quads[qcounter].setIdx(next_global_elemidx);
       _quads[qcounter].addVertex(&_tipverts[0][j-1]);
       _quads[qcounter].addVertex(&_tipverts[0][j]);
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1));
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j));
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1),false);
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j),false);
       _panels[_nspan-1][j] = &_quads[qcounter];
       qcounter += 1;
       next_global_elemidx += 1;
@@ -792,15 +795,16 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       _quads[qcounter].setIdx(next_global_elemidx);
       _quads[qcounter].addVertex(&_tipverts[_ntipcap-3][2*_nchord-3-j]);
       _quads[qcounter].addVertex(&_tipverts[_ntipcap-3][2*_nchord-3-j-1]);
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1));
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j));
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1),false);
+      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j),false);
       _panels[_nspan-1][j] = &_quads[qcounter];
       qcounter += 1;
       next_global_elemidx += 1;
     }
   }
 
-  // Next layers involve only _tipverts except at TE and LE points
+  // Next layers involve only _tipverts except at TE and LE points.
+  // As before, don't connect to top/bottom surfaces vertices.
 
   for ( i = 1; i < (_ntipcap-1)/2; i++ )
   {
@@ -812,7 +816,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       if (j == 0)
       {
         _tris[tcounter].setIdx(next_global_elemidx);
-        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0));
+        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0),false);
         _tris[tcounter].addVertex(&_tipverts[i][0]);
         _tris[tcounter].addVertex(&_tipverts[i-1][0]);
         _panels[_nspan-1+i][j] = &_tris[tcounter];
@@ -823,7 +827,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       {
         _tris[tcounter].setIdx(next_global_elemidx);
         _tris[tcounter].addVertex(&_tipverts[i][_nchord-3]);
-        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
+        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),false);
         _tris[tcounter].addVertex(&_tipverts[i-1][_nchord-3]);
         _panels[_nspan-1+i][j] = &_tris[tcounter];
         tcounter += 1;
@@ -832,7 +836,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       else if (j == _nchord-1)
       {
         _tris[tcounter].setIdx(next_global_elemidx);
-        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1));
+        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),false);
         _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i][_nchord-3]);
         _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i+1][_nchord-3]);
         _panels[_nspan-1+i][j] = &_tris[tcounter];
@@ -843,7 +847,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       {
         _tris[tcounter].setIdx(next_global_elemidx);
         _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i][0]);
-        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2));
+        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2),false);
         _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i+1][0]);
         _panels[_nspan-1+i][j] = &_tris[tcounter];
         tcounter += 1;
@@ -907,9 +911,9 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
         _panels[_nspan-1+i][j]->setLeftNeighbor(_panels[_nspan-1+i-1][j]);
       if (i < (_ntipcap-1)/2-1)
         _panels[_nspan-1+i][j]->setRightNeighbor(_panels[_nspan-1+i+1][j]);
-      if (j > 0)
+      if ( (j > 0) && (j != _nchord-1) )
         _panels[_nspan-1+i][j]->setBackNeighbor(_panels[_nspan-1+i][j-1]);
-      if (j < 2*_nchord-3)
+      if ( (j < 2*_nchord-3) && (j != _nchord-2) )
         _panels[_nspan-1+i][j]->setFrontNeighbor(_panels[_nspan-1+i][j+1]);
 
       // Add right neighbor across the tip cut
@@ -999,6 +1003,10 @@ void Wing::computeVelocities ()
 
   // Interpolate to vertices
 //FIXME: move this to after computing pressures
+//FIXME: extrapolate to trailing edges
+//FIXME: finite difference / grid transformation method seems to have issues
+// at tips, especially near LE and TE. Not sure if there is a bug there or if
+// I need to just use a different gradient method at the tips.
 
   nverts = _verts.size();
 #pragma omp paralle for private(i)

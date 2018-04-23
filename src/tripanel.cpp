@@ -36,7 +36,7 @@ TriPanel::TriPanel ()
 // Vertices should be added in a counterclockwise order.
 //
 /******************************************************************************/
-int TriPanel::addVertex ( Vertex * vert )
+int TriPanel::addVertex ( Vertex * vert, bool ref_element_to_vert )
 {
   if (_currverts == 3)
   {
@@ -46,7 +46,8 @@ int TriPanel::addVertex ( Vertex * vert )
   }
 
   _verts[_currverts] = vert;
-  _verts[_currverts]->addPanel(this);
+  if (ref_element_to_vert)
+    _verts[_currverts]->addPanel(this);
   _currverts += 1;
 
   if (_currverts == 3)
