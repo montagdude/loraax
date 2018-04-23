@@ -25,6 +25,8 @@ class Panel: public Element {
     double _area;                  // Face area
     Eigen::Vector3d _norm;         // Outward-facing normal
     Eigen::Vector3d _cen;          // Face centroid
+    Eigen::Vector3d _colloc;	   // Collocation point (defaults to centroid)
+    bool _colloc_is_centroid;	   // Whether collocation point is centroid
     Eigen::Matrix3d _trans, _invtrans;
                                    // Transform from inertial frame to panel
                                    // frame and vice versa
@@ -85,6 +87,12 @@ class Panel: public Element {
     const double & area () const;
     const Eigen::Vector3d & centroid () const;
     const Eigen::Vector3d & normal () const;
+
+    // Set/access collocation point. If not set, defaults to centroid.
+
+    void setCollocationPoint ( const Eigen::Vector3d & colloc );
+    const Eigen::Vector3d & collocationPoint () const;
+    bool collocationPointIsCentroid () const;
 
     // Virtual functions implemented in derived classes
     

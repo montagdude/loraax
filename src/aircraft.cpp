@@ -13,6 +13,8 @@
 #include "wing.h"
 #include "aircraft.h"
 
+#include <iostream>
+
 using namespace tinyxml2;
 
 //FIXME: make this a function of wingspan?
@@ -608,7 +610,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 {
   XMLDocument doc;
   unsigned int i, nwings;
-  int nchord, nspan, ntipcap, check;
+  int nchord, nspan, check;
   double lesprat, tesprat, rootsprat, tipsprat;
   std::vector<Section> user_sections;
   std::vector<Airfoil> foils;
@@ -704,11 +706,8 @@ int Aircraft::readXML ( const std::string & geom_file )
       return 2;
     if (read_setting(pan, "TipSpaceRat", tipsprat) != 0)
       return 2;
-    if (read_setting(pan, "TipCapPoints", ntipcap) != 0)
-      return 2;
-    if (_wings[nwings].setDiscretization(nchord, nspan, lesprat, tesprat,
-                                         rootsprat, tipsprat, ntipcap) != 0 )
-      return 2;
+    _wings[nwings].setDiscretization(nchord, nspan, lesprat, tesprat,
+                                     rootsprat, tipsprat);
 
     // Sections
 
@@ -986,7 +985,7 @@ void Aircraft::constructSystem ()
 {
   unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans;
   int toptepan, bottepan;
-  Eigen::Vector3d cen;
+  Eigen::Vector3d col;
   WakeStrip * strip;
   double stripic; 
   bool onpanel;
@@ -1007,12 +1006,12 @@ void Aircraft::constructSystem ()
     _aic.resize(npanels,npanels);
     _rhs.resize(npanels);
 
-#pragma omp parallel for private(i,cen,j,onpanel)
+#pragma omp parallel for private(i,col,j,onpanel)
     for ( i = 0; i < npanels; i++ )
     {
-      // Collocation point at centroid of panel (point of BC application)
+      // Collocation point (point of BC application)
 
-      cen = _panels[i]->centroid();
+      col = _panels[i]->collocationPoint();
 
       // Influence coefficients
 
@@ -1022,9 +1021,9 @@ void Aircraft::constructSystem ()
           onpanel = true;
         else
           onpanel = false;
-        _sourceic(i,j) = _panels[j]->sourcePhiCoeff(cen(0), cen(1), cen(2),
+        _sourceic(i,j) = _panels[j]->sourcePhiCoeff(col(0), col(1), col(2),
                                                     onpanel, "bottom", true);
-        _doubletic(i,j) = _panels[j]->doubletPhiCoeff(cen(0), cen(1), cen(2),
+        _doubletic(i,j) = _panels[j]->doubletPhiCoeff(col(0), col(1), col(2),
                                                       onpanel, "bottom", true);
       }
     }
@@ -1032,13 +1031,13 @@ void Aircraft::constructSystem ()
 
   // Compute AIC and RHS
 
-#pragma omp parallel for private(i,cen,j,k,nstrips,l,strip,nwakepans,stripic,m,\
+#pragma omp parallel for private(i,col,j,k,nstrips,l,strip,nwakepans,stripic,m,\
                                  toptepan,bottepan)
   for ( i = 0; i < npanels; i++ )
   {
-    // Collocation point at centroid of panel (point of BC application)
+    // Collocation point (point of BC application)
 
-    cen = _panels[i]->centroid();
+    col = _panels[i]->collocationPoint();
 
     // Surface panel contribution to AIC and RHS
 
@@ -1061,7 +1060,7 @@ void Aircraft::constructSystem ()
         stripic = 0.;
         for ( m = 0; m < nwakepans; m++ )
         {
-          stripic += strip->panel(m)->doubletPhiCoeff(cen(0), cen(1), cen(2),
+          stripic += strip->panel(m)->doubletPhiCoeff(col(0), col(1), col(2),
                                                       false, "bottom", true);
         }
         toptepan = strip->topTEPan()->idx();

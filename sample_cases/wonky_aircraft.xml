@@ -14,7 +14,6 @@
       <TESpaceRat>0.4</TESpaceRat>
       <RootSpaceRat>0.75</RootSpaceRat>
       <TipSpaceRat>0.4</TipSpaceRat>
-      <TipCapPoints>9</TipCapPoints>
     </Paneling>
     <Sections>
       <!-- Note that sections do not need to be given in order -->
@@ -90,7 +89,6 @@
       <TESpaceRat>0.4</TESpaceRat>
       <RootSpaceRat>0.75</RootSpaceRat>
       <TipSpaceRat>0.4</TipSpaceRat>
-      <TipCapPoints>7</TipCapPoints>
     </Paneling>
     <Sections>
       <Section name="Root">

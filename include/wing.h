@@ -28,7 +28,8 @@ class Wing {
 					//   span. nchord is on each side (top
 					//   and bottom); total is 2*nchord-1.
     unsigned int _ntipcap;		// Number of points along the arc
-                                        //   forming the tip cap
+                                        //   forming the tip cap. Now fixed at
+                                        //   3, and tips are not rounded.
     double _lesprat, _tesprat;		// LE and TE spacing ratios relative to
 					//   uniform
     double _rootsprat, _tipsprat;	// Root and tip spacing ratios relative
@@ -65,10 +66,10 @@ class Wing {
 
     // Set discretization and spacing info
 
-    int setDiscretization ( unsigned int nchord, unsigned int nspan,
-                            const double & lesprat, const double & tesprat,
-                            const double & rootsprat,
-                            const double & tipsprat, unsigned int ntipcap );
+    void setDiscretization ( unsigned int nchord, unsigned int nspan,
+                             const double & lesprat, const double & tesprat,
+                             const double & rootsprat,
+                             const double & tipsprat );
 
     // Set airfoils. Section airfoils are interpolated from these airfoils.
     // Airfoils do not need to be given in sorted order.

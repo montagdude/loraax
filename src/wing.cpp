@@ -252,7 +252,7 @@ Wing::Wing ()
   _name = "";
   _nchord = 0;
   _nspan = 0;
-  _ntipcap = 0;
+  _ntipcap = 3;
   _lesprat = 1.;
   _tesprat = 1.;
   _rootsprat = 1.;
@@ -280,10 +280,10 @@ const std::string & Wing::name () const { return _name; }
 // Set discretization and spacing info
 //
 /******************************************************************************/
-int Wing::setDiscretization ( unsigned int nchord, unsigned int nspan,
-                              const double & lesprat, const double & tesprat,
-                              const double & rootsprat,
-                              const double & tipsprat, unsigned int ntipcap )
+void Wing::setDiscretization ( unsigned int nchord, unsigned int nspan,
+                               const double & lesprat, const double & tesprat,
+                               const double & rootsprat,
+                               const double & tipsprat )
 {
   _nchord = nchord;
   _nspan = nspan;
@@ -291,18 +291,6 @@ int Wing::setDiscretization ( unsigned int nchord, unsigned int nspan,
   _tesprat = tesprat;
   _rootsprat = rootsprat;
   _tipsprat = tipsprat;
-  _ntipcap = ntipcap;
-
-  // An odd number of points are required on the tip
-
-  if ( (_ntipcap % 2 != 1) || (_ntipcap < 3) )
-  {
-    conditional_stop(1, "Wing::setDiscretization",
-              "TipCapPoints must be an odd number greater than or equal to 3.");
-    return 1;
-  }
-
-  return 0;
 }
 
 /******************************************************************************/
@@ -605,6 +593,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
   Eigen::Matrix3d trans, T1;
   Eigen::Vector3d cen, r0, rb, ri, point, norm, tang, tangb;
   double x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4;
+  double tipchord;
 
   // Set vertex pointers on top and bottom surfaces
 
@@ -647,9 +636,9 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
     }
   }
 
-  // Create tip cap vertices
-//FIXME: It would be better to loop over j first to avoid recomputing
-//  transforms, but it's a negligible computational expense anyway
+  // Create tip cap vertices. Currently, there's a lot of stuff in here that
+  // does nothing useful, because I switched back to flat tips. The code is
+  // kept here in case I want to go back to revolved tip caps again.
 
   _tipverts.resize(_ntipcap-2);
   for ( i = 1; i < _ntipcap-1; i++ )
@@ -705,7 +694,10 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       r0(0) = _sections[_nspan-1].vert(j).x() - cen(0);
       r0(1) = _sections[_nspan-1].vert(j).y() - cen(1);
       r0(2) = _sections[_nspan-1].vert(j).z() - cen(2);
-      //r = r0.norm();
+      /* Use this to enable rounded tip caps. Also would need to make _ntipcap
+         an input again in that case.
+      r = r0.norm();
+      */
       r = 0.;
 
       // Radial vector in y-z plane
@@ -926,6 +918,23 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
     }
   }
 
+  // Move collocation point off panel near tip LEs to relax BC. Otherwise,
+  // can get really high, sometimes reversed, velocities on those LE triangles.
+  // There's probably a better way to do this, but this is mainly just for viz
+  // anyway since these points don't contribute to the overall forces and don't
+  // have much influence on the top and bottom surface panels.
+
+  tipchord = _sections[_nspan-1].chord();
+  for ( i = 0; i < (_ntipcap-1)/2; i++ )
+  {
+    for ( j = _nchord-2; j < _nchord; j++ )
+    {
+      norm = _panels[_nspan-1+i][j]->normal();
+      cen = _panels[_nspan-1+i][j]->centroid();
+      _panels[_nspan-1+i][j]->setCollocationPoint(cen + 0.02*norm*tipchord);
+    }
+  }
+
   // Compute grid metrics
 
 #pragma omp parallel for private(i,j)
@@ -1004,12 +1013,9 @@ void Wing::computeVelocities ()
   // Interpolate to vertices
 //FIXME: move this to after computing pressures
 //FIXME: extrapolate to trailing edges
-//FIXME: finite difference / grid transformation method seems to have issues
-// at tips, especially near LE and TE. Not sure if there is a bug there or if
-// I need to just use a different gradient method at the tips.
 
   nverts = _verts.size();
-#pragma omp paralle for private(i)
+#pragma omp parallel for private(i)
   for ( i = 0; i < nverts; i++ )
   {
     _verts[i]->interpFromPanels();

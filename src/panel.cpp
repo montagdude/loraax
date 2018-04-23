@@ -25,6 +25,8 @@ Panel::Panel ()
   _area = 0.0;
   _xtrans.resize(0);
   _vel << 0., 0., 0.;
+  _colloc << 0., 0., 0.;
+  _colloc_is_centroid = true;
   _right = NULL;
   _left = NULL;
   _front = NULL;
@@ -202,6 +204,27 @@ const Eigen::Vector3d & Panel::centroid () const { return _cen; }
 //
 /******************************************************************************/
 const Eigen::Vector3d & Panel::normal () const { return _norm; }
+
+/******************************************************************************/
+//
+// Set/access collocation point
+//
+/******************************************************************************/
+void Panel::setCollocationPoint ( const Eigen::Vector3d & colloc )
+{
+  _colloc = colloc;
+  _colloc_is_centroid = false;
+}
+
+const Eigen::Vector3d & Panel::collocationPoint () const
+{
+  if (_colloc_is_centroid)
+    return _cen;
+  else
+    return _colloc;
+}
+
+bool Panel::collocationPointIsCentroid () const { return _colloc_is_centroid; }
 
 /******************************************************************************/
 //
