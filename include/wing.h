@@ -90,9 +90,10 @@ class Wing {
 
     void setupWake ( int & next_global_vertidx, int & next_global_elemidx );
 
-    // Computes velocities on surface vertices
+    // Computes velocities and pressures on surface panels; interpolate to
+    // vertices
 
-    void computeVelocities ();
+    void computeSurfaceQuantities ();
 
     // Access to verts and panels
 

@@ -55,10 +55,10 @@ int main (int argc, char* argv[])
   ac.setDoubletStrengths();
   ac.setWakeDoubletStrengths();
 
-  // Compute panel velocities
+  // Compute surface velocities and pressures
 
-  std::cout << "Computing velocities ..." << std::endl;
-  ac.computeVelocities();
+  std::cout << "Computing surface velocity and pressure ..." << std::endl;
+  ac.computeSurfaceQuantities();
 
   // Write viz
 

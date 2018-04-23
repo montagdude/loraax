@@ -211,6 +211,8 @@ const double & Vertex::data ( unsigned int idx ) const
   return _data[idx];
 }
 
+unsigned int Vertex::dataSize () const { return _data.size(); }
+
 /******************************************************************************/
 //
 // Interpolates panel quantities to vertex
@@ -222,11 +224,10 @@ void Vertex::interpFromPanels ()
   double dx, dy, dz, dist, weightsum;
   Eigen::Vector3d cen;
 
-  _data[0] = 0.;
-  _data[1] = 0.;
-  _data[2] = 0.;
-  _data[3] = 0.;
-  _data[4] = 0.;
+  for ( i = 0; i < 7; i++ )
+  {
+    _data[i] = 0.;
+  }
   weightsum = 0.;
   for ( i = 0; i < _npanels; i++ )
   {
@@ -240,13 +241,14 @@ void Vertex::interpFromPanels ()
     _data[2] += _panels[i]->velocity()(0)/dist;
     _data[3] += _panels[i]->velocity()(1)/dist;
     _data[4] += _panels[i]->velocity()(2)/dist;
+    _data[5] += _panels[i]->pressure()/dist;
+    _data[6] += _panels[i]->pressureCoefficient()/dist;
     weightsum += 1./dist;
   }
-  _data[0] /= weightsum;
-  _data[1] /= weightsum;
-  _data[2] /= weightsum;
-  _data[3] /= weightsum;
-  _data[4] /= weightsum;
+  for ( i = 0; i < 7; i++ )
+  {
+    _data[i] /= weightsum;
+  }
 }
 
 /******************************************************************************/

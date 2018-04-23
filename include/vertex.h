@@ -73,6 +73,7 @@ class Vertex {
 
     int setData ( unsigned int idx, const double & var );
     const double & data ( unsigned int idx ) const;
+    unsigned int dataSize () const;
 
     // Interpolates panel quantities to vertex
 

@@ -79,9 +79,9 @@ class Aircraft {
 
     unsigned int systemSize () const;
 
-    // Computes surface velocities
+    // Computes surface velocities and pressures
 
-    void computeVelocities ();
+    void computeSurfaceQuantities ();
 
     // Write VTK viz
 

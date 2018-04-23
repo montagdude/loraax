@@ -33,6 +33,7 @@ class Panel: public Element {
     std::vector<double> _xtrans, _ytrans;
                                    // Panel endpoint coordinates in panel frame
     Eigen::Vector3d _vel;	   // Flow velocity at centroid
+    double _cp, _p;		   // Pressure coefficient and pressure
 
     Panel * _right, * _left, * _front, * _back;
 				   // Neighbor panels
@@ -127,6 +128,13 @@ class Panel: public Element {
 
     void computeVelocity ( const Eigen::Vector3d & uinfvec );
     const Eigen::Vector3d & velocity () const;
+
+    // Compute or access pressure and pressure coefficient
+
+    void computePressure ( const double & uinf, const double & rhoinf,
+                           const double & pinf );
+    const double & pressure () const;
+    const double & pressureCoefficient () const;
 };
 
 #endif

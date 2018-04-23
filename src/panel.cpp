@@ -1,5 +1,6 @@
 #include <vector>
-#include <Eigen/Core>
+#include <cmath>
+#include <Eigen/Dense>
 #include "util.h"
 #include "vertex.h"
 #include "element.h"
@@ -25,6 +26,8 @@ Panel::Panel ()
   _area = 0.0;
   _xtrans.resize(0);
   _vel << 0., 0., 0.;
+  _cp = 0.;
+  _p = 0.;
   _colloc << 0., 0., 0.;
   _colloc_is_centroid = true;
   _right = NULL;
@@ -262,3 +265,22 @@ void Panel::computeVelocity ( const Eigen::Vector3d & uinfvec )
   _vel = gradmu + _sigma*_norm + uinfvec; 
 }
 const Eigen::Vector3d & Panel::velocity () const { return _vel; }
+
+/******************************************************************************/
+//
+// Compute / access pressure and pressure coefficient
+//
+/******************************************************************************/
+void Panel::computePressure ( const double & uinf, const double & rhoinf,
+                              const double & pinf )
+{
+  double uinf2;
+
+// FIXME: add compressibility correction
+  uinf2 = std::pow(uinf, 2.);
+  _cp = 1. - _vel.squaredNorm() / uinf2;
+  _p = 0.5*_cp*rhoinf*uinf2 + pinf;
+}
+
+const double & Panel::pressure () const { return _p; }
+const double & Panel::pressureCoefficient () const { return _cp; }

@@ -288,31 +288,31 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
       << _verts[i]->data(4) << std::endl;
   }
 
-  //f << "SCALARS pressure double 1" << std::endl;
-  //f << "LOOKUP_TABLE default" << std::endl;
-  //for ( i = 0; i < nverts; i++ )
-  //{
-  //  f << std::setprecision(14) << std::setw(25) << std::left
-  //    << _verts[i]->data(5) << std::endl;
-  //}
-  //for ( i = 0; i < nverts; i++ )
-  //{
-  //  f << std::setprecision(14) << std::setw(25) << std::left
-  //    << _verts[i]->data(5) << std::endl;
-  //}
+  f << "SCALARS pressure double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(5) << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(5) << std::endl;
+  }
 
-  //f << "SCALARS cp double 1" << std::endl;
-  //f << "LOOKUP_TABLE default" << std::endl;
-  //for ( i = 0; i < nverts; i++ )
-  //{
-  //  f << std::setprecision(14) << std::setw(25) << std::left
-  //    << _verts[i]->data(6) << std::endl;
-  //}
-  //for ( i = 0; i < nverts; i++ )
-  //{
-  //  f << std::setprecision(14) << std::setw(25) << std::left
-  //    << _verts[i]->data(6) << std::endl;
-  //}
+  f << "SCALARS pressure_coefficient double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(6) << std::endl;
+  }
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _verts[i]->data(6) << std::endl;
+  }
 }
 
 /******************************************************************************/
@@ -1089,17 +1089,17 @@ unsigned int Aircraft::systemSize () const { return _panels.size(); }
 
 /******************************************************************************/
 //
-// Computes surface velocities
+// Computes surface velocities and pressures
 //
 /******************************************************************************/
-void Aircraft::computeVelocities ()
+void Aircraft::computeSurfaceQuantities ()
 {
   unsigned int i, nwings;
 
   nwings = _wings.size();
   for ( i = 0; i < nwings; i++ )
   {
-    _wings[i].computeVelocities();
+    _wings[i].computeSurfaceQuantities();
   }
 }
 

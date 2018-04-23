@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <cmath>
-#include <Eigen/Core>
 #include <Eigen/Dense>
 #include "algorithms.h"
 #include "util.h"
@@ -994,12 +993,18 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
 
 /******************************************************************************/
 //
-// Computes surface velocities by finite differences + grid transformation
+// Computes velocities and pressures on surface panels, and interpolates to
+// vertices
 //
 /******************************************************************************/
-void Wing::computeVelocities ()
+void Wing::computeSurfaceQuantities ()
 {
-  unsigned int i, j, nverts;
+  unsigned int i, j, nverts, datasize;
+  double s12, s1, s2;
+  Eigen::Matrix3d A;
+  Eigen::Vector3d x, b;
+  Eigen::PartialPivLU<Eigen::Matrix3d> lu;
+  Vertex * v0, * v1, * v2;
 
 #pragma omp parallel for private(i,j)
   for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
@@ -1007,18 +1012,118 @@ void Wing::computeVelocities ()
     for ( j = 0; j < 2*_nchord-2; j++ )
     {
       _panels[i][j]->computeVelocity(uinfvec);
+      _panels[i][j]->computePressure(uinf, rhoinf, pinf);
     }
   }
 
   // Interpolate to vertices
-//FIXME: move this to after computing pressures
-//FIXME: extrapolate to trailing edges
 
   nverts = _verts.size();
 #pragma omp parallel for private(i)
   for ( i = 0; i < nverts; i++ )
   {
     _verts[i]->interpFromPanels();
+  }
+
+  /* Extrapolate to vertices at edges using quadratic fit. Note that the
+     originally calculated values at edge vertices actually apply to the
+     midpoint of the boundary between adjacent panels, since it is averaged only
+     from these two panels. */
+
+  // Top trailing edge
+#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,datasize,j,b,x)
+  for ( i = 0; i < _nspan-1; i++ )
+  {
+    v0 = &_sections[i].vert(0);
+    v1 = &_sections[i].vert(1);
+    v2 = &_sections[i].vert(2);
+    s1 = v0->distance(*v1);
+    s12 = 0.5*s1;
+    s2 = s1 + v1->distance(*v2);
+    A << std::pow(s12,2.), s12, 1.,
+         std::pow(s1,2.),  s1,  1.,
+         std::pow(s2,2.),  s2,  1.;
+    lu.compute(A);
+
+    datasize = v0->dataSize();
+    for ( j = 0; j < datasize; j++ )
+    { 
+      b << v0->data(j), v1->data(j), v2->data(j);
+      x = lu.solve(b);
+      v0->setData(j, x(2));
+    }
+  }
+
+  // Bottom trailing edge
+#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,datasize,j,b,x)
+  for ( i = 0; i < _nspan-1; i++ )
+  {
+    v0 = &_sections[i].vert(2*_nchord-2);
+    v1 = &_sections[i].vert(2*_nchord-3);
+    v2 = &_sections[i].vert(2*_nchord-4);
+    s1 = v0->distance(*v1);
+    s12 = 0.5*s1;
+    s2 = s1 + v1->distance(*v2);
+    A << std::pow(s12,2.), s12, 1.,
+         std::pow(s1,2.),  s1,  1.,
+         std::pow(s2,2.),  s2,  1.;
+    lu.compute(A);
+
+    datasize = v0->dataSize();
+    for ( j = 0; j < datasize; j++ )
+    { 
+      b << v0->data(j), v1->data(j), v2->data(j);
+      x = lu.solve(b);
+      v0->setData(j, x(2));
+    }
+  }
+
+  // Centerline
+#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,datasize,j,b,x)
+  for ( i = 1; i < 2*_nchord-2; i++ )
+  {
+    v0 = &_sections[0].vert(i);
+    v1 = &_sections[1].vert(i);
+    v2 = &_sections[2].vert(i);
+    s1 = v0->distance(*v1);
+    s12 = 0.5*s1;
+    s2 = s1 + v1->distance(*v2);
+    A << std::pow(s12,2.), s12, 1.,
+         std::pow(s1,2.),  s1,  1.,
+         std::pow(s2,2.),  s2,  1.;
+    lu.compute(A);
+
+    datasize = v0->dataSize();
+    for ( j = 0; j < datasize; j++ )
+    { 
+      b << v0->data(j), v1->data(j), v2->data(j);
+      x = lu.solve(b);
+      v0->setData(j, x(2));
+    }
+  }
+
+  // Tip
+#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,datasize,j,b,x)
+  for ( i = 1; i < 2*_nchord-2; i++ )
+  {
+    v0 = &_sections[_nspan-1].vert(i);
+    v1 = &_sections[_nspan-2].vert(i);
+    v2 = &_sections[_nspan-3].vert(i);
+    s1 = v0->distance(*v1);
+    s12 = 0.5*s1;
+    s2 = s1 + v1->distance(*v2);
+    A << std::pow(s12,2.), s12, 1.,
+         std::pow(s1,2.),  s1,  1.,
+         std::pow(s2,2.),  s2,  1.;
+    lu.compute(A);
+
+    datasize = v0->dataSize();
+    for ( j = 0; j < datasize; j++ )
+    { 
+      b << v0->data(j), v1->data(j), v2->data(j);
+      x = lu.solve(b);
+      v0->setData(j, x(2));
+    }
   }
 }
 
