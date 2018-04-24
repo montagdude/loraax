@@ -1181,3 +1181,42 @@ WakeStrip * Wing::wStrip ( unsigned int wsidx )
 
   return &_wakestrips[wsidx];
 }
+
+/******************************************************************************/
+//
+// Compute or access forces and moments
+//
+/******************************************************************************/
+void Wing::computeForceMoment ( const Eigen::Vector3d & moment_center )
+{
+  unsigned int i, j;
+  Eigen::Vector3d df, dm;
+
+  _force << 0., 0., 0.;
+  _moment << 0., 0., 0.;
+
+  // Only include top and bottom surface panels, since side panels cancel out
+  // with mirror contribution
+
+  for ( i = 0; i < _nspan-1; i++ )
+  {
+    for ( j = 0; j < 2*_nchord-2; j++ )
+    { 
+      _panels[i][j]->computeForceMoment(df, dm, moment_center);
+      _force += df;
+      _moment += dm;
+    }
+  }
+
+  // Account for mirror image
+
+  _force(0)  *= 2.;
+  _force(1)  =  0.;
+  _force(2)  *= 2.;
+  _moment(0) =  0.;
+  _moment(1) *= 2.;
+  _moment(2) =  0.;
+}
+
+const Eigen::Vector3d & Wing::force () const { return _force; }
+const Eigen::Vector3d & Wing::moment () const { return _moment; }

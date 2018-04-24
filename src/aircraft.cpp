@@ -1,6 +1,9 @@
+#define USE_MATH_DEFINES
+
 #include <iomanip>
 #include <vector>
 #include <fstream>
+#include <cmath>
 #include <tinyxml2.h>
 #include <Eigen/Core>
 #include "util.h"
@@ -13,12 +16,7 @@
 #include "wing.h"
 #include "aircraft.h"
 
-#include <iostream>
-
 using namespace tinyxml2;
-
-//FIXME: make this a function of wingspan?
-const double rcore = 1.E-08;
 
 /******************************************************************************/
 //
@@ -1102,6 +1100,40 @@ void Aircraft::computeSurfaceQuantities ()
     _wings[i].computeSurfaceQuantities();
   }
 }
+
+/******************************************************************************/
+//
+// Computes or access forces and moments
+//
+/******************************************************************************/
+void Aircraft::computeForceMoment ()
+{
+  unsigned int i, nwings;
+  double qinf;
+
+  nwings = _wings.size();
+  _force << 0., 0., 0.;
+  _moment << 0., 0., 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].computeForceMoment(_momcen);
+    _force += _wings[i].force();
+    _moment += _wings[i].moment();
+  }
+
+  // Wind frame forces and coefficients
+
+  qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+  _lift = -_force(0)*sin(alpha*M_PI/180.) + _force(2)*cos(alpha*M_PI/180.);
+  _drag =  _force(0)*cos(alpha*M_PI/180.) + _force(2)*sin(alpha*M_PI/180.);
+  _cl = _lift/(qinf*_sref);
+  _cd = _drag/(qinf*_sref);
+  _cm = _moment(1)/(qinf*_sref*_lref);
+}
+
+const double & Aircraft::liftCoefficient () const { return _cl; }
+const double & Aircraft::dragCoefficient () const { return _cd; }
+const double & Aircraft::pitchingMomentCoefficient () const { return _cm; }
 
 /******************************************************************************/
 //

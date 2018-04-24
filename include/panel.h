@@ -135,6 +135,11 @@ class Panel: public Element {
                            const double & pinf );
     const double & pressure () const;
     const double & pressureCoefficient () const;
+
+    // Compute force and moment contributions
+
+    void computeForceMoment ( Eigen::Vector3d & force, Eigen::Vector3d & moment,
+                              const Eigen::Vector3d & moment_center ) const;
 };
 
 #endif

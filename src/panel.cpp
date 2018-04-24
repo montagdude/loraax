@@ -284,3 +284,17 @@ void Panel::computePressure ( const double & uinf, const double & rhoinf,
 
 const double & Panel::pressure () const { return _p; }
 const double & Panel::pressureCoefficient () const { return _cp; }
+
+/******************************************************************************/
+//
+// Compute force and moment contributions
+//
+/******************************************************************************/
+void Panel::computeForceMoment ( Eigen::Vector3d & force,
+                                 Eigen::Vector3d & moment,
+                                 const Eigen::Vector3d & moment_center ) const
+{
+//FIXME: add viscous terms
+  force = -_p*_norm*_area;
+  moment = (_cen - moment_center).cross(force);
+} 

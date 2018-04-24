@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include "clo_parser.h"
 #include "settings.h"
@@ -59,6 +60,17 @@ int main (int argc, char* argv[])
 
   std::cout << "Computing surface velocity and pressure ..." << std::endl;
   ac.computeSurfaceQuantities();
+
+  // Compute forces and moments
+
+  std::cout << "Computing forces and moments ..." << std::endl;
+  ac.computeForceMoment();
+  std::cout << "CL: " << std::setprecision(5) << std::setw(8) << std::left
+            << ac.liftCoefficient();
+  std::cout << "  CD: " << std::setprecision(5) << std::setw(8) << std::left
+            << ac.dragCoefficient();
+  std::cout << "  Cm: " << std::setprecision(5) << std::setw(8) << std::left
+            << ac.pitchingMomentCoefficient() << std::endl;
 
   // Write viz
 
