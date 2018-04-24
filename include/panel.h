@@ -41,6 +41,8 @@ class Panel: public Element {
     Eigen::PartialPivLU<Eigen::Matrix3d> _lu;
 				   // Factorization of jacobian matrix 
 
+    const static double _farfield_distance_factor = 8.;
+
     // Computing geometric quantities
 
     virtual void computeCharacteristicLength () = 0;

@@ -592,7 +592,6 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
   Eigen::Matrix3d trans, T1;
   Eigen::Vector3d cen, r0, rb, ri, point, norm, tang, tangb;
   double x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4;
-  double tipchord;
 
   // Set vertex pointers on top and bottom surfaces
 
@@ -914,23 +913,6 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
         right = 2*_nchord-3-j;
         _panels[_nspan-1+i][j]->setRightNeighbor(_panels[_nspan-1+i][right]);
       }
-    }
-  }
-
-  // Move collocation point off panel near tip LEs to relax BC. Otherwise,
-  // can get really high, sometimes reversed, velocities on those LE triangles.
-  // There's probably a better way to do this, but this is mainly just for viz
-  // anyway since these points don't contribute to the overall forces and don't
-  // have much influence on the top and bottom surface panels.
-
-  tipchord = _sections[_nspan-1].chord();
-  for ( i = 0; i < (_ntipcap-1)/2; i++ )
-  {
-    for ( j = _nchord-2; j < _nchord; j++ )
-    {
-      norm = _panels[_nspan-1+i][j]->normal();
-      cen = _panels[_nspan-1+i][j]->centroid();
-      _panels[_nspan-1+i][j]->setCollocationPoint(cen + 0.02*norm*tipchord);
     }
   }
 

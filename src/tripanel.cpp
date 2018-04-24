@@ -205,11 +205,19 @@ double TriPanel::sourcePhiCoeff ( const double & x, const double & y,
   
   transvec = _trans*vec;
   
-  // Source potential -- panel endpoints given in clockwise order
-  
-  coeff = tri_source_potential(transvec(0), transvec(1), transvec(2),
-                               _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2], 
-                               _xtrans[1], _ytrans[1], onpanel, side);
+  // Farfield approximation
+
+  if (vec.norm() > Panel::_farfield_distance_factor*_length)
+    coeff = _area*point_source_potential(transvec(0), transvec(1),
+                                         transvec(2));
+  else
+  {
+    // Source potential -- panel endpoints given in clockwise order
+    
+    coeff = tri_source_potential(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
+                                 _xtrans[1], _ytrans[1], onpanel, side);
+  }
 
   // Compute mirror image contribution if requested. Always assume the mirror
   // image point is not on the panel.
@@ -220,7 +228,11 @@ double TriPanel::sourcePhiCoeff ( const double & x, const double & y,
     vec(1) = -y - _cen[1];
     vec(2) =  z - _cen[2];
     transvec = _trans*vec;
-    coeff += tri_source_potential(transvec(0), transvec(1), transvec(2),
+    if (vec.norm() > Panel::_farfield_distance_factor*_length)
+      coeff += _area*point_source_potential(transvec(0), transvec(1),
+                                            transvec(2)); 
+    else
+      coeff += tri_source_potential(transvec(0), transvec(1), transvec(2),
                                  _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
                                  _xtrans[1], _ytrans[1], onpanel, side);
   }
@@ -250,11 +262,18 @@ Eigen::Vector3d TriPanel::sourceVCoeff ( const double & x, const double & y,
 
   transvec = _trans*vec;
 
-  // Source velocity -- panel endpoints given in clockwise order
-  
-  velpf = tri_source_velocity(transvec(0), transvec(1), transvec(2),
-                              _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2], 
-                              _xtrans[1], _ytrans[1], onpanel, side);
+  // Farfield approximation
+
+  if (vec.norm() > Panel::_farfield_distance_factor*_length)
+    velpf = _area*point_source_velocity(transvec(0), transvec(1), transvec(2));
+  else
+  {
+    // Source velocity -- panel endpoints given in clockwise order
+    
+    velpf = tri_source_velocity(transvec(0), transvec(1), transvec(2),
+                                _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
+                                _xtrans[1], _ytrans[1], onpanel, side);
+  }
   
   // Convert to inertial frame
   
@@ -269,9 +288,13 @@ Eigen::Vector3d TriPanel::sourceVCoeff ( const double & x, const double & y,
     vec(1) = -y - _cen[1];
     vec(2) =  z - _cen[2];
     transvec = _trans*vec;
-    velpf = tri_source_velocity(transvec(0), transvec(1), transvec(2),
-                                _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2], 
-                                _xtrans[1], _ytrans[1], false, side);
+    if (vec.norm() > Panel::_farfield_distance_factor*_length)
+      velpf = _area*point_source_velocity(transvec(0), transvec(1),
+                                          transvec(2));
+    else
+      velpf = tri_source_velocity(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
+                                 _xtrans[1], _ytrans[1], false, side);
     velif_mirror = _invtrans*velpf;
     velif(0) += velif_mirror(0);
     velif(1) -= velif_mirror(1);
@@ -301,11 +324,20 @@ double TriPanel::doubletPhiCoeff ( const double & x, const double & y,
   vec(2) = z - _cen[2];
   transvec = _trans*vec;
 
-  // Doublet potential -- points given in clockwise order
-  
-  coeff = tri_doublet_potential(transvec(0), transvec(1), transvec(2),
-                                _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
-                                _xtrans[1], _ytrans[1], onpanel, side);
+  // Farfield approximation. Note that transformation is required here since
+  // doublets are directional.
+
+  if (vec.norm() > Panel::_farfield_distance_factor*_length)
+    coeff = _area*point_doublet_potential(transvec(0), transvec(1),
+                                          transvec(2));
+  else
+  {
+    // Doublet potential -- points given in clockwise order
+    
+    coeff = tri_doublet_potential(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
+                                 _xtrans[1], _ytrans[1], onpanel, side);
+  }
 
   // Compute mirror image contribution if requested. Always assume the mirror
   // image point is not on the panel.
@@ -316,7 +348,11 @@ double TriPanel::doubletPhiCoeff ( const double & x, const double & y,
     vec(1) = -y - _cen[1];
     vec(2) =  z - _cen[2];
     transvec = _trans*vec;
-    coeff += tri_doublet_potential(transvec(0), transvec(1), transvec(2),
+    if (vec.norm() > Panel::_farfield_distance_factor*_length)
+      coeff += _area*point_doublet_potential(transvec(0), transvec(1),
+                                             transvec(2));
+    else
+      coeff += tri_doublet_potential(transvec(0), transvec(1), transvec(2),
                                  _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
                                  _xtrans[1], _ytrans[1], onpanel, side);
   }
@@ -343,11 +379,19 @@ Eigen::Vector3d TriPanel::doubletVCoeff ( const double & x, const double & y,
   vec(2) = z - _cen[2];
   transvec = _trans*vec;
 
-  // Doublet velocity -- points given in clockwise order
-  
-  velpf = tri_doublet_velocity(transvec(0), transvec(1), transvec(2),
-                               _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
-                               _xtrans[1], _ytrans[1], onpanel, side);
+  // Farfield approximation. Note that transformation is required here since
+  // doublets are directional.
+
+  if (vec.norm() > Panel::_farfield_distance_factor*_length)
+    velpf = _area*point_doublet_velocity(transvec(0), transvec(1), transvec(2));
+  else
+  {
+    // Doublet velocity -- points given in clockwise order
+    
+    velpf = tri_doublet_velocity(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
+                                 _xtrans[1], _ytrans[1], onpanel, side);
+  }
 
   // Convert to inertial frame
 
@@ -362,7 +406,11 @@ Eigen::Vector3d TriPanel::doubletVCoeff ( const double & x, const double & y,
     vec(1) = -y - _cen[1];
     vec(2) =  z - _cen[2];
     transvec = _trans*vec;
-    velpf = tri_doublet_velocity(transvec(0), transvec(1), transvec(2),
+    if (vec.norm() > Panel::_farfield_distance_factor*_length)
+      velpf = _area*point_doublet_velocity(transvec(0), transvec(1),
+                                           transvec(2));
+    else
+      velpf = tri_doublet_velocity(transvec(0), transvec(1), transvec(2),
                                  _xtrans[0], _ytrans[0], _xtrans[2], _ytrans[2],
                                  _xtrans[1], _ytrans[1], false, side);
     velif_mirror = _invtrans*velpf;

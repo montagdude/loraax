@@ -197,15 +197,22 @@ double QuadPanel::sourcePhiCoeff ( const double & x, const double & y,
   // Transform point to panel frame
   
   transvec = _trans*vec;
-  
-  // Source potential -- panel endpoints given in clockwise order
-  
-  coeff = quad_source_potential(transvec(0), transvec(1), transvec(2),
-                                _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3], 
-                                _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
-                                onpanel, side);
 
-  // Compute mirror image contribution if requested. Alwas assume the mirror
+  // Farfield approximation
+
+  if (vec.norm() > Panel::_farfield_distance_factor*_length)
+    coeff = _area*point_source_potential(transvec(0), transvec(1), transvec(2));
+  else
+  {
+    // Source potential -- panel endpoints given in clockwise order
+    
+    coeff = quad_source_potential(transvec(0), transvec(1), transvec(2),
+                                  _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3], 
+                                  _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
+                                  onpanel, side);
+  }
+
+  // Compute mirror image contribution if requested. Always assume the mirror
   // image is not on the panel.
 
   if (mirror_y)
@@ -214,7 +221,11 @@ double QuadPanel::sourcePhiCoeff ( const double & x, const double & y,
     vec(1) = -y - _cen[1];
     vec(2) =  z - _cen[2];
     transvec = _trans*vec;
-    coeff += quad_source_potential(transvec(0), transvec(1), transvec(2),
+    if (vec.norm() > Panel::_farfield_distance_factor*_length)
+      coeff += _area*point_source_potential(transvec(0), transvec(1),
+                                            transvec(2));
+    else
+      coeff += quad_source_potential(transvec(0), transvec(1), transvec(2),
                                  _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
                                  _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
                                  false, side);
@@ -244,14 +255,21 @@ Eigen::Vector3d QuadPanel::sourceVCoeff ( const double & x, const double & y,
   // Transform point to panel frame
   
   transvec = _trans*vec;
-  
-  // Source velocity -- panel endpoints given in clockwise order
-  
-  velpf = quad_source_velocity(transvec(0), transvec(1), transvec(2),
-                               _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3], 
-                               _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
-                               onpanel, side);
-  
+
+  // Farfield approximation
+
+  if (vec.norm() > Panel::_farfield_distance_factor*_length)
+    velpf = _area*point_source_velocity(transvec(0), transvec(1), transvec(2));
+  else
+  { 
+    // Source velocity -- panel endpoints given in clockwise order
+    
+    velpf = quad_source_velocity(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
+                                 _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
+                                 onpanel, side);
+  }
+
   // Convert to inertial frame
   
   velif = _invtrans*velpf;
@@ -265,8 +283,12 @@ Eigen::Vector3d QuadPanel::sourceVCoeff ( const double & x, const double & y,
     vec(1) = -y - _cen[1];
     vec(2) =  z - _cen[2];
     transvec = _trans*vec;
-    velpf = quad_source_velocity(transvec(0), transvec(1), transvec(2),
-                                 _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3], 
+    if (vec.norm() > Panel::_farfield_distance_factor*_length)
+      velpf = _area*point_source_velocity(transvec(0), transvec(1),
+                                          transvec(2));
+    else
+      velpf = quad_source_velocity(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
                                  _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
                                  false, side);
     velif_mirror = _invtrans*velpf;
@@ -298,13 +320,21 @@ double QuadPanel::doubletPhiCoeff ( const double & x, const double & y,
   vec(2) = z - _cen[2];
   transvec = _trans*vec;
 
-  // Doublet potential -- points given in clockwise order
-  
-  coeff = quad_doublet_potential(transvec(0), transvec(1), transvec(2),
+  // Farfield approximation
+
+  if (vec.norm() > Panel::_farfield_distance_factor*_length)
+    coeff = _area*point_doublet_potential(transvec(0), transvec(1),
+                                          transvec(2));
+  else
+  {
+    // Doublet potential -- points given in clockwise order
+    
+    coeff = quad_doublet_potential(transvec(0), transvec(1), transvec(2),
                                  _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
                                  _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
                                  onpanel, side);
-
+  }
+   
   // Compute mirror image contribution if requested. Always assume the mirror
   // image point is not on the panel.
 
@@ -314,7 +344,11 @@ double QuadPanel::doubletPhiCoeff ( const double & x, const double & y,
     vec(1) = -y - _cen[1];
     vec(2) =  z - _cen[2];
     transvec = _trans*vec;
-    coeff += quad_doublet_potential(transvec(0), transvec(1), transvec(2),
+    if (vec.norm() > Panel::_farfield_distance_factor*_length)
+      coeff += _area*point_doublet_potential(transvec(0), transvec(1),
+                                             transvec(2));
+    else
+      coeff += quad_doublet_potential(transvec(0), transvec(1), transvec(2),
                                  _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
                                  _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
                                  false, side);
@@ -342,12 +376,19 @@ Eigen::Vector3d QuadPanel::doubletVCoeff ( const double & x, const double & y,
   vec(2) = z - _cen[2];
   transvec = _trans*vec;
 
-  // Doublet velocity -- points given in clockwise order
-  
-  velpf = quad_doublet_velocity(transvec(0), transvec(1), transvec(2),
-                               _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
-                               _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
-                               onpanel, side);
+  // Farfield approximation
+
+  if (vec.norm() > Panel::_farfield_distance_factor*_length)
+    velpf = _area*point_doublet_velocity(transvec(0), transvec(1), transvec(2));
+  else
+  {
+    // Doublet velocity -- points given in clockwise order
+    
+    velpf = quad_doublet_velocity(transvec(0), transvec(1), transvec(2),
+                                 _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
+                                 _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
+                                 onpanel, side);
+  }
 
   // Convert to inertial frame
 
@@ -362,7 +403,11 @@ Eigen::Vector3d QuadPanel::doubletVCoeff ( const double & x, const double & y,
     vec(1) = -y - _cen[1];
     vec(2) =  z - _cen[2];
     transvec = _trans*vec;
-    velpf = quad_doublet_velocity(transvec(0), transvec(1), transvec(2),
+    if (vec.norm() > Panel::_farfield_distance_factor*_length)
+      velpf = _area*point_doublet_velocity(transvec(0), transvec(1),
+                                           transvec(2));
+    else
+      velpf = quad_doublet_velocity(transvec(0), transvec(1), transvec(2),
                                  _xtrans[0], _ytrans[0], _xtrans[3], _ytrans[3],
                                  _xtrans[2], _ytrans[2], _xtrans[1], _ytrans[1],
                                  false, side);
