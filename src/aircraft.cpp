@@ -979,9 +979,9 @@ void Aircraft::setWakeDoubletStrengths ()
 // Constructs AIC matrix and RHS vector
 //
 /******************************************************************************/
-void Aircraft::constructSystem ()
+void Aircraft::constructSystem ( bool init )
 {
-  unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans;
+  unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans, nwakeunk;
   int toptepan, bottepan;
   Eigen::Vector3d col;
   WakeStrip * strip;
@@ -997,7 +997,7 @@ void Aircraft::constructSystem ()
 
   // Compute influence coefficient matrices the first time through
 
-  if (_sourceic.rows() != npanels)
+  if (init)
   {
     _sourceic.resize(npanels,npanels);
     _doubletic.resize(npanels,npanels);
@@ -1029,8 +1029,8 @@ void Aircraft::constructSystem ()
 
   // Compute AIC and RHS
 
-#pragma omp parallel for private(i,col,j,k,nstrips,l,strip,nwakepans,stripic,m,\
-                                 toptepan,bottepan)
+#pragma omp parallel for private(i,col,j,k,nstrips,l,strip,nwakepans,stripic,\
+                                 nwakeunk,m,toptepan,bottepan)
   for ( i = 0; i < npanels; i++ )
   {
     // Collocation point (point of BC application)
@@ -1046,7 +1046,7 @@ void Aircraft::constructSystem ()
       _rhs(i) -= _panels[j]->sourceStrength()*_sourceic(i,j);
     }
 
-    // Wake contribution to AIC
+    // Wake contribution to AIC and RHS
 
     for ( k = 0; k < nwings; k++ )
     {
@@ -1055,8 +1055,18 @@ void Aircraft::constructSystem ()
       {
         strip = _wings[k].wStrip(l);
         nwakepans = strip->nPanels();
+
+        // During initial step, all wake panels in a strip have strength equal
+        // to mu_topte - mu_botte. Subsequently, only the most recently shed
+        // panels have this strength, and the rest have known strengths.
+
+        if (init)
+          nwakeunk = nwakepans;
+        else
+          nwakeunk = 2;
+
         stripic = 0.;
-        for ( m = 0; m < nwakepans; m++ )
+        for ( m = 0; m < nwakeunk; m++ )
         {
           stripic += strip->panel(m)->doubletPhiCoeff(col(0), col(1), col(2),
                                                       false, "bottom", true);
@@ -1065,6 +1075,15 @@ void Aircraft::constructSystem ()
         bottepan = strip->botTEPan()->idx();
         _aic(i,toptepan) += stripic;
         _aic(i,bottepan) -= stripic;
+
+        if (! init)
+        {
+          for ( m = 2; m < nwakepans; m++ )
+          {
+            _rhs(i) -= strip->panel(m)->inducedPotential(col(0), col(1), col(2),
+                                                         false, "bottom", true);
+          }
+        }
       }
     }
   }
@@ -1137,15 +1156,35 @@ const double & Aircraft::pitchingMomentCoefficient () const { return _cm; }
 
 /******************************************************************************/
 //
+// Convects and updates wake panels
+//
+/******************************************************************************/
+void Aircraft::moveWake ()
+{
+  unsigned int i, nwings;
+
+  nwings = _wings.size();
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].wake().convectVertices(dt, _panels, _wakepanels);
+  }
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].wake().update();
+  }
+}
+
+/******************************************************************************/
+//
 // Writes legacy VTK viz files
 //
 /******************************************************************************/
-int Aircraft::writeViz ( const std::string & prefix ) const
+int Aircraft::writeViz ( const std::string & prefix, int iter ) const
 {
   std::string surfname, wakename;
 
-  surfname = prefix + "_surfs.vtk";
-  wakename = prefix + "_wake.vtk";
+  surfname = prefix + "_surfs_iter" + int2string(iter) + ".vtk";
+  wakename = prefix + "_wake_iter" + int2string(iter) + ".vtk";
 
   if (writeSurfaceViz(surfname) != 0)
     return 1;

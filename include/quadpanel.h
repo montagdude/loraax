@@ -69,6 +69,15 @@ class QuadPanel: public Panel {
                                       const double & z, bool onpanel,
                                       const std::string & side,
                                       bool mirror_y=false ) const;
+
+    // Returns induced velocity due to modeling the doublet panel as a vortex
+    // ring, which should give the same result as the doublet panel, but is
+    // better behaved and cheaper to compute. Does not include the source
+    // contribution.
+
+    Eigen::Vector3d vortexVelocity ( const double & x, const double & y,
+                                     const double & z, const double & rcore,
+                                     bool mirror_y=false ) const;
 };
 
 #endif

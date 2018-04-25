@@ -936,23 +936,22 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
 {
   unsigned int i, j, nstream;
-  std::vector<Vertex> teverts;
-  double xt, yt, zt;
+  std::vector<Vertex *> topteverts, botteverts;
 
   // Create vertices along trailing edge
 
-  teverts.resize(_nspan);
+  topteverts.resize(_nspan);
+  botteverts.resize(_nspan);
   for ( i = 0; i < _nspan; i++ )
   {
-    xt = _sections[i].vert(0).x();
-    yt = _sections[i].vert(0).y();
-    zt = _sections[i].vert(0).z(); 
-    teverts[i].setCoordinates(xt, yt, zt);
+    topteverts[i] = &_sections[i].vert(0); 
+    botteverts[i] = &_sections[i].vert(2*_nchord-2); 
   }
 
   // Initialize wake
 
-  _wake.initialize(teverts, next_global_vertidx, next_global_elemidx);
+  _wake.initialize(topteverts, botteverts, next_global_vertidx,
+                   next_global_elemidx);
 
   // Create wake strips
 

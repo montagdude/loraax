@@ -73,7 +73,7 @@ class Aircraft {
 
     // Construct AIC matrix and RHS vector, factorize, and solve
 
-    void constructSystem ();
+    void constructSystem ( bool init );
     void factorize ();
     void solveSystem ();
 
@@ -92,9 +92,13 @@ class Aircraft {
     const double & dragCoefficient () const;
     const double & pitchingMomentCoefficient () const;
 
+    // Convects and updates wake panels
+
+    void moveWake ();
+
     // Write VTK viz
 
-    int writeViz ( const std::string & prefix ) const;
+    int writeViz ( const std::string & prefix, int iter ) const;
 };
 
 #endif

@@ -43,7 +43,7 @@
      local flow velocity. Behind this, the wake is aligned with the freestream
      over a distance of 1000 * RollupDist. (So make sure RollupDist is long
      enough!) -->
-  <RollupDist>10</RollupDist>
+  <RollupDist>8</RollupDist>
 
 <!-- Whether to run Xfoil for a coupled viscous solution. -->
   <Viscous>true</Viscous>

@@ -125,6 +125,16 @@ class Panel: public Element {
                                            const std::string & side,
                                            bool mirror_y=false ) const = 0;
 
+    // Returns induced velocity due to modeling the doublet panel as a vortex
+    // ring, which should give the same result as the doublet panel, but is
+    // better behaved and cheaper to compute. Does not include the source
+    // contribution.
+
+    virtual Eigen::Vector3d vortexVelocity ( const double & x,
+                                             const double & y, const double & z,
+                                             const double & rcore,
+                                             bool mirror_y=false ) const = 0;
+
     // Compute or access surface velocity. Must set neighbors and compute grid
     // transformation before computing velocity.
 

@@ -456,3 +456,55 @@ Eigen::Vector3d QuadPanel::inducedVelocity ( const double & x, const double & y,
 
   return vel;
 }
+
+/******************************************************************************/
+//
+// Computes induced velocity due to modeling the doublet panel as a vortex
+// ring, which should give the same result as the doublet panel, but it is
+// better behaved and cheaper to compute. Does not include the source
+// contribution.
+//
+/*****************************************************************************/
+Eigen::Vector3d QuadPanel::vortexVelocity ( const double & x, const double & y,
+                                        const double & z, const double & rcore,
+                                        bool mirror_y ) const
+{
+  int i;
+  Eigen::Vector3d vel, vel_mirror;
+
+  // Vortex ring endpoints given in clockwise loop
+
+  vel << 0., 0., 0.;
+  for ( i = 3; i > 0; i-- )
+  {
+    vel += vortex_velocity(x, y, z, _verts[i]->x(), _verts[i]->y(),
+                           _verts[i]->z(), _verts[i-1]->x(), _verts[i-1]->y(),
+                           _verts[i-1]->z(), rcore, false);
+  }
+  vel += vortex_velocity(x, y, z, _verts[0]->x(), _verts[0]->y(),
+                         _verts[0]->z(), _verts[3]->x(), _verts[3]->y(),
+                         _verts[3]->z(), rcore, false);
+
+  // Compute mirror image if requested
+
+  if (mirror_y)
+  {
+    vel_mirror << 0., 0., 0.;
+    for ( i = 3; i > 0; i-- )
+    {
+      vel_mirror += vortex_velocity(x, -y, z, _verts[i]->x(), _verts[i]->y(),
+                             _verts[i]->z(), _verts[i-1]->x(), _verts[i-1]->y(),
+                             _verts[i-1]->z(), rcore, false);
+    }
+    vel_mirror += vortex_velocity(x, -y, z, _verts[0]->x(), _verts[0]->y(),
+                             _verts[0]->z(), _verts[3]->x(), _verts[3]->y(),
+                             _verts[3]->z(), rcore, false);
+
+    vel(0) += vel_mirror(0);
+    vel(1) -= vel_mirror(1);
+    vel(2) += vel_mirror(2);
+  }
+  vel *= _mu;
+
+  return vel;
+}
