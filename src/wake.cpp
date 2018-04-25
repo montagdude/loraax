@@ -63,9 +63,6 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
   _newz.resize(_nspan*(_nstream-1));
 
   // Add vertices along freestream direction
-//FIXME: allow user-defined initial wake angle, because if it is too high,
-// solution can go unstable. Checked one case with full pivoting LU instead of
-// partial pivoting, but it was still unstable.
 
   for ( i = 0; int(i) < _nspan; i++ )
   {
@@ -81,9 +78,11 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
       else if (int(j) < _nstream)
       {
         // Vertices that will roll up
-        x = _verts[i*(_nstream+1)].x() + uinfvec(0)*double(j)*dt;
+        x = _verts[i*(_nstream+1)].x()
+          + std::cos(wakeangle*M_PI/180.)*uinf*double(j)*dt;
         y = _verts[i*(_nstream+1)].y();
-        z = _verts[i*(_nstream+1)].z() + uinfvec(2)*double(j)*dt;
+        z = _verts[i*(_nstream+1)].z()
+          + std::sin(wakeangle*M_PI/180.)*uinf*double(j)*dt;
         _verts[i*(_nstream+1)+j].setCoordinates(x, y, z);
       }
       else

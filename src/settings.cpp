@@ -26,6 +26,7 @@ double muinf;
 double alpha;
 double dt;
 double rollupdist;
+double wakeangle;
 bool viscous;
 double stop_tol;
 int maxsteps;
@@ -147,6 +148,8 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
     return 2;
   if (read_setting(main, "RollupDist", rollupdist) != 0)
     return 2;
+  if (read_setting(main, "InitialWakeAngle", wakeangle) != 0)
+    wakeangle = alpha;
   if (read_setting(main, "Viscous", viscous) != 0)
     return 2;
   if (read_setting(main, "StoppingTolerance", stop_tol) != 0)

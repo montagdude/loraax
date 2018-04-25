@@ -1,9 +1,9 @@
 <Main>
 <!-- Case name -->
-  <CaseName>wortmann_ar4</CaseName>
+  <CaseName>naca0012</CaseName>
 
 <!-- Aircraft definition. -->
-  <GeometryFile>wortmann_ar4.xml</GeometryFile>
+  <GeometryFile>naca0012.xml</GeometryFile>
 
 <!-- Freestream reference conditions. Freestream speed must be given in units of
      length/sec, where length is the length unit inherent in your aircraft
@@ -33,17 +33,24 @@
   <FreestreamViscosity>1.81e-05</FreestreamViscosity>
 
 <!-- Angle of attack, in degrees. -->
-  <AngleOfAttack>5.0</AngleOfAttack>
+  <AngleOfAttack>10.</AngleOfAttack>
 
 <!-- Time step size, in seconds, for wake rollup and iterative viscous -
      inviscid coupling. -->
-  <TimeStep>0.15</TimeStep>
+  <TimeStep>0.5</TimeStep>
 
 <!-- The distance behind a wing over which the wake will convect with the
      local flow velocity. Behind this, the wake is aligned with the freestream
      over a distance of 1000 * RollupDist. (So make sure RollupDist is long
      enough!) -->
-  <RollupDist>8</RollupDist>
+  <RollupDist>15</RollupDist>
+
+<!-- Initial wake angle for the convecting part of the wake (within RollupDist).
+     Defaults to angle of attack, but sometimes that may result in an unstable
+     solution for higher angles of attack. The wake rollup procedure will take
+     care of placing the wake properly by the end of the simulation regardless
+     of this value. -->
+  <InitialWakeAngle>5.0</InitialWakeAngle>
 
 <!-- Whether to run Xfoil for a coupled viscous solution. -->
   <Viscous>true</Viscous>
@@ -54,7 +61,7 @@
 
 <!-- Maximum number of time steps to perform, in case the stopping tolerance
      is not reached. -->
-  <MaxSteps>100</MaxSteps>
+  <MaxSteps>50</MaxSteps>
 
 <!-- How often to write visualization files, in number of time steps. 0 = only
      at the end, < 0 = never. -->

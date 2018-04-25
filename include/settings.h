@@ -24,6 +24,7 @@ extern double muinf;
 extern double alpha;
 extern double dt;
 extern double rollupdist;
+extern double wakeangle;
 extern bool viscous;
 extern double stop_tol;
 extern int maxsteps;
