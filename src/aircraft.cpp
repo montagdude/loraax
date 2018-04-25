@@ -1090,8 +1090,9 @@ void Aircraft::constructSystem ( bool init )
         {
           for ( m = 2; m < nwakepans; m++ )
           {
-            _rhs(i) -= strip->panel(m)->inducedPotential(col(0), col(1), col(2),
-                                                         false, "bottom", true);
+            _rhs(i) -= strip->panel(m)->doubletPhiCoeff(col(0), col(1), col(2),
+                                                        false, "bottom", true)
+                     * strip->panel(m)->doubletStrength();
           }
         }
       }
