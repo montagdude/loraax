@@ -68,7 +68,7 @@ int main (int argc, char* argv[])
 
     std::cout << "  Setting doublet strengths ..." << std::endl;
     ac.setDoubletStrengths();
-    ac.setWakeDoubletStrengths();
+    ac.setWakeDoubletStrengths(iter==1);
 
     // Compute surface velocities and pressures
 

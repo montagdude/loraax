@@ -942,9 +942,9 @@ void Aircraft::setDoubletStrengths ()
 // Sets wake doublet strength
 //
 /******************************************************************************/
-void Aircraft::setWakeDoubletStrengths ()
+void Aircraft::setWakeDoubletStrengths ( bool init )
 {
-  unsigned int i, j, k, nwings, nstrips, nwakepans, nwakeverts;
+  unsigned int i, j, k, nwings, nstrips, nwakepans, nwakeunk, nwakeverts;
   double mu; 
   WakeStrip *strip;
 
@@ -952,14 +952,24 @@ void Aircraft::setWakeDoubletStrengths ()
   for ( i = 0; i < nwings; i++ )
   {
     nstrips = _wings[i].nWStrips();
-#pragma omp parallel for private(j,strip,mu,nwakepans,k)
+#pragma omp parallel for private(j,strip,mu,nwakepans,nwakeunk,k)
     for ( j = 0; j < nstrips; j++ )
     { 
       strip = _wings[i].wStrip(j);
       mu = strip->topTEPan()->doubletStrength()
          - strip->botTEPan()->doubletStrength();
       nwakepans = strip->nPanels();
-      for ( k = 0; k < nwakepans; k++ )
+
+      // During initial step, all wake panels in a strip have strength equal
+      // to mu_topte - mu_botte. Subsequently, only the most recently shed
+      // panels have this strength, and the rest have known strengths.
+
+      if (init)
+        nwakeunk = nwakepans;
+      else
+        nwakeunk = 2;
+
+      for ( k = 0; k < nwakeunk; k++ )
       {
         strip->panel(k)->setDoubletStrength(mu);
       }

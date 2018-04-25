@@ -69,7 +69,7 @@ class Aircraft {
 
     void setSourceStrengths ();
     void setDoubletStrengths ();
-    void setWakeDoubletStrengths ();
+    void setWakeDoubletStrengths ( bool init );
 
     // Construct AIC matrix and RHS vector, factorize, and solve
 

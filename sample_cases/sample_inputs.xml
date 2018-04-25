@@ -37,7 +37,7 @@
 
 <!-- Time step size, in seconds, for wake rollup and iterative viscous -
      inviscid coupling. -->
-  <TimeStep>0.3</TimeStep>
+  <TimeStep>0.15</TimeStep>
 
 <!-- The distance behind a wing over which the wake will convect with the
      local flow velocity. Behind this, the wake is aligned with the freestream
@@ -54,7 +54,7 @@
 
 <!-- Maximum number of time steps to perform, in case the stopping tolerance
      is not reached. -->
-  <MaxSteps>50</MaxSteps>
+  <MaxSteps>100</MaxSteps>
 
 <!-- How often to write visualization files, in number of time steps. 0 = only
      at the end, < 0 = never. -->
