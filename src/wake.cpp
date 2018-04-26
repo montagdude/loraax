@@ -154,7 +154,8 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
 
 /******************************************************************************/
 //
-// Convects wake vertices downstream (a.k.a. wake rollup) 
+// Convects wake vertices downstream (a.k.a. wake rollup) using 1st-order
+// Euler integration
 //
 /******************************************************************************/
 void Wake::convectVertices ( const double & dt,
@@ -162,14 +163,17 @@ void Wake::convectVertices ( const double & dt,
                              const std::vector<Panel *> & allwake )
 {
   unsigned int i, j, k, nsurfpan, nwakepan;
-  Eigen::Vector3d vel, dvel;
-  double x, y, z;
+  Eigen::Vector3d k1, k2, dvel;
+  double x, y, z, x1, y1, z1;
 // FIXME: make this a function of smallest panel size
   const double rcore = 1.E-8;
+  const int order = 1;		// Make 2nd order an option if I can get it
+				// working
 
   nsurfpan = allsurf.size();
   nwakepan = allwake.size();
 
+#pragma omp parallel for private(i,j,x,y,z,k,k1,dvel,x1,y1,z1,k2)
   for ( i = 0; int(i) < _nspan; i++ )
   {
     for ( j = 0; int(j) < _nstream-1; j++ )
@@ -178,40 +182,74 @@ void Wake::convectVertices ( const double & dt,
       y = _verts[i*(_nstream+1)+j].y();
       z = _verts[i*(_nstream+1)+j].z();
 
+      // Stage 1 update
+
       if (j == 0)
       {
         // At trailing edge, use average top + bottom surface velocity
 
-        vel(0) = 0.5*(_topteverts[i]->data(2) + _botteverts[i]->data(2));
-        vel(1) = 0.5*(_topteverts[i]->data(3) + _botteverts[i]->data(3));
-        vel(2) = 0.5*(_topteverts[i]->data(4) + _botteverts[i]->data(4));
+        k1(0) = 0.5*(_topteverts[i]->data(2) + _botteverts[i]->data(2));
+        k1(1) = 0.5*(_topteverts[i]->data(3) + _botteverts[i]->data(3));
+        k1(2) = 0.5*(_topteverts[i]->data(4) + _botteverts[i]->data(4));
       }
       else
       {
         // Elsewhere in the wake, sum the surface and wake influences
 
-        vel = uinfvec;
-#pragma omp parallel for private(k,dvel)
+        k1 = uinfvec;
         for ( k = 0; k < nsurfpan; k++ )
         {
-          dvel = allsurf[k]->vortexVelocity(x, y, z, rcore, true);
-#pragma omp critical
-          vel += dvel;
+          dvel = allsurf[k]->inducedVelocity(x, y, z, false, "top", true);
+          k1 += dvel;
         }
-#pragma omp parallel for private(k,dvel)
         for ( k = 0; k < nwakepan; k++ )
         {
           dvel = allwake[k]->vortexVelocity(x, y, z, rcore, true);
-#pragma omp critical
-          vel += dvel;
+          k1 += dvel;
         }
       }
       if (i == 0)
-        vel(1) = 0.;
+        k1(1) = 0.;
+      k1 *= dt;
 
-      _newx[i*(_nstream-1)+j] = x + dt*vel(0);
-      _newy[i*(_nstream-1)+j] = y + dt*vel(1);
-      _newz[i*(_nstream-1)+j] = z + dt*vel(2);
+      if (order == 1) 
+      {
+        _newx[i*(_nstream-1)+j] = x + k1(0);
+        _newy[i*(_nstream-1)+j] = y + k1(1);
+        _newz[i*(_nstream-1)+j] = z + k1(2);
+      }
+
+      // For some reason, I can't get the second-order update to be stable.
+      // Maybe the wake would have to be updated to t = tn + 1/2*dt for this
+      // to be valid, but I'm not sure. Hence, this disabled.
+
+      else
+      {
+        x1 = x + 0.5*k1(0); 
+        y1 = y + 0.5*k1(1); 
+        z1 = z + 0.5*k1(2); 
+
+        // Stage 2 update at midpoint
+
+        k2 = uinfvec;
+        for ( k = 0; k < nsurfpan; k++ )
+        {
+          dvel = allsurf[k]->inducedVelocity(x1, y1, z1, false, "top", true);
+          k2 += dvel;
+        }
+        for ( k = 0; k < nwakepan; k++ )
+        {
+          dvel = allwake[k]->vortexVelocity(x1, y1, z1, rcore, true);
+          k2 += dvel;
+        }
+        if (i == 0)
+          k2(1) = 0.;
+        k2 *= dt;
+
+        _newx[i*(_nstream-1)+j] = x + k2(0);
+        _newy[i*(_nstream-1)+j] = y + k2(1);
+        _newz[i*(_nstream-1)+j] = z + k2(2);
+      }
     }
   }
 }
