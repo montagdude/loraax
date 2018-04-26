@@ -58,8 +58,11 @@ int main (int argc, char* argv[])
 
     std::cout << "  Constructing the linear system ..." << std::endl;
     ac.constructSystem(iter==1);
-    std::cout << "  Factorizing the AIC matrix ..." << std::endl;
-    ac.factorize();
+    if (iter < 3)	// AIC matrix does not change after 2nd iteration
+    {
+      std::cout << "  Factorizing the AIC matrix ..." << std::endl;
+      ac.factorize();
+    }
     std::cout << "  Solving the linear system with " << ac.systemSize()
               << " unknowns ..." << std::endl;
     ac.solveSystem();

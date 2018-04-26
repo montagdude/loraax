@@ -991,7 +991,7 @@ void Aircraft::setWakeDoubletStrengths ( bool init )
 /******************************************************************************/
 void Aircraft::constructSystem ( bool init )
 {
-  unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans, nwakeunk;
+  unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans;
   int toptepan, bottepan;
   Eigen::Vector3d col;
   WakeStrip * strip;
@@ -1040,7 +1040,7 @@ void Aircraft::constructSystem ( bool init )
   // Compute AIC and RHS
 
 #pragma omp parallel for private(i,col,j,k,nstrips,l,strip,nwakepans,stripic,\
-                                 nwakeunk,m,toptepan,bottepan)
+                                 m,toptepan,bottepan)
   for ( i = 0; i < npanels; i++ )
   {
     // Collocation point (point of BC application)
@@ -1067,28 +1067,30 @@ void Aircraft::constructSystem ( bool init )
         nwakepans = strip->nPanels();
 
         // During initial step, all wake panels in a strip have strength equal
-        // to mu_topte - mu_botte. Subsequently, only the most recently shed
-        // panels have this strength, and the rest have known strengths.
+        // to mu_topte - mu_botte 
 
         if (init)
-          nwakeunk = nwakepans;
-        else
-          nwakeunk = 2;
-
-        stripic = 0.;
-        for ( m = 0; m < nwakeunk; m++ )
         {
-          stripic += strip->panel(m)->doubletPhiCoeff(col(0), col(1), col(2),
-                                                      false, "bottom", true);
+          stripic = 0.;
+          for ( m = 0; m < nwakepans; m++ )
+          {
+            stripic += strip->panel(m)->doubletPhiCoeff(col(0), col(1), col(2),
+                                                        false, "bottom", true);
+          }
+          toptepan = strip->topTEPan()->idx();
+          bottepan = strip->botTEPan()->idx();
+          _aic(i,toptepan) += stripic;
+          _aic(i,bottepan) -= stripic;
         }
-        toptepan = strip->topTEPan()->idx();
-        bottepan = strip->botTEPan()->idx();
-        _aic(i,toptepan) += stripic;
-        _aic(i,bottepan) -= stripic;
+
+        // For subsequent time steps, use the current doublet strength for the
+        // first two rows of wake panels. This avoids having to re-do the LU
+        // factorization. We will still set their strength to the updated
+        // mu_topte - mu_botte value for force and wake calculations.
 
         if (! init)
         {
-          for ( m = 2; m < nwakepans; m++ )
+          for ( m = 0; m < nwakepans; m++ )
           {
             _rhs(i) -= strip->panel(m)->doubletPhiCoeff(col(0), col(1), col(2),
                                                         false, "bottom", true)
