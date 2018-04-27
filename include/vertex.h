@@ -31,6 +31,8 @@ class Vertex {
 
     std::vector<double> _data;
 
+    double _waketime;			// Variable to track wake convection
+
   public:
 
     // Constructor
@@ -74,6 +76,12 @@ class Vertex {
     int setData ( unsigned int idx, const double & var );
     const double & data ( unsigned int idx ) const;
     unsigned int dataSize () const;
+
+    // Setting or accessing wake time variables
+
+    void setWakeTime ( const double & waketime );
+    void incrementWakeTime ( const double & dt );
+    const double & wakeTime () const;
 
     // Interpolates panel quantities to vertex
 

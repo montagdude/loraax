@@ -100,6 +100,7 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
         _verts[i*(_nstream+1)+j].setVizCoordinates(xviz, yviz, zviz);
       }
       _verts[i*(_nstream+1)+j].setIdx(next_global_vertidx);
+      _verts[i*(_nstream+1)+j].setWakeTime(-double(j)*dt);
       next_global_vertidx += 1;
     }
   }
@@ -235,12 +236,14 @@ void Wake::update ()
 //#pragma omp parallel for private(i,j,x,y,z,xviz,yviz,zviz)
   for ( i = 0; int(i) < _nspan; i++ )
   {
+    _verts[i*(_nstream+1)].incrementWakeTime(dt);
     for ( j = 1; int(j) < _nstream; j++ )
     {
       x = _newx[i*(_nstream-1)+j-1];
       y = _newy[i*(_nstream-1)+j-1];
       z = _newz[i*(_nstream-1)+j-1];
       _verts[i*(_nstream+1)+j].setCoordinates(x, y, z);
+      _verts[i*(_nstream+1)+j].incrementWakeTime(dt);
     }
 
     // Trailing vertices at "infinity" extend along freestream direction
@@ -249,6 +252,7 @@ void Wake::update ()
     y = _newy[i*(_nstream-1)+_nstream-2];
     z = _newz[i*(_nstream-1)+_nstream-2] + uinfvec(2)*1000.*rollupdist/uinf;
     _verts[i*(_nstream+1)+_nstream].setCoordinates(x, y, z);
+    _verts[i*(_nstream+1)+_nstream].incrementWakeTime(dt);
     xviz = _newx[i*(_nstream-1)+_nstream-2] + uinfvec(0)*dt;
     yviz = _newy[i*(_nstream-1)+_nstream-2];
     zviz = _newz[i*(_nstream-1)+_nstream-2] + uinfvec(2)*dt;

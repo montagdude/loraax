@@ -33,6 +33,7 @@ Vertex::Vertex ()
   _zviz = 0.;
   _data.resize(7);
   for ( i = 0; i < 7; i++ ) { _data[i] = 0.; }
+  _waketime = 0.;
 }
 
 /******************************************************************************/
@@ -212,6 +213,15 @@ const double & Vertex::data ( unsigned int idx ) const
 }
 
 unsigned int Vertex::dataSize () const { return _data.size(); }
+
+/******************************************************************************/
+//
+// Set or access wake time variable
+//
+/******************************************************************************/
+void Vertex::setWakeTime ( const double & waketime ) { _waketime = waketime; }
+void Vertex::incrementWakeTime ( const double & dt ) { _waketime += dt; }
+const double & Vertex::wakeTime () const { return _waketime; }
 
 /******************************************************************************/
 //

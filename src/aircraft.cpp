@@ -453,6 +453,18 @@ void Aircraft::writeWakeData ( std::ofstream & f ) const
     f << std::setprecision(14) << std::setw(25) << std::left
       << _wakeverts[i]->data(1) << std::endl;
   }
+  f << "SCALARS wake_time double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  for ( i = 0; i < nwakeverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->wakeTime() << std::endl;
+  }
+  for ( i = 0; i < nwakeverts; i++ )
+  {
+    f << std::setprecision(14) << std::setw(25) << std::left
+      << _wakeverts[i]->wakeTime() << std::endl;
+  }
 }
 
 #if 0
