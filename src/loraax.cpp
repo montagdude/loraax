@@ -12,7 +12,7 @@ int main (int argc, char* argv[])
   std::string geom_file;
   int check;
   Aircraft ac;
-  unsigned int iter;
+  unsigned int iter, viz_iter;
 
   // Parse CLOs
 
@@ -37,6 +37,7 @@ int main (int argc, char* argv[])
     return 3;
 
   iter = 1;
+  viz_iter = 1;
   while (int(iter) <= maxsteps)
   {
     // Convect wake
@@ -89,12 +90,23 @@ int main (int argc, char* argv[])
     std::cout << "  Cm: " << std::setprecision(5) << std::setw(8) << std::left
               << ac.pitchingMomentCoefficient() << std::endl;
 
-    // Write viz
-//FIXME: do this only every viz_freq iterations
-    ac.writeViz(casename, iter);
+    // Write visualization
+
+    if ( (int(viz_iter) == viz_freq) && (int(iter) < maxsteps) )
+    {
+      std::cout << "  Writing VTK visualization ..." << std::endl;
+      ac.writeViz(casename, iter);
+      viz_iter = 0;
+    }
 
     iter++;
+    viz_iter++;
   }
+
+  // Write final visualization
+
+  std::cout << "Writing final VTK visualization ..." << std::endl;
+  ac.writeViz(casename, iter-1);
 
   return 0; 
 }
