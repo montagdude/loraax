@@ -162,95 +162,60 @@ void Wake::convectVertices ( const double & dt,
                              const std::vector<Panel *> & allsurf,
                              const std::vector<Panel *> & allwake )
 {
-  unsigned int i, j, k, nsurfpan, nwakepan;
-  Eigen::Vector3d k1, k2, dvel;
-  double x, y, z, x1, y1, z1;
+  int i, j;
+  unsigned int v, k, nsurfpan, nwakepan, nmove;
+  Eigen::Vector3d k1, dvel;
+  double x, y, z;
 // FIXME: make this a function of smallest panel size
   const double rcore = 1.E-8;
-  const int order = 1;		// Make 2nd order an option if I can get it
-				// working
 
   nsurfpan = allsurf.size();
   nwakepan = allwake.size();
+  nmove = _nspan*(_nstream-1);
 
-#pragma omp parallel for private(i,j,x,y,z,k,k1,dvel,x1,y1,z1,k2)
-  for ( i = 0; int(i) < _nspan; i++ )
+#pragma omp parallel for private(v,i,j,x,y,z,k,k1,dvel)
+  for ( v = 0; v < nmove; v++ )
   {
-    for ( j = 0; int(j) < _nstream-1; j++ )
+    i = int(floor(v/(_nstream-1)));
+    j = v - i*(_nstream-1);
+
+    x = _verts[i*(_nstream+1)+j].x();
+    y = _verts[i*(_nstream+1)+j].y();
+    z = _verts[i*(_nstream+1)+j].z();
+
+    // Calculate velocity and update position
+
+    if (j == 0)
     {
-      x = _verts[i*(_nstream+1)+j].x();
-      y = _verts[i*(_nstream+1)+j].y();
-      z = _verts[i*(_nstream+1)+j].z();
+      // At trailing edge, use average top + bottom surface velocity
 
-      // Stage 1 update
+      k1(0) = 0.5*(_topteverts[i]->data(2) + _botteverts[i]->data(2));
+      k1(1) = 0.5*(_topteverts[i]->data(3) + _botteverts[i]->data(3));
+      k1(2) = 0.5*(_topteverts[i]->data(4) + _botteverts[i]->data(4));
+    }
+    else
+    {
+      // Elsewhere in the wake, sum the surface and wake influences
 
-      if (j == 0)
+      k1 = uinfvec;
+      for ( k = 0; k < nsurfpan; k++ )
       {
-        // At trailing edge, use average top + bottom surface velocity
-
-        k1(0) = 0.5*(_topteverts[i]->data(2) + _botteverts[i]->data(2));
-        k1(1) = 0.5*(_topteverts[i]->data(3) + _botteverts[i]->data(3));
-        k1(2) = 0.5*(_topteverts[i]->data(4) + _botteverts[i]->data(4));
+        dvel = allsurf[k]->inducedVelocity(x, y, z, false, "top", true);
+        k1 += dvel;
       }
-      else
+      for ( k = 0; k < nwakepan; k++ )
       {
-        // Elsewhere in the wake, sum the surface and wake influences
-
-        k1 = uinfvec;
-        for ( k = 0; k < nsurfpan; k++ )
-        {
-          dvel = allsurf[k]->inducedVelocity(x, y, z, false, "top", true);
-          k1 += dvel;
-        }
-        for ( k = 0; k < nwakepan; k++ )
-        {
-          dvel = allwake[k]->vortexVelocity(x, y, z, rcore, true);
-          k1 += dvel;
-        }
-      }
-      if (i == 0)
-        k1(1) = 0.;
-      k1 *= dt;
-
-      if (order == 1) 
-      {
-        _newx[i*(_nstream-1)+j] = x + k1(0);
-        _newy[i*(_nstream-1)+j] = y + k1(1);
-        _newz[i*(_nstream-1)+j] = z + k1(2);
-      }
-
-      // For some reason, I can't get the second-order update to be stable.
-      // Maybe the wake would have to be updated to t = tn + 1/2*dt for this
-      // to be valid, but I'm not sure. Hence, this disabled.
-
-      else
-      {
-        x1 = x + 0.5*k1(0); 
-        y1 = y + 0.5*k1(1); 
-        z1 = z + 0.5*k1(2); 
-
-        // Stage 2 update at midpoint
-
-        k2 = uinfvec;
-        for ( k = 0; k < nsurfpan; k++ )
-        {
-          dvel = allsurf[k]->inducedVelocity(x1, y1, z1, false, "top", true);
-          k2 += dvel;
-        }
-        for ( k = 0; k < nwakepan; k++ )
-        {
-          dvel = allwake[k]->vortexVelocity(x1, y1, z1, rcore, true);
-          k2 += dvel;
-        }
-        if (i == 0)
-          k2(1) = 0.;
-        k2 *= dt;
-
-        _newx[i*(_nstream-1)+j] = x + k2(0);
-        _newy[i*(_nstream-1)+j] = y + k2(1);
-        _newz[i*(_nstream-1)+j] = z + k2(2);
+        dvel = allwake[k]->vortexVelocity(x, y, z, rcore, true);
+        k1 += dvel;
       }
     }
+    if (i == 0)
+      k1(1) = 0.;
+    k1 *= dt;
+
+    _newx[v] = x + k1(0);
+    _newy[v] = y + k1(1);
+    _newz[v] = z + k1(2);
   }
 }
 
