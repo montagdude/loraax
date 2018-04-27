@@ -41,14 +41,15 @@ xfoil_options_type xfoil_run_opts;
 //
 /******************************************************************************/
 int read_setting ( const XMLElement *elem, const std::string & setting,
-                   std::string & value )
+                   std::string & value, bool required )
 {
   if (elem->FirstChildElement(setting.c_str()))
     value = elem->FirstChildElement(setting.c_str())->GetText();
   else
   {
-    conditional_stop(1, "read_setting",
-                     "No " + setting +" in xml element " + elem->Name() + ".");
+    if (required)
+      conditional_stop(1, "read_setting",
+                      "No " + setting +" in xml element " + elem->Name() + ".");
     return 1;
   }
 
@@ -56,14 +57,15 @@ int read_setting ( const XMLElement *elem, const std::string & setting,
 }
 
 int read_setting ( const XMLElement *elem, const std::string & setting,
-                   double & value )
+                   double & value, bool required )
 {
   if (elem->FirstChildElement(setting.c_str()))
     elem->FirstChildElement(setting.c_str())->QueryDoubleText(&value);
   else
   {
-    conditional_stop(1, "read_setting",
-                     "No " + setting +" in xml element " + elem->Name() + ".");
+    if (required)
+      conditional_stop(1, "read_setting",
+                      "No " + setting +" in xml element " + elem->Name() + ".");
     return 1;
   }
 
@@ -71,14 +73,15 @@ int read_setting ( const XMLElement *elem, const std::string & setting,
 }
 
 int read_setting ( const XMLElement *elem, const std::string & setting,
-                   int & value )
+                   int & value, bool required )
 {
   if (elem->FirstChildElement(setting.c_str()))
     elem->FirstChildElement(setting.c_str())->QueryIntText(&value);
   else
   {
-    conditional_stop(1, "read_setting",
-                     "No " + setting +" in xml element " + elem->Name() + ".");
+    if (required)
+      conditional_stop(1, "read_setting",
+                      "No " + setting +" in xml element " + elem->Name() + ".");
     return 1;
   }
 
@@ -86,14 +89,15 @@ int read_setting ( const XMLElement *elem, const std::string & setting,
 }
 
 int read_setting ( const XMLElement *elem, const std::string & setting,
-                   bool & value )
+                   bool & value, bool required )
 {
   if (elem->FirstChildElement(setting.c_str()))
     elem->FirstChildElement(setting.c_str())->QueryBoolText(&value);
   else
   {
-    conditional_stop(1, "read_setting",
-                     "No " + setting +" in xml element " + elem->Name() + ".");
+    if (required)
+      conditional_stop(1, "read_setting",
+                      "No " + setting +" in xml element " + elem->Name() + ".");
     return 1;
   }
 
@@ -108,6 +112,8 @@ int read_setting ( const XMLElement *elem, const std::string & setting,
 int read_settings ( const std::string & inputfile, std::string & geom_file )
 {
   XMLDocument doc;
+
+//FIXME: a lot of these settings need to be made optional with default values
 
   doc.LoadFile(inputfile.c_str());
   if ( (doc.ErrorID() == XML_ERROR_FILE_NOT_FOUND) ||
@@ -148,7 +154,7 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
     return 2;
   if (read_setting(main, "RollupDist", rollupdist) != 0)
     return 2;
-  if (read_setting(main, "InitialWakeAngle", wakeangle) != 0)
+  if (read_setting(main, "InitialWakeAngle", wakeangle, false) != 0)
     wakeangle = alpha;
   if (read_setting(main, "Viscous", viscous) != 0)
     return 2;

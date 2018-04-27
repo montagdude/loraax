@@ -38,13 +38,13 @@ extern xfoil_options_type xfoil_run_opts;
 // Functions
 
 int read_setting ( const XMLElement *elem, const std::string & setting,
-                   std::string & value );
+                   std::string & value, bool required=true );
 int read_setting ( const XMLElement *elem, const std::string & setting,
-                   double & value );
+                   double & value, bool required=true );
 int read_setting ( const XMLElement *elem, const std::string & setting,
-                   int & value );
+                   int & value, bool required=true );
 int read_setting ( const XMLElement *elem, const std::string & setting,
-                   bool & value );
+                   bool & value, bool required=true );
 int read_settings ( const std::string & inputfile, std::string & geom_file );
 
 #endif
