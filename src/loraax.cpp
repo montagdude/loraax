@@ -29,6 +29,9 @@ int main (int argc, char* argv[])
     if (read_settings(parser.inputFile(), geom_file) != 0)
       return 2;
   }
+  std::cout << "Freestream Mach: "
+            << std::setprecision(5) << std::setw(8) << std::left << minf
+            << std::endl;
     
   // Read geometry
 

@@ -23,11 +23,13 @@ Eigen::Vector3d uinfvec;
 double pinf;
 double rhoinf;
 double muinf;
+double minf;
 double alpha;
 double dt;
 double rollupdist;
 double wakeangle;
 bool viscous;
+bool compressible;
 double stop_tol;
 int maxsteps;
 int viz_freq;
@@ -158,6 +160,8 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
     wakeangle = alpha;
   if (read_setting(main, "Viscous", viscous) != 0)
     return 2;
+  if (read_setting(main, "Compressible", compressible) != 0)
+    compressible = true;
   if (read_setting(main, "StoppingTolerance", stop_tol) != 0)
     return 2;
   if (read_setting(main, "MaxSteps", maxsteps) != 0)
@@ -207,11 +211,12 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
   xfoil_geom_opts.xpref1 = 1.0;
   xfoil_geom_opts.xpref2 = 1.0;
 
-  // Set freestream vector
+  // Set freestream vector and mach number
 
   uinfvec(0) = uinf*cos(alpha*M_PI/180.);
   uinfvec(1) = 0.;
   uinfvec(2) = uinf*sin(alpha*M_PI/180.);
+  minf = uinf / std::sqrt(1.4*pinf/rhoinf);
   
   return 0;
 }

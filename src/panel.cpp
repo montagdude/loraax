@@ -1,4 +1,5 @@
 #include <vector>
+#include <string>
 #include <cmath>
 #include <Eigen/Dense>
 #include "util.h"
@@ -268,18 +269,44 @@ const Eigen::Vector3d & Panel::velocity () const { return _vel; }
 
 /******************************************************************************/
 //
-// Compute / access pressure and pressure coefficient
+// Compute / access pressure and pressure coefficient. Also performs
+// compressibility corrections on surface pressure and velocity.
 //
 /******************************************************************************/
-void Panel::computePressure ( const double & uinf, const double & rhoinf,
-                              const double & pinf )
+int Panel::computePressure ( const double & uinf, const double & rhoinf,
+                             const double & pinf, const double & minf,
+                             bool compressible )
 {
-  double uinf2;
+  double uinf2, vel2, cpinc, minf2, beta, lambda, den;
 
-// FIXME: add compressibility correction
   uinf2 = std::pow(uinf, 2.);
-  _cp = 1. - _vel.squaredNorm() / uinf2;
+  vel2 = _vel.squaredNorm();
+  cpinc = 1. - vel2 / uinf2;
+
+  // Karman-Tsien compressibility correction
+
+  if (compressible)
+  {
+    minf2 = std::pow(minf, 2.);
+    beta = std::sqrt(1. - minf2);
+    lambda = minf2 / std::pow(1 + beta, 2.);
+    den = (beta+lambda*(1+beta)*0.5*cpinc); 
+    if (den <= 0.0)
+    {
+      conditional_stop(1, "Panel::computePressure",
+                       "Locally supersonic flow detected. " +
+                       std::string("Compressibility correction is invalid."));
+      return 1;
+    }
+    _cp = cpinc / den;
+    _vel *= (1. - lambda) / (1. - lambda*vel2/uinf2);
+  }
+  else
+    _cp = cpinc;
+
   _p = 0.5*_cp*rhoinf*uinf2 + pinf;
+
+  return 0;
 }
 
 const double & Panel::pressure () const { return _p; }

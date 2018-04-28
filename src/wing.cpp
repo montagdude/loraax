@@ -993,7 +993,7 @@ void Wing::computeSurfaceQuantities ()
     for ( j = 0; j < 2*_nchord-2; j++ )
     {
       _panels[i][j]->computeVelocity(uinfvec);
-      _panels[i][j]->computePressure(uinf, rhoinf, pinf);
+      _panels[i][j]->computePressure(uinf, rhoinf, pinf, minf, compressible);
     }
   }
 

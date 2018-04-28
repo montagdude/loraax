@@ -33,17 +33,17 @@
   <FreestreamViscosity>1.81e-05</FreestreamViscosity>
 
 <!-- Angle of attack, in degrees. -->
-  <AngleOfAttack>0.</AngleOfAttack>
+  <AngleOfAttack>4.</AngleOfAttack>
 
 <!-- Time step size, in seconds, for wake rollup and iterative viscous -
      inviscid coupling. -->
-  <TimeStep>0.1</TimeStep>
+  <TimeStep>1.25</TimeStep>
 
 <!-- The distance behind a wing over which the wake will convect with the
      local flow velocity. Behind this, the wake is aligned with the freestream
      over a distance of 1000 * RollupDist. (So make sure RollupDist is long
      enough!) -->
-  <RollupDist>8</RollupDist>
+  <RollupDist>40</RollupDist>
 
 <!-- Initial wake angle for the convecting part of the wake (within RollupDist).
      Defaults to angle of attack, but sometimes that may result in an unstable
@@ -57,13 +57,17 @@
 <!-- Whether to run Xfoil for a coupled viscous solution. -->
   <Viscous>true</Viscous>
 
+<!-- Whether to apply Karman-Tsien compressibility correction to surface
+     pressure and velocity -->
+  <Compressible>false</Compressible>
+
 <!-- Tolerance in change in CL between time steps to consider the solution
      converged and stop doing time steps. -->
   <StoppingTolerance>1e-06</StoppingTolerance>
 
 <!-- Maximum number of time steps to perform, in case the stopping tolerance
      is not reached. -->
-  <MaxSteps>100</MaxSteps>
+  <MaxSteps>1</MaxSteps>
 
 <!-- How often to write visualization files, in number of time steps. 0 = only
      at the end, < 0 = never. -->
