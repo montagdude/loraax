@@ -25,6 +25,7 @@ extern double muinf;
 extern double alpha;
 extern double dt;
 extern double rollupdist;
+extern int wakesteps;
 extern double wakeangle;
 extern bool viscous;
 extern bool compressible;

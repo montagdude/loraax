@@ -27,6 +27,7 @@ double minf;
 double alpha;
 double dt;
 double rollupdist;
+int wakesteps;
 double wakeangle;
 bool viscous;
 bool compressible;
@@ -152,9 +153,9 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
     return 2;
   if (read_setting(main, "AngleOfAttack", alpha) != 0)
     return 2;
-  if (read_setting(main, "TimeStep", dt) != 0)
-    return 2;
   if (read_setting(main, "RollupDist", rollupdist) != 0)
+    return 2;
+  if (read_setting(main, "WakeSteps", wakesteps) != 0)
     return 2;
   if (read_setting(main, "InitialWakeAngle", wakeangle, false) != 0)
     wakeangle = alpha;
@@ -211,12 +212,13 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
   xfoil_geom_opts.xpref1 = 1.0;
   xfoil_geom_opts.xpref2 = 1.0;
 
-  // Set freestream vector and mach number
+  // Set freestream vector, mach number, and time step size
 
   uinfvec(0) = uinf*cos(alpha*M_PI/180.);
   uinfvec(1) = 0.;
   uinfvec(2) = uinf*sin(alpha*M_PI/180.);
   minf = uinf / std::sqrt(1.4*pinf/rhoinf);
+  dt = rollupdist / (uinf * double(wakesteps));
   
   return 0;
 }

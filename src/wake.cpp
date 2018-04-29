@@ -54,9 +54,9 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
   // Determine number of rows to store based on inputs
 
   _nspan = _topteverts.size();
-  _nstream = int(ceil(rollupdist/(dt*uinf))); // Number of relaxable streamwise
-                                              // points. One more will be added
-                                              // for the trailing horseshoe.
+  _nstream = wakesteps;			// Number of relaxable streamwise 
+                                        // points. One more will be added for
+					// the trailing "infinite" panel.
   _verts.resize(_nspan*(_nstream+1));
   _newx.resize(_nspan*(_nstream-1));
   _newy.resize(_nspan*(_nstream-1));
