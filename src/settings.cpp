@@ -161,7 +161,7 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
     wakeangle = alpha;
   if (read_setting(main, "Viscous", viscous) != 0)
     return 2;
-  if (read_setting(main, "Compressible", compressible) != 0)
+  if (read_setting(main, "Compressible", compressible, false) != 0)
     compressible = true;
   if (read_setting(main, "StoppingTolerance", stop_tol) != 0)
     return 2;
