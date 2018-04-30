@@ -156,7 +156,15 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
 /******************************************************************************/
 //
 // Convects wake vertices downstream (a.k.a. wake rollup) using 1st-order
-// Euler integration
+// Euler integration.
+//
+// 1st-order integration is still pretty accurate here because the wake
+// convection algorithm allows each point to take only 1 time step. Increasing
+// the itegration order causes difficulty because the evaluation points end up
+// very close to panel edges, but not on them (which would make the velocity
+// contribution identically 0 due to the vortex core model). The integration
+// order can potentially be increased if that problem can be worked around, but
+// it's probably not worthwhile since this method is already pretty accurate.
 //
 /******************************************************************************/
 void Wake::convectVertices ( const double & dt,
@@ -233,7 +241,7 @@ void Wake::update ()
   // Update vertex positions. New position for vertex (i,j) is equal to
   // convected position of vertex (i,j-1).
 
-//#pragma omp parallel for private(i,j,x,y,z,xviz,yviz,zviz)
+#pragma omp parallel for private(i,j,x,y,z,xviz,yviz,zviz)
   for ( i = 0; int(i) < _nspan; i++ )
   {
     _verts[i*(_nstream+1)].incrementWakeTime(dt);
