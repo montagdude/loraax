@@ -36,7 +36,7 @@ class Aircraft {
 					// Aero influence coefficients due to
 					//   sources and doublets on surface
     Eigen::MatrixXd _aic;		// Aero influence coefficients matrix
-    Eigen::VectorXd _mu;		// Unknown doublet strengths vector
+    Eigen::VectorXd _mun;		// Normalized doublet strengths vector
     Eigen::VectorXd _rhs;		// Right hand side vector
     Eigen::PartialPivLU<Eigen::MatrixXd> _lu;
 					// LU factorization of AIC matrix

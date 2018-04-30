@@ -607,7 +607,7 @@ Aircraft::Aircraft ()
   _sourceic.resize(0,0);
   _doubletic.resize(0,0);
   _aic.resize(0,0);
-  _mu.resize(0);
+  _mun.resize(0);
   _rhs.resize(0);
 }
 
@@ -937,7 +937,7 @@ void Aircraft::setDoubletStrengths ()
 #ifdef DEBUG
   if (npanels == 0)
     conditional_stop(1, "Aircraft::setDoubletStrengths", "No panels exist.");
-  if (_mu.size() != npanels)
+  if (_mun.size() != npanels)
     conditional_stop(1, "Aircraft::setDoubletStrengths",
                      "Inconsistent number of panels and solution vector size.");
 #endif
@@ -945,7 +945,7 @@ void Aircraft::setDoubletStrengths ()
 #pragma omp parallel for private(i)
   for ( i = 0; i < npanels; i++ )
   {
-    _panels[i]->setDoubletStrength(_mu(i));
+    _panels[i]->setDoubletStrength(_mun(i)*uinf);
   }
 }
 
@@ -1111,6 +1111,11 @@ void Aircraft::constructSystem ( bool init )
         }
       }
     }
+
+    // Normalize RHS by uinf to keep magnitudes small in the linear system. The
+    // resulting doublet strengths are later scaled back up.
+
+    _rhs(i) /= uinf;
   }
 }
 
@@ -1120,7 +1125,7 @@ void Aircraft::constructSystem ( bool init )
 //
 /******************************************************************************/
 void Aircraft::factorize () { _lu.compute(_aic); }
-void Aircraft::solveSystem () { _mu = _lu.solve(_rhs); }
+void Aircraft::solveSystem () { _mun = _lu.solve(_rhs); }
 
 /******************************************************************************/
 //
