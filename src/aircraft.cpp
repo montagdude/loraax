@@ -1001,7 +1001,7 @@ void Aircraft::setWakeDoubletStrengths ( bool init )
 // Constructs AIC matrix and RHS vector
 //
 /******************************************************************************/
-void Aircraft::constructSystem ( bool init )
+void Aircraft::constructSystem ( unsigned int iter )
 {
   unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans;
   int toptepan, bottepan;
@@ -1019,7 +1019,7 @@ void Aircraft::constructSystem ( bool init )
 
   // Compute influence coefficient matrices the first time through
 
-  if (init)
+  if (iter == 1)
   {
     _sourceic.resize(npanels,npanels);
     _doubletic.resize(npanels,npanels);
@@ -1064,8 +1064,12 @@ void Aircraft::constructSystem ( bool init )
     _rhs(i) = 0.;
     for ( j = 0; j < npanels; j++ )
     {
-      _aic(i,j) = _doubletic(i,j);
       _rhs(i) -= _panels[j]->sourceStrength()*_sourceic(i,j);
+
+      // AIC matrix is static after iteration 2
+
+      if (iter < 3)
+        _aic(i,j) = _doubletic(i,j);
     }
 
     // Wake contribution to AIC and RHS
@@ -1081,7 +1085,7 @@ void Aircraft::constructSystem ( bool init )
         // During initial step, all wake panels in a strip have strength equal
         // to mu_topte - mu_botte 
 
-        if (init)
+        if (iter == 1)
         {
           stripic = 0.;
           for ( m = 0; m < nwakepans; m++ )
@@ -1100,7 +1104,7 @@ void Aircraft::constructSystem ( bool init )
         // factorization. We will still set their strength to the updated
         // mu_topte - mu_botte value for force and wake calculations.
 
-        if (! init)
+        if (iter > 1)
         {
           for ( m = 0; m < nwakepans; m++ )
           {
