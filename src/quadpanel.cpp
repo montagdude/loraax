@@ -470,41 +470,68 @@ Eigen::Vector3d QuadPanel::vortexVelocity ( const double & x, const double & y,
                                         bool mirror_y ) const
 {
   int i;
-  Eigen::Vector3d vel, vel_mirror;
+  Eigen::Vector3d vec, transvec, velpf, velif, velif_mirror;
 
-  // Vortex ring endpoints given in clockwise loop
+  vec(0) = x - _cen[0];
+  vec(1) = y - _cen[1];
+  vec(2) = z - _cen[2];
 
-  vel << 0., 0., 0.;
-  for ( i = 3; i > 0; i-- )
+  // Farfield approximation
+
+  if (vec.norm() > Panel::_farfield_distance_factor*_length)
   {
-    vel += vortex_velocity(x, y, z, _verts[i]->x(), _verts[i]->y(),
-                           _verts[i]->z(), _verts[i-1]->x(), _verts[i-1]->y(),
-                           _verts[i-1]->z(), rcore, false);
+    transvec = _trans*vec;
+    velpf = _area*point_doublet_velocity(transvec(0), transvec(1), transvec(2));
+    velif = _invtrans*velpf;
   }
-  vel += vortex_velocity(x, y, z, _verts[0]->x(), _verts[0]->y(),
-                         _verts[0]->z(), _verts[3]->x(), _verts[3]->y(),
-                         _verts[3]->z(), rcore, false);
-
-  // Compute mirror image if requested
-
-  if (mirror_y)
+  else
   {
-    vel_mirror << 0., 0., 0.;
+    // Vortex ring endpoints given in clockwise loop
+
+    velif << 0., 0., 0.;
     for ( i = 3; i > 0; i-- )
     {
-      vel_mirror += vortex_velocity(x, -y, z, _verts[i]->x(), _verts[i]->y(),
+      velif += vortex_velocity(x, y, z, _verts[i]->x(), _verts[i]->y(),
                              _verts[i]->z(), _verts[i-1]->x(), _verts[i-1]->y(),
                              _verts[i-1]->z(), rcore, false);
     }
-    vel_mirror += vortex_velocity(x, -y, z, _verts[0]->x(), _verts[0]->y(),
+    velif += vortex_velocity(x, y, z, _verts[0]->x(), _verts[0]->y(),
                              _verts[0]->z(), _verts[3]->x(), _verts[3]->y(),
                              _verts[3]->z(), rcore, false);
-
-    vel(0) += vel_mirror(0);
-    vel(1) -= vel_mirror(1);
-    vel(2) += vel_mirror(2);
   }
-  vel *= _mu;
 
-  return vel;
+  // Compute mirror image contribution if requested
+
+  if (mirror_y)
+  {
+    vec(0) =  x - _cen[0];
+    vec(1) = -y - _cen[1];
+    vec(2) =  z - _cen[2];
+    if (vec.norm() > Panel::_farfield_distance_factor*_length)
+    {
+      transvec = _trans*vec;
+      velpf = _area*point_doublet_velocity(transvec(0), transvec(1),
+                                           transvec(2));
+      velif_mirror = _invtrans*velpf;
+    }
+    else
+    {
+      velif_mirror << 0., 0., 0.;
+      for ( i = 3; i > 0; i-- )
+      {
+        velif_mirror += vortex_velocity(x, -y, z, _verts[i]->x(),
+                              _verts[i]->y(), _verts[i]->z(), _verts[i-1]->x(),
+                              _verts[i-1]->y(), _verts[i-1]->z(), rcore, false);
+      }
+      velif_mirror += vortex_velocity(x, -y, z, _verts[0]->x(), _verts[0]->y(),
+                                 _verts[0]->z(), _verts[3]->x(), _verts[3]->y(),
+                                 _verts[3]->z(), rcore, false);
+    }
+    velif(0) += velif_mirror(0);
+    velif(1) -= velif_mirror(1);
+    velif(2) += velif_mirror(2);
+  }
+  velif *= _mu;
+
+  return velif;
 }
