@@ -13,9 +13,6 @@
 // plane.
 
 const double eps = 1.E-12;       
-const double corefact = 0.025;   // Scaling factor for vortex core radius.
-                                 //   0.025 results in error between 1/d and f1 
-                                 //   less than 5% when d = rcore.
 
 /******************************************************************************/
 //
@@ -938,7 +935,7 @@ Eigen::Vector3d vortex_velocity (
 
   // Finite core model approximating 1/d outside of rcore
 
-  f1 = d / std::pow(d + corefact*rcore, 2.0);
+  f1 = d / std::pow(d + rcore, 2.0);
 
   // Dot products r0*r1 and r0*r2
 

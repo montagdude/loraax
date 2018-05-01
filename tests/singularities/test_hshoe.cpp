@@ -46,7 +46,7 @@ int main ()
   hshoe.setCirculation(1.0);
 
   npoints = 100;
-  ymin = -5;
+  ymin = -5.;
   ymax = 5;
   dy = (ymax-ymin)/double(npoints-1);
   y.resize(npoints);

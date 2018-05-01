@@ -26,10 +26,11 @@ ONPANSOURCE=test_source_onpanel
 MIRROR=test_mirror
 POTENTIAL=test_quad_potential
 POTENTIAL2=test_tri_potential
+VORTEXCORE=test_vortex_core
 SRCDIR=../../src
-INCLUDE=-I../../include -I/usr/include/eigen3
-#INCLUDE=-I../../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
-#LDFLAGS=-L/data/dprosser/locally_installed/lib64
+#INCLUDE=-I../../include -I/usr/include/eigen3
+INCLUDE=-I../../include -I/data/dprosser/locally_installed/include/eigen3 -I/data/dprosser/locally_installed/include
+LDFLAGS=-L/data/dprosser/locally_installed/lib64
 
 ################################################################################
 
@@ -43,7 +44,7 @@ endif
 
 ################################################################################
 
-all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(ONPANDOUBLET) $(ONPANDOUBLET2) $(SOURCE) $(ROTSOURCE) $(ONPANSOURCE) $(MIRROR) $(POTENTIAL) $(POTENTIAL2)
+all: $(HSHOE) $(DOUBLET) $(DOUBLET2) $(TRIDOUBLET) $(ROTDOUBLET) $(ROTDOUBLET2) $(POINTDOUBLET) $(ONPANDOUBLET) $(ONPANDOUBLET2) $(SOURCE) $(ROTSOURCE) $(ONPANSOURCE) $(MIRROR) $(POTENTIAL) $(POTENTIAL2) $(VORTEXCORE)
 
 $(HSHOE): $(OBJ) test_hshoe.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(HSHOE) $(OBJ) test_hshoe.o
@@ -89,6 +90,9 @@ $(POTENTIAL): $(OBJ) test_quad_potential.o
 
 $(POTENTIAL2): $(OBJ) test_tri_potential.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(POTENTIAL2) $(OBJ) test_tri_potential.o
+
+$(VORTEXCORE): $(OBJ) test_vortex_core.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PREPROC) -o $(VORTEXCORE) $(OBJ) test_vortex_core.o
 
 clean: 
 	rm -f *.o
@@ -197,3 +201,6 @@ test_quad_potential.o: test_quad_potential.cpp
 
 test_tri_potential.o: test_tri_potential.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_tri_potential.cpp
+
+test_vortex_core.o: test_vortex_core.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) test_vortex_core.cpp
