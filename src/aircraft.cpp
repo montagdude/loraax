@@ -1220,10 +1220,10 @@ int Aircraft::writeViz ( const std::string & prefix, int iter ) const
   surfname = prefix + "_surfs_iter" + int2string(iter) + ".vtk";
   wakename = prefix + "_wake_iter" + int2string(iter) + ".vtk";
 
-  if (writeSurfaceViz(surfname) != 0)
+  if (writeSurfaceViz("visualization/" + surfname) != 0)
     return 1;
 
-  if (writeWakeViz(wakename) != 0)
+  if (writeWakeViz("visualization/" + wakename) != 0)
     return 1;
 
   return 0;

@@ -1,9 +1,41 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <ctime>
+#include <sys/stat.h>
+#include <dirent.h>
 #include "clo_parser.h"
 #include "settings.h"
 #include "aircraft.h"
+#include "util.h"
+
+void create_or_backup_dir ( const std::string & dirname )
+{
+  DIR *pdir = NULL;
+  time_t now;
+  tm *ltm;
+  std::string newpath;
+
+  pdir = opendir(dirname.c_str());
+  if (pdir != NULL)
+  { 
+    pdir = opendir("backup");
+    if (pdir == NULL)
+      mkdir("backup", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+    now = time(0);
+    ltm = localtime(&now);
+    newpath = "backup/" + dirname;
+    newpath += "." + int2string(1900 + ltm->tm_year);
+    newpath += "." + int2string(1 + ltm->tm_mon);
+    newpath += "." + int2string(ltm->tm_mday);
+    newpath += "." + int2string(ltm->tm_hour);
+    newpath += "." + int2string(ltm->tm_min);
+    newpath += "." + int2string(ltm->tm_sec);
+    rename(dirname.c_str(), newpath.c_str());
+  }
+
+  mkdir(dirname.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+}
 
 int main (int argc, char* argv[]) 
 { 
@@ -38,6 +70,14 @@ int main (int argc, char* argv[])
   std::cout << "Reading and discretizing geometry ..." << std::endl;
   if (ac.readXML(geom_file) != 0)
     return 3;
+
+  // Set up output directories or back up existing
+
+  create_or_backup_dir("visualization");
+  create_or_backup_dir("sectional");
+  create_or_backup_dir("forcemoment");
+
+  // Iterate
 
   iter = 1;
   viz_iter = 1;
