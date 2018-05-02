@@ -40,8 +40,8 @@ class Aircraft {
     Eigen::VectorXd _rhs;		// Right hand side vector
     Eigen::PartialPivLU<Eigen::MatrixXd> _lu;
 					// LU factorization of AIC matrix
-    Eigen::Vector3d _force, _moment;	// Forces and moments
-    double _lift, _drag, _cl, _cd, _cm; // Wind frame forces and coefficients
+    double _lift, _drag, _moment;	// Dimensional forces and moments
+    double _cl, _cd, _cm;		// Force and moment coefficients
 
     // Set up pointers to vertices, panels, and wake elements
 
@@ -88,6 +88,9 @@ class Aircraft {
     // Computes or access forces and moments
 
     void computeForceMoment ();
+    const double & lift () const;
+    const double & drag () const;
+    const double & pitchingMoment () const;
     const double & liftCoefficient () const;
     const double & dragCoefficient () const;
     const double & pitchingMomentCoefficient () const;

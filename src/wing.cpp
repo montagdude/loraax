@@ -1168,13 +1168,15 @@ WakeStrip * Wing::wStrip ( unsigned int wsidx )
 // Compute or access forces and moments
 //
 /******************************************************************************/
-void Wing::computeForceMoment ( const Eigen::Vector3d & moment_center )
+void Wing::computeForceMoment ( const double & sref, const double & lref,
+                                const Eigen::Vector3d & momcen )
 {
   unsigned int i, j;
-  Eigen::Vector3d df, dm;
+  Eigen::Vector3d df, dm, force, moment;
+  double qinf;
 
-  _force << 0., 0., 0.;
-  _moment << 0., 0., 0.;
+  force << 0., 0., 0.;
+  moment << 0., 0., 0.;
 
   // Only include top and bottom surface panels, since side panels cancel out
   // with mirror contribution
@@ -1183,21 +1185,35 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & moment_center )
   {
     for ( j = 0; j < 2*_nchord-2; j++ )
     { 
-      _panels[i][j]->computeForceMoment(df, dm, moment_center);
-      _force += df;
-      _moment += dm;
+      _panels[i][j]->computeForceMoment(df, dm, momcen);
+      force += df;
+      moment += dm;
     }
   }
 
   // Account for mirror image
 
-  _force(0)  *= 2.;
-  _force(1)  =  0.;
-  _force(2)  *= 2.;
-  _moment(0) =  0.;
-  _moment(1) *= 2.;
-  _moment(2) =  0.;
+  force(0)  *= 2.;
+  force(1)  =  0.;
+  force(2)  *= 2.;
+  moment(0) =  0.;
+  moment(1) *= 2.;
+  moment(2) =  0.;
+
+  // Convert to wind frame
+
+  qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+  _lift = -force(0)*sin(alpha*M_PI/180.) + force(2)*cos(alpha*M_PI/180.);
+  _drag =  force(0)*cos(alpha*M_PI/180.) + force(2)*sin(alpha*M_PI/180.);
+  _moment = moment(1);
+  _cl = _lift/(qinf*sref);
+  _cd = _drag/(qinf*sref);
+  _cm = _moment/(qinf*sref*lref);
 }
 
-const Eigen::Vector3d & Wing::force () const { return _force; }
-const Eigen::Vector3d & Wing::moment () const { return _moment; }
+const double & Wing::lift () const { return _lift; }
+const double & Wing::drag () const { return _drag; }
+const double & Wing::pitchingMoment () const { return _moment; }
+const double & Wing::liftCoefficient () const { return _cl; }
+const double & Wing::dragCoefficient () const { return _cd; }
+const double & Wing::pitchingMomentCoefficient () const { return _cm; }

@@ -1162,28 +1162,29 @@ void Aircraft::computeSurfaceQuantities ()
 void Aircraft::computeForceMoment ()
 {
   unsigned int i, nwings;
-  double qinf;
 
   nwings = _wings.size();
-  _force << 0., 0., 0.;
-  _moment << 0., 0., 0.;
+  _lift = 0.;
+  _drag = 0.;
+  _moment = 0.;
+  _cl = 0.;
+  _cd = 0.;
+  _cm = 0.;
   for ( i = 0; i < nwings; i++ )
   {
-    _wings[i].computeForceMoment(_momcen);
-    _force += _wings[i].force();
-    _moment += _wings[i].moment();
+    _wings[i].computeForceMoment(_sref, _lref, _momcen);
+    _lift += _wings[i].lift();
+    _drag += _wings[i].drag();
+    _moment += _wings[i].pitchingMoment();
+    _cl += _wings[i].liftCoefficient();
+    _cd += _wings[i].dragCoefficient();
+    _cm += _wings[i].pitchingMomentCoefficient();
   }
-
-  // Wind frame forces and coefficients
-
-  qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-  _lift = -_force(0)*sin(alpha*M_PI/180.) + _force(2)*cos(alpha*M_PI/180.);
-  _drag =  _force(0)*cos(alpha*M_PI/180.) + _force(2)*sin(alpha*M_PI/180.);
-  _cl = _lift/(qinf*_sref);
-  _cd = _drag/(qinf*_sref);
-  _cm = _moment(1)/(qinf*_sref*_lref);
 }
 
+const double & Aircraft::lift () const { return _lift; }
+const double & Aircraft::drag () const { return _drag; }
+const double & Aircraft::pitchingMoment () const { return _moment; }
 const double & Aircraft::liftCoefficient () const { return _cl; }
 const double & Aircraft::dragCoefficient () const { return _cd; }
 const double & Aircraft::pitchingMomentCoefficient () const { return _cm; }

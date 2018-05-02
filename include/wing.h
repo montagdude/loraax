@@ -49,7 +49,8 @@ class Wing {
                                         //   coordinate directions
     Wake _wake;				// Wake
     std::vector<WakeStrip> _wakestrips;	// Wake strips behind TE panels
-    Eigen::Vector3d _force, _moment;	// Dimensional forces and moments
+    double _lift, _drag, _moment;	// Dimensional forces and moments
+    double _cl, _cd, _cm;		// Force and moment coefficients
 
     std::vector<double> adjustSpacing ( 
                                const std::vector<double> & nom_stations ) const;
@@ -113,9 +114,14 @@ class Wing {
 
     // Compute or access forces and moments
 
-    void computeForceMoment ( const Eigen::Vector3d & moment_center );
-    const Eigen::Vector3d & force () const;
-    const Eigen::Vector3d & moment () const;
+    void computeForceMoment ( const double & sref, const double & lref,
+                              const Eigen::Vector3d & momcen );
+    const double & lift () const;
+    const double & drag () const;
+    const double & pitchingMoment () const;
+    const double & liftCoefficient () const;
+    const double & dragCoefficient () const;
+    const double & pitchingMomentCoefficient () const;
 };
 
 #endif
