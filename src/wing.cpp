@@ -3,6 +3,8 @@
 #include <vector>
 #include <cmath>
 #include <Eigen/Dense>
+#include <fstream>
+#include <iomanip>
 #include "algorithms.h"
 #include "util.h"
 #include "settings.h"
@@ -1217,3 +1219,53 @@ const double & Wing::pitchingMoment () const { return _moment; }
 const double & Wing::liftCoefficient () const { return _cl; }
 const double & Wing::dragCoefficient () const { return _cd; }
 const double & Wing::pitchingMomentCoefficient () const { return _cm; }
+
+/******************************************************************************/
+//
+// Writes forces and moments for aircraft and each wing to CSV formatted files
+//
+/******************************************************************************/
+int Wing::writeForceMoment ( int iter ) const
+{
+  std::ofstream f;
+  std::string fname;
+
+  fname = "forcemoment/" + _name + "_forcemoment.csv";
+
+  // Write header during first iteration
+
+  if (iter == 1)
+  {
+    f.open(fname.c_str(), std::fstream::out);
+    if (! f.is_open())
+    {
+      print_warning("Wing::writeForceMoment",
+                    "Unable to open " + fname + " for writing.");
+      return 1;
+    }
+    f << "\"Iter\",\"Lift\",\"Drag\",\"Pitching moment\","
+      << "\"CL\",\"CD\",\"Cm\"" << std::endl;
+  }
+  else
+  {
+    f.open(fname.c_str(), std::fstream::app);
+    if (! f.is_open())
+    {
+      print_warning("Wing::writeForceMoment",
+                    "Unable to open " + fname + " for writing.");
+      return 1;
+    }
+  }
+  f << iter << ",";
+  f.setf(std::ios_base::scientific);
+  f << std::setprecision(6) << _lift << ",";
+  f << std::setprecision(6) << _drag << ",";
+  f << std::setprecision(6) << _moment << ",";
+  f << std::setprecision(6) << _cl << ",";
+  f << std::setprecision(6) << _cd << ",";
+  f << std::setprecision(6) << _cm << "" << std::endl;
+
+  f.close();
+
+  return 0;
+}

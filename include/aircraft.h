@@ -95,6 +95,10 @@ class Aircraft {
     const double & dragCoefficient () const;
     const double & pitchingMomentCoefficient () const;
 
+    // Write forces and moments to file
+
+    int writeForceMoment ( int iter ) const;
+
     // Convects and updates wake panels
 
     void moveWake ();

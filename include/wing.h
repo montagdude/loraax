@@ -122,6 +122,10 @@ class Wing {
     const double & liftCoefficient () const;
     const double & dragCoefficient () const;
     const double & pitchingMomentCoefficient () const;
+
+    // Write forces and moments to file
+
+    int writeForceMoment ( int iter ) const;
 };
 
 #endif

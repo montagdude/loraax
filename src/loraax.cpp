@@ -126,6 +126,7 @@ int main (int argc, char* argv[])
 
     std::cout << "  Computing forces and moments ..." << std::endl;
     ac.computeForceMoment();
+    ac.writeForceMoment(iter);
     std::cout << "  CL: " << std::setprecision(5) << std::setw(8) << std::left
               << ac.liftCoefficient();
     std::cout << "  CD: " << std::setprecision(5) << std::setw(8) << std::left

@@ -142,22 +142,23 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
 
   nverts = _verts.size();
   f << "POINTS " << nverts*2 << " double" << std::endl;
+  f.setf(std::ios_base::scientific);
   for ( i = 0; i < int(nverts); i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->xViz();
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->yViz();
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->zViz() << std::endl;
   } 
   for ( i = 0; i < int(nverts); i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->xViz();
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << -_verts[i]->yViz();
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->zViz() << std::endl;
   } 
 
@@ -242,47 +243,44 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
   f << "POINT_DATA " << nverts*2 << std::endl;
   f << "SCALARS source_strength double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
+  f.setf(std::ios_base::scientific);
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(0) << std::endl;
+    f << std::setprecision(7) << _verts[i]->data(0) << std::endl;
   }
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(0) << std::endl;
+    f << std::setprecision(7) << _verts[i]->data(0) << std::endl;
   }
 
   f << "SCALARS doublet_strength double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(1) << std::endl;
+    f << std::setprecision(7) << _verts[i]->data(1) << std::endl;
   }
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(1) << std::endl;
+    f << std::setprecision(7) << _verts[i]->data(1) << std::endl;
   }
 
   f << "Vectors velocity double" << std::endl;
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->data(2);
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->data(3);
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->data(4) << std::endl;
   }
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->data(2);
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << -_verts[i]->data(3);
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->data(4) << std::endl;
   }
 
@@ -290,26 +288,22 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
   f << "LOOKUP_TABLE default" << std::endl;
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(5) << std::endl;
+    f << std::setprecision(7) << _verts[i]->data(5) << std::endl;
   }
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(5) << std::endl;
+    f << std::setprecision(7) << _verts[i]->data(5) << std::endl;
   }
 
   f << "SCALARS pressure_coefficient double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(6) << std::endl;
+    f << std::setprecision(7) << _verts[i]->data(6) << std::endl;
   }
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _verts[i]->data(6) << std::endl;
+    f << std::setprecision(7) << _verts[i]->data(6) << std::endl;
   }
 }
 
@@ -344,22 +338,23 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
   nverts = _wakeverts.size();
   nsurf_verts = _verts.size();
   f << "POINTS " << nverts*2 << " double" << std::endl;
+  f.setf(std::ios_base::scientific);
   for ( i = 0; i < int(nverts); i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _wakeverts[i]->xViz();
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _wakeverts[i]->yViz();
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _wakeverts[i]->zViz() << std::endl;
   } 
   for ( i = 0; i < int(nverts); i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _wakeverts[i]->xViz();
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << -_wakeverts[i]->yViz();
-    f << std::setprecision(14) << std::setw(25) << std::left
+    f << std::setprecision(7) << std::setw(16) << std::left
       << _wakeverts[i]->zViz() << std::endl;
   } 
 
@@ -443,151 +438,26 @@ void Aircraft::writeWakeData ( std::ofstream & f ) const
   f << "POINT_DATA " << nwakeverts*2 << std::endl;
   f << "SCALARS doublet_strength double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
+  f.setf(std::ios_base::scientific);
   for ( i = 0; i < nwakeverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->data(1) << std::endl;
+    f << std::setprecision(7) << _wakeverts[i]->data(1) << std::endl;
   }
   for ( i = 0; i < nwakeverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->data(1) << std::endl;
+    f << std::setprecision(7) << _wakeverts[i]->data(1) << std::endl;
   }
   f << "SCALARS wake_time double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
   for ( i = 0; i < nwakeverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->wakeTime() << std::endl;
+    f << std::setprecision(7) << _wakeverts[i]->wakeTime() << std::endl;
   }
   for ( i = 0; i < nwakeverts; i++ )
   {
-    f << std::setprecision(14) << std::setw(25) << std::left
-      << _wakeverts[i]->wakeTime() << std::endl;
+    f << std::setprecision(7) << _wakeverts[i]->wakeTime() << std::endl;
   }
 }
-
-#if 0
-/******************************************************************************/
-//
-// Writes legacy VTK wake strip viz (for checking purposes). One file is written
-// for each strip so they can be cycled through.
-//
-/******************************************************************************/
-int Aircraft::writeWakeStripViz ( const std::string & prefix )
-{
-  std::ofstream f;
-  unsigned int counter;
-  unsigned int i, j, k, nwings, nstrips, nsurf_verts, nwake_verts, nvorts;
-  std::string fname;
-  std::vector<WakeStrip *> wakestrips;
-
-  // Determine number of wake strips and populate container
-
-  nwings = _wings.size();
-  nstrips = 0;
-  for ( i = 0; i < nwings; i++ )
-  {
-    nstrips += _wings[i].nWStrips();
-  }
-  wakestrips.resize(nstrips);
-  counter = 0;
-  for ( i = 0; i < nwings; i++ )
-  {
-    for ( j = 0; j < _wings[i].nWStrips(); j++ )
-    {
-      wakestrips[counter] = _wings[i].wStrip(j);
-      counter += 1;
-    }
-  }
-
-  // Write a file for each strip
-
-  for ( j = 0; j < nstrips; j++ )
-  {
-    fname = prefix + "_timestep" + int2string(j) + ".vtk";
-    f.open(fname.c_str());
-    if (! f.is_open())
-    {
-      conditional_stop(1, "Aircraft::writeWakeStripViz",
-                       "Unable to open " + fname + " for writing."); 
-      return 1;
-    }
-
-    // Header
-
-    f << "# vtk DataFile Version 3.0" << std::endl;
-    f << casename << std::endl;
-    f << "ASCII" << std::endl;
-    f << "DATASET UNSTRUCTURED_GRID" << std::endl;
-
-    // Write all surface and wake vertices
-
-    nsurf_verts = _verts.size();
-    nwake_verts = _wakeverts.size();
-    f << "POINTS " << nsurf_verts + nwake_verts << " double" << std::endl;
-    for ( i = 0; i < nsurf_verts; i++ )
-    {
-      f << std::setprecision(14) << std::setw(25) << std::left
-        << _verts[i]->x();
-      f << std::setprecision(14) << std::setw(25) << std::left
-        << _verts[i]->y();
-      f << std::setprecision(14) << std::setw(25) << std::left
-        << _verts[i]->z() << std::endl;
-    } 
-    for ( i = 0; i < nwake_verts; i++ )
-    {
-      f << std::setprecision(14) << std::setw(25) << std::left
-        << _wakeverts[i]->x();
-      f << std::setprecision(14) << std::setw(25) << std::left
-        << _wakeverts[i]->y();
-      f << std::setprecision(14) << std::setw(25) << std::left
-        << _wakeverts[i]->z() << std::endl;
-    } 
-
-    // Write TE panels and wake strip elements
-
-    nvorts = wakestrips[j]->nVortices();
-    f << "CELLS " << 2+nvorts << " " << 5*(2+nvorts) << std::endl;
-    f << 4;
-    for ( k = 0; k < 4; k++ )
-    {
-      f << " " << wakestrips[j]->topTEPan()->vertex(k).idx();
-    }
-    f << std::endl;
-    f << 4;
-    for ( k = 0; k < 4; k++ )
-    {
-      f << " " << wakestrips[j]->botTEPan()->vertex(k).idx();
-    }
-    f << std::endl;
-    for ( i = 0; i < nvorts; i++ )
-    {
-      f << 4;
-      for ( k = 0; k < 4; k++ )
-      {
-        f << " " << wakestrips[j]->vortex(i)->vertex(k).idx();
-      }
-      f << std::endl;
-    } 
-
-    // Cell types
-
-    f << "CELL_TYPES " << 2+nvorts << std::endl;
-    f << 9 << std::endl;
-    f << 9 << std::endl;
-    for ( i = 0; i < nvorts-1; i++ )
-    {
-      f << 9 << std::endl;
-    }
-    f << 4 << std::endl;
-
-    f.close();
-  }
-
-  return 0;
-}
-#endif
 
 /******************************************************************************/
 //
@@ -694,6 +564,8 @@ int Aircraft::readXML ( const std::string & geom_file )
     const char *wingname = wingelem->Attribute("name");
     if (wingname)
       _wings[nwings].setName(wingname);
+    else
+      _wings[nwings].setName("Wing" + int2string(nwings+1));
 
     // Paneling
 
@@ -1188,6 +1060,64 @@ const double & Aircraft::pitchingMoment () const { return _moment; }
 const double & Aircraft::liftCoefficient () const { return _cl; }
 const double & Aircraft::dragCoefficient () const { return _cd; }
 const double & Aircraft::pitchingMomentCoefficient () const { return _cm; }
+
+/******************************************************************************/
+//
+// Writes forces and moments for aircraft and each wing to CSV formatted files
+//
+/******************************************************************************/
+int Aircraft::writeForceMoment ( int iter ) const
+{
+  std::ofstream f;
+  std::string fname;
+  unsigned int i, nwings;
+
+  fname = "forcemoment/" + casename + "_forcemoment.csv";
+
+  // Write header during first iteration
+
+  if (iter == 1)
+  {
+    f.open(fname.c_str(), std::fstream::out);
+    if (! f.is_open())
+    {
+      print_warning("Aircraft::writeForceMoment",
+                    "Unable to open " + fname + " for writing.");
+      return 1;
+    }
+    f << "\"Iter\",\"Lift\",\"Drag\",\"Pitching moment\","
+      << "\"CL\",\"CD\",\"Cm\"" << std::endl;
+  }
+  else
+  {
+    f.open(fname.c_str(), std::fstream::app);
+    if (! f.is_open())
+    {
+      print_warning("Aircraft::writeForceMoment",
+                    "Unable to open " + fname + " for writing.");
+      return 1;
+    }
+  }
+  f << iter << ",";
+  f.setf(std::ios_base::scientific);
+  f << std::setprecision(7) << _lift << ",";
+  f << std::setprecision(7) << _drag << ",";
+  f << std::setprecision(7) << _moment << ",";
+  f << std::setprecision(7) << _cl << ",";
+  f << std::setprecision(7) << _cd << ",";
+  f << std::setprecision(7) << _cm << "" << std::endl;
+
+  f.close();
+
+  nwings = _wings.size();
+  for ( i = 0; i < nwings; i++ )
+  {
+    if (_wings[i].writeForceMoment(iter) != 0)
+      return 1;
+  }
+
+  return 0;
+}
 
 /******************************************************************************/
 //
