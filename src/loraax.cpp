@@ -127,6 +127,7 @@ int main (int argc, char* argv[])
     std::cout << "  Computing forces and moments ..." << std::endl;
     ac.computeForceMoment();
     ac.writeForceMoment(iter);
+    ac.computeSectionPressureForces();
     std::cout << "  CL: " << std::setprecision(5) << std::setw(8) << std::left
               << ac.liftCoefficient();
     std::cout << "  CD: " << std::setprecision(5) << std::setw(8) << std::left
@@ -140,6 +141,7 @@ int main (int argc, char* argv[])
     {
       std::cout << "  Writing VTK visualization ..." << std::endl;
       ac.writeViz(casename, iter);
+      ac.writeSectionForces(iter);
       viz_iter = 0;
     }
 

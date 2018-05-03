@@ -24,9 +24,13 @@ class Section: public SectionalObject {
     double _roll;	// Roll angle, positive CCW viewed from back
 
     unsigned int _nverts;
-    std::vector<Vertex>	_verts;
-			// Vertices defining panel endpoints
+    std::vector<Vertex>	_verts, _uverts;
+			// Vertices defining panel endpoints, and non-rotated,
+                        // non-translated version of same
     Airfoil _foil;	// Airfoil at this section
+
+    double _fn, _fa;	// Normal and axial force/span
+    double _cl, _cd;	// Sectional lift and drag coefficients
 
   public:
 
@@ -58,6 +62,16 @@ class Section: public SectionalObject {
     // Access airfoil
 
     Airfoil & airfoil ();
+
+    // Computes pressure forces
+
+    void computePressureForce ( const double & alpha, const double & uinf,
+                                const double & rhoinf );
+
+    // Sectional lift and drag coefficients
+
+    const double & liftCoefficient () const;
+    const double & dragCoefficient () const;
 };
 
 #endif

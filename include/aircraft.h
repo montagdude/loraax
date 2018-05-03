@@ -99,6 +99,14 @@ class Aircraft {
 
     int writeForceMoment ( int iter ) const;
 
+    // Computes sectional pressure force
+
+    void computeSectionPressureForces (); 
+
+    // Write section forces to file
+
+    void writeSectionForces ( int iter ) const;
+
     // Convects and updates wake panels
 
     void moveWake ();

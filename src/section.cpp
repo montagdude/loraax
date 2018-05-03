@@ -1,6 +1,7 @@
 #include <vector>
 #include <string>
 #include <Eigen/Core>
+#include <cmath>
 #include "util.h"
 #include "algorithms.h"
 #include "transformations.h"
@@ -29,6 +30,7 @@ Section::Section ()
   _roll = 0.;
   _nverts = 0;
   _verts.resize(0); 
+  _uverts.resize(0); 
 }
 
 /******************************************************************************/
@@ -118,6 +120,7 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
 
   _nverts = 2*nchord - 1;
   _verts.resize(_nverts);
+  _uverts.resize(_nverts);
   sv.resize(_nverts);
   sv[0] = 0.;
   for ( i = 1; i < nchord; i++ )
@@ -146,7 +149,8 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   zf[0] = zte;
   zf[_nverts-1] = zte; 
 
-  // Transform to section coordinates
+  // Transform to section coordinates. Also store non-rotated, non-translated
+  // version for calculating sectional loads.
 
   rotation = inverse_euler_rotation(_roll, _twist, 0.0, "123");
   for ( i = 0; i < _nverts; i++ )
@@ -157,6 +161,9 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
     _verts[i].translate(0.25, 0., 0.);
     _verts[i].scale(_chord);
     _verts[i].translate(_xle, _y, _zle);
+
+    _uverts[i].setCoordinates(xf[i], 0.0, zf[i]);
+    _uverts[i].scale(_chord);
   } 
 } 
 
@@ -166,3 +173,55 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
 //
 /******************************************************************************/
 Airfoil & Section::airfoil () { return _foil; }
+
+/******************************************************************************/
+//
+// Computes pressure forces / span
+//
+/******************************************************************************/
+void Section::computePressureForce ( const double & alpha, const double & uinf,
+                                     const double & rhoinf )
+{
+  unsigned int i;
+  double nx, nz, pave, qinf, lift, drag;
+  Eigen::Vector3d force;
+  Eigen::Matrix3d rotation;
+
+  _fn = 0.;
+  _fa = 0.;
+  for ( i = 1; i < _nverts; i++ )
+  {
+    // Dimensional edge normal vector
+
+    nx = _uverts[i].z() - _uverts[i-1].z();
+    nz = _uverts[i-1].x() - _uverts[i].x();
+
+    // Integrate pressure
+
+    pave = 0.5*(_verts[i].data(5) + _verts[i-1].data(5));
+    _fn -= pave*nz;
+    _fa -= pave*nx;
+  }
+
+  // Rotate forces to inertial frame
+
+  rotation = inverse_euler_rotation(_roll, _twist, 0.0, "123");
+  force << _fa, 0., _fn;
+  force = rotation*force;
+
+  // Sectional lift and drag coefficients
+ 
+  qinf = 0.5*rhoinf*std::pow(uinf,2.);
+  lift = -force(0)*sin(alpha*M_PI/180.) + force(2)*cos(alpha*M_PI/180.);
+  drag =  force(0)*cos(alpha*M_PI/180.) + force(2)*sin(alpha*M_PI/180.);
+  _cl = lift/(qinf*_chord);
+  _cd = drag/(qinf*_chord);
+}
+
+/******************************************************************************/
+//
+// Sectional lift and drag coefficients
+//
+/******************************************************************************/
+const double & Section::liftCoefficient () const { return _cl; }
+const double & Section::dragCoefficient () const { return _cd; }

@@ -126,6 +126,14 @@ class Wing {
     // Write forces and moments to file
 
     int writeForceMoment ( int iter ) const;
+
+    // Compute sectional pressure forces
+
+    void computeSectionPressureForces (); 
+
+    // Write sectional forces to file
+
+    int writeSectionForces ( int iter ) const;
 };
 
 #endif

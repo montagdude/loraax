@@ -1121,6 +1121,38 @@ int Aircraft::writeForceMoment ( int iter ) const
 
 /******************************************************************************/
 //
+// Computes pressure forces at sections
+//
+/******************************************************************************/
+void Aircraft::computeSectionPressureForces ()
+{
+  unsigned int i, nwings;
+
+  nwings = _wings.size();
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].computeSectionPressureForces();
+  }
+}
+
+/******************************************************************************/
+//
+// Writes sectional forces to files
+//
+/******************************************************************************/
+void Aircraft::writeSectionForces ( int iter ) const
+{
+  unsigned int i, nwings;
+
+  nwings = _wings.size();
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].writeSectionForces(iter);
+  }
+}
+
+/******************************************************************************/
+//
 // Convects and updates wake panels
 //
 /******************************************************************************/

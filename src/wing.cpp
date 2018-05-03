@@ -1263,8 +1263,80 @@ int Wing::writeForceMoment ( int iter ) const
   f << std::setprecision(6) << _moment << ",";
   f << std::setprecision(6) << _cl << ",";
   f << std::setprecision(6) << _cd << ",";
-  f << std::setprecision(6) << _cm << "" << std::endl;
+  f << std::setprecision(6) << _cm << std::endl;
 
+  f.close();
+
+  return 0;
+}
+
+/******************************************************************************/
+//
+// Computes pressure forces at sections
+//
+/******************************************************************************/
+void Wing::computeSectionPressureForces ()
+{
+  unsigned int i;
+
+#pragma omp parallel for private(i)
+  for ( i = 0; i < _nspan; i++ )
+  {
+    _sections[i].computePressureForce(alpha, uinf, rhoinf);
+  }
+}
+
+/******************************************************************************/
+//
+// Writes sectional forces to file
+//
+/******************************************************************************/
+int Wing::writeSectionForces ( int iter ) const
+{
+  std::ofstream f;
+  std::string fname;
+  int i;
+
+  fname = "sectional/" + _name + "_sectional_iter" + int2string(iter) + ".csv";
+
+  // Write header
+
+  f.open(fname.c_str(), std::fstream::out);
+  if (! f.is_open())
+  {
+    print_warning("Wing::writeSectionForces",
+                  "Unable to open " + fname + " for writing.");
+    return 1;
+  }
+  f << "\"xle\",\"y\",\"zle\",\"Cl\",\"Cd\",\"cCl\",\"cCd\"" << std::endl;
+
+  // Write data for sections and mirror image
+  
+  f.setf(std::ios_base::scientific);
+  for ( i = _nspan-1; i >= 0; i-- )
+  {
+    f << std::setprecision(6) << _sections[i].xle() << ",";
+    f << std::setprecision(6) << _sections[i].y() << ",";
+    f << std::setprecision(6) << _sections[i].zle() << ",";
+    f << std::setprecision(6) << _sections[i].liftCoefficient() << ",";
+    f << std::setprecision(6) << _sections[i].dragCoefficient() << ",";
+    f << std::setprecision(6) << _sections[i].chord() *
+                                 _sections[i].liftCoefficient() << ",";
+    f << std::setprecision(6) << _sections[i].chord() *
+                                 _sections[i].dragCoefficient() << std::endl;
+  }
+  for ( i = 1; i < int(_nspan); i++ )
+  {
+    f << std::setprecision(6) << _sections[i].xle() << ",";
+    f << std::setprecision(6) << -_sections[i].y() << ",";
+    f << std::setprecision(6) << _sections[i].zle() << ",";
+    f << std::setprecision(6) << _sections[i].liftCoefficient() << ",";
+    f << std::setprecision(6) << _sections[i].dragCoefficient() << ",";
+    f << std::setprecision(6) << _sections[i].chord() *
+                                 _sections[i].liftCoefficient() << ",";
+    f << std::setprecision(6) << _sections[i].chord() *
+                                 _sections[i].dragCoefficient() << std::endl;
+  }
   f.close();
 
   return 0;
