@@ -1295,7 +1295,21 @@ int Wing::writeSectionForces ( int iter ) const
 {
   std::ofstream f;
   std::string fname;
+  std::vector<double> y_flat;
   int i;
+  double dy, dz, ds;
+
+  // Compute "flattened" spanwise locations
+
+  y_flat.resize(_nspan);
+  y_flat[0] = 0.;
+  for ( i = 1; i < int(_nspan); i++ )
+  {
+    dy = _sections[i].y() - _sections[i-1].y();
+    dz = _sections[i].zle() - _sections[i-1].zle();
+    ds = std::sqrt(dy*dy + dz*dz);
+    y_flat[i] = y_flat[i-1] + ds;
+  }
 
   fname = "sectional/" + _name + "_sectional_iter" + int2string(iter) + ".csv";
 
@@ -1308,7 +1322,8 @@ int Wing::writeSectionForces ( int iter ) const
                   "Unable to open " + fname + " for writing.");
     return 1;
   }
-  f << "\"xle\",\"y\",\"zle\",\"Cl\",\"Cd\",\"cCl\",\"cCd\"" << std::endl;
+  f << "\"xle\",\"y\",\"y_flat\",\"zle\",\"Cl\",\"Cd\",\"cCl\",\"cCd\""
+    << std::endl;
 
   // Write data for sections and mirror image
   
@@ -1317,6 +1332,7 @@ int Wing::writeSectionForces ( int iter ) const
   {
     f << std::setprecision(6) << _sections[i].xle() << ",";
     f << std::setprecision(6) << _sections[i].y() << ",";
+    f << std::setprecision(6) << y_flat[i] << ",";
     f << std::setprecision(6) << _sections[i].zle() << ",";
     f << std::setprecision(6) << _sections[i].liftCoefficient() << ",";
     f << std::setprecision(6) << _sections[i].dragCoefficient() << ",";
@@ -1329,6 +1345,7 @@ int Wing::writeSectionForces ( int iter ) const
   {
     f << std::setprecision(6) << _sections[i].xle() << ",";
     f << std::setprecision(6) << -_sections[i].y() << ",";
+    f << std::setprecision(6) << -y_flat[i] << ",";
     f << std::setprecision(6) << _sections[i].zle() << ",";
     f << std::setprecision(6) << _sections[i].liftCoefficient() << ",";
     f << std::setprecision(6) << _sections[i].dragCoefficient() << ",";
