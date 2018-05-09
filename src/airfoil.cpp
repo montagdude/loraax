@@ -457,7 +457,7 @@ int Airfoil::unitTransform ()
 int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
 {
   unsigned int i;
-  int npointin, npointout;
+  int npointin, npointout, stat;
   double xin[_nb], zin[_nb];
   double xout[geom_opts.npan], zout[geom_opts.npan];
 
@@ -485,7 +485,21 @@ int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
 
   npointin = _nb;
   npointout = geom_opts.npan;
-  smooth_paneling(xin, zin, &npointin, &npointout, &geom_opts, xout, zout);
+  xfoil_init();
+  xfoil_set_paneling(&geom_opts);
+  xfoil_set_airfoil(xin, zin, &npointin, &stat);
+  if (stat != 0)
+  {
+    conditional_stop(1, "Airfoil::smoothPaneling", "Failed to set airfoil.");
+    return 3;
+  }
+  xfoil_smooth_paneling(&stat);
+  if (stat != 0)
+  {
+    conditional_stop(1, "Airfoil::smoothPaneling", "Airfoil smoothing failed.");
+    return 4;
+  }
+  xfoil_get_airfoil(xout, zout, &npointout);
 
   _n = npointout;
   _x.resize(_n);
