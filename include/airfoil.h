@@ -73,6 +73,14 @@ class Airfoil: public SectionalObject {
 
     int smoothPaneling ( const xfoil_geom_options_type & geom_opts );
 
+    // Returns or modifies trailing edge gap. Note: modifyTEGap only only
+    // modifies the buffer airfoil coordinates. You may want to call
+    // splineInterp, smoothPaneling, etc. again afterwards.
+
+    double teGap () const;
+    int modifyTEGap ( const xfoil_geom_options_type & geom_opts,
+                      const double & newgap, const double & blendloc );
+
     // Airfoil data
 
     unsigned int nBuffer () const;

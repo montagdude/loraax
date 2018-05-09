@@ -2,6 +2,10 @@
 #include <string>
 #include <Eigen/Core>
 #include <cmath>
+extern "C"
+{
+  #include <xfoil_interface.h>
+}
 #include "util.h"
 #include "algorithms.h"
 #include "transformations.h"
@@ -81,11 +85,12 @@ Vertex & Section::vert ( unsigned int idx )
 //
 /******************************************************************************/
 void Section::setVertices ( unsigned int nchord, const double & lesprat,
-                            const double & tesprat )
+                            const double & tesprat,
+                            const xfoil_geom_options_type & geom_opts )
 {
+  Airfoil foil;
   double slen, sle, unisp, lesp, tesp;
   double a4top, a5top, a4bot, a5bot;
-  double zte;
   std::vector<double> sv;
   std::vector<double> xf, zf;			// Vertices in foil coordinates
   unsigned int i;
@@ -103,10 +108,21 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   }
 #endif
 
+  // Save a copy of the section's airfoil and remove TE gap if necessary. By
+  // working with a copy, the gap is only removed for 3D panel calculations, but
+  // it is preserved for Xfoil BL calculations.
+
+  foil = _foil;
+  if (foil.teGap() > 1.E-14)
+  {
+    foil.modifyTEGap(geom_opts, 0.0, 0.9);
+    foil.splineFit();
+  }
+
   // Get spacings 
 
-  slen = _foil.sLen();
-  sle = _foil.sLE();
+  slen = foil.sLen();
+  sle = foil.sLE();
   unisp = slen / float(2*nchord-2);	// Uniform spacing
   lesp = unisp * lesprat;		// LE spacing
   tesp = unisp * tesprat;		// TE spacing
@@ -140,14 +156,8 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   zf.resize(_nverts);
   for ( i = 0; i < _nverts; i++ )
   {
-    _foil.splineInterp(sv[i], xf[i], zf[i]);
+    foil.splineInterp(sv[i], xf[i], zf[i]);
   }
-
-  // Close trailing edge
-
-  zte = 0.5*(zf[0] + zf[_nverts-1]);
-  zf[0] = zte;
-  zf[_nverts-1] = zte; 
 
   // Transform to section coordinates. Also store non-rotated, non-translated
   // version for calculating sectional loads.

@@ -5,6 +5,10 @@
 
 #include <vector>
 #include <string>
+extern "C"
+{
+  #include <xfoil_interface.h>
+}
 #include "sectional_object.h"
 #include "vertex.h"
 #include "airfoil.h"
@@ -57,7 +61,8 @@ class Section: public SectionalObject {
     // Set vertices from spacing distribution
 
     void setVertices ( unsigned int nchord, const double & lesprat,
-                       const double & tesprat );
+                       const double & tesprat,
+                       const xfoil_geom_options_type & geom_opts );
 
     // Access airfoil
 

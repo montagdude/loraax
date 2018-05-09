@@ -1,5 +1,7 @@
 #include <fstream>
 #include <vector>
+#include <cstdlib>
+#include <cmath>
 #include "sectional_object.h"
 extern "C"
 {
@@ -368,7 +370,7 @@ int Airfoil::splineInterp ( const double & sc, double & xc, double & zc ) const
 
 /******************************************************************************/
 //
-// Scales to unit chord and moves to origin
+// Scales to unit chord and moves to origin.
 //
 /******************************************************************************/
 int Airfoil::unitTransform ()
@@ -451,7 +453,7 @@ int Airfoil::unitTransform ()
 //
 // Generates smoothed coordinates. Returns 1 and does nothing if buffer airfoil
 // has not been loaded. Returns 2 and does nothing if unitTransform has not been
-// called.
+// called. Returns 3 if smoothing failed.
 //
 /******************************************************************************/
 int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
@@ -497,7 +499,7 @@ int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
   if (stat != 0)
   {
     conditional_stop(1, "Airfoil::smoothPaneling", "Airfoil smoothing failed.");
-    return 4;
+    return 3;
   }
   xfoil_get_airfoil(xout, zout, &npointout);
 
@@ -509,6 +511,95 @@ int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
     _x[i] = xout[i];
     _z[i] = zout[i];
   }
+
+  return 0;
+}
+
+/******************************************************************************/
+//
+// Returns TE gap
+//
+/******************************************************************************/
+double Airfoil::teGap () const
+{
+  double dx, dz, gap;
+
+  dx = _xb[0] - _xb[_nb-1];
+  dz = _zb[0] - _zb[_nb-1];
+  gap = std::sqrt(std::pow(dx,2.) + std::pow(dz,2.));
+
+  return gap;
+}
+
+/******************************************************************************/
+//
+// Modifies trailing edge gap. Returns 1 and does nothing if buffer airfoil has
+// not been loaded. Returns 2 and does nothing if unitTransform has not been
+// called. Returns 3 if TE gap modification failed.
+//
+// Note: this method only modifies the buffer coordinates. You may want to call
+// splineInterp, smoothPaneling, etc. again afterwards.
+//
+/******************************************************************************/
+int Airfoil::modifyTEGap ( const xfoil_geom_options_type & geom_opts,
+                           const double & newgap, const double & blendloc )
+{
+  unsigned int i;
+  int npointin, npointout, stat;
+  double xin[_nb], zin[_nb];
+  double *xout, *zout;
+
+  if (_nb == 0)
+  {
+#ifdef DEBUG
+    print_warning("Airfoil::modifyTEGap", "Airfoil not yet loaded.");
+#endif
+    return 1;
+  }
+
+  if (! _unit_transform)
+  {
+#ifdef DEBUG
+    print_warning("Airfoil::modifyTEGap", "Must call unitTransform first.");
+#endif
+    return 2;
+  }
+
+  for ( i = 0; i < _nb; i++ )
+  {
+    xin[i] = _xb[i]; 
+    zin[i] = _zb[i]; 
+  }
+
+  npointin = _nb;
+  xfoil_init();
+  xfoil_set_paneling(&geom_opts);
+  xfoil_set_airfoil(xin, zin, &npointin, &stat);
+  if (stat != 0)
+  {
+    conditional_stop(1, "Airfoil::modifyTEGap", "Failed to set airfoil.");
+    return 3;
+  }
+  xfoil_modify_tegap(&newgap, &blendloc, &npointout, &stat);
+  if (stat != 0)
+  {
+    conditional_stop(1, "Airfoil::modifyTEGap", "TE gap modification failed.");
+    return 3;
+  }
+  xout = (double*)std::malloc(npointout*sizeof(double));
+  zout = (double*)std::malloc(npointout*sizeof(double));
+  xfoil_get_airfoil(xout, zout, &npointout);
+
+  _nb = npointout;
+  _xb.resize(_nb);
+  _zb.resize(_nb);
+  for ( i = 0; i < _nb; i++ )
+  {
+    _xb[i] = xout[i];
+    _zb[i] = zout[i];
+  }
+  std::free(xout);
+  std::free(zout);
 
   return 0;
 }

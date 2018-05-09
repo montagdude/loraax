@@ -575,7 +575,7 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 
     // Set vertices from spacing distribution
 
-    _sections[i].setVertices(_nchord, _lesprat, _tesprat);
+    _sections[i].setVertices(_nchord, _lesprat, _tesprat, xfoil_geom_opts);
   }
 
   return 0; 
