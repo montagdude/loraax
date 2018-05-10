@@ -55,6 +55,8 @@ class Wing {
     std::vector<double> adjustSpacing ( 
                                const std::vector<double> & nom_stations ) const;
 
+    void computeAreaMAC ( std::vector<Section> & sorted_user_sections ) const;
+
   public:
 
     // Constructor
@@ -81,6 +83,7 @@ class Wing {
     // Set sections based on user section inputs and spacing. User sections
     // define the planform shape, and the _sections variables defines the final
     // discretization. Sections do not need to be given in sorted order.
+    // Also computes planform area and MAC and writes to stdout.
 
     int setupSections ( std::vector<Section> & user_sections );
 

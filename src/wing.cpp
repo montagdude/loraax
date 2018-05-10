@@ -4,6 +4,7 @@
 #include <cmath>
 #include <Eigen/Dense>
 #include <fstream>
+#include <iostream>
 #include <iomanip>
 #include "algorithms.h"
 #include "util.h"
@@ -245,6 +246,86 @@ std::vector<double> Wing::adjustSpacing (
 
 /******************************************************************************/
 //
+// Computes wing area and MAC from section data and writes to stdout
+//
+/******************************************************************************/
+void Wing::computeAreaMAC ( std::vector<Section> & sorted_user_sections ) const
+{
+  unsigned int i, nsecs;
+  double span, area, cenx, ceny, cbar, cbarx;
+  double xT1, xL1, y1, xT2, xL2, y2;
+  double mT, mL, bT, bL, mp, mm, bp, bm;
+
+  nsecs = sorted_user_sections.size();
+  span = 2.*sorted_user_sections[nsecs-1].y();
+  area = 0.;
+  cenx = 0.;
+  ceny = 0.;
+  cbar = 0.;
+  for ( i = 0; i < nsecs-1; i++ )
+  {
+    xL1 = sorted_user_sections[i].xle();
+    xT1 = sorted_user_sections[i].xle() + sorted_user_sections[i].chord();
+    y1 = sorted_user_sections[i].y();
+    xL2 = sorted_user_sections[i+1].xle();
+    xT2 = sorted_user_sections[i+1].xle() + sorted_user_sections[i+1].chord();
+    y2 = sorted_user_sections[i+1].y();
+
+    if (y2 - y1 < 1.E-12)
+      continue;
+
+    // Slopes and intercepts of LE and TE edges
+
+    mT = (xT2 - xT1) / (y2 - y1);
+    mL = (xL2 - xL1) / (y2 - y1);
+    bT = xT1 - mT*y1;
+    bL = xL1 - mL*y1;
+
+    // Added and subtracted terms
+
+    mp = mT + mL;
+    mm = mT - mL;
+    bp = bT + bL;
+    bm = bT - bL;
+
+    // Area, centroid, and MAC increments. Note that the increments to cenx,
+    // ceny, and cbar here are weighted by area increment.
+
+    area += 0.5*(mT - mL)*(std::pow(y2,2.) - std::pow(y1,2.))
+         +  (bT - bL)*(y2 - y1);  
+    cenx += 0.5 * (
+            1./3.*mp*mm*(std::pow(y2,3.) - std::pow(y1,3.))
+         +  0.5*(mp*bm + mm*bp)*(std::pow(y2,2.) - std::pow(y1,2.))
+         +  bp*bm*(y2 - y1) );
+    ceny += 1./3.*mm*(std::pow(y2,3.) - std::pow(y1,3.))
+         +  0.5*bm*(std::pow(y2,2.) - std::pow(y1,2.));
+    cbar += 1./3.*std::pow(mm,2.)*(std::pow(y2,3.) - std::pow(y1,3.))
+         +  mm*bm*(std::pow(y2,2.) - std::pow(y1,2.))
+         +  std::pow(bm,2.)*(y2 - y1);
+  }
+  if (area > 0.)
+  {
+    cenx /= area;
+    ceny /= area;
+    cbar /= area;
+    cbarx = cenx - 0.25*cbar;
+  }
+  area *= 2.;	// Mirror image
+
+  std::cout.setf(std::ios_base::scientific);
+  std::cout << "Geometry information for wing " << _name << ":" << std::endl;
+  std::cout << "  Span: "
+            << std::setprecision(5) << span << std::endl;
+  std::cout << "  Area: "
+            << std::setprecision(5) << area << std::endl;
+  std::cout << "  Mean aerodynamic chord: "
+            << std::setprecision(5) << cbar << std::endl;
+  std::cout << "  Mean aerodynamic chord location (x, y): "
+            << std::setprecision(5) << cbarx << ",  " << ceny << std::endl;
+}
+
+/******************************************************************************/
+//
 // Default constructor
 //
 /******************************************************************************/
@@ -396,6 +477,10 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
     }
     sorted_user_sections[i].setRoll(atan(secvec[1]/secvec[0])*180./M_PI);
   }
+
+  // Compute and print wing geometric info
+
+  computeAreaMAC(sorted_user_sections);
 
   // Compute nominal discretized section locations (stations) from spacing
 
