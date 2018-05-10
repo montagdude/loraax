@@ -151,7 +151,8 @@ class Panel: public Element {
 
     // Compute force and moment contributions
 
-    void computeForceMoment ( Eigen::Vector3d & force, Eigen::Vector3d & moment,
+    void computeForceMoment ( const double & pinf, Eigen::Vector3d & force,
+                              Eigen::Vector3d & moment,
                               const Eigen::Vector3d & moment_center ) const;
 };
 

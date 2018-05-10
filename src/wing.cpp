@@ -1271,7 +1271,7 @@ void Wing::computeForceMoment ( const double & sref, const double & lref,
   {
     for ( j = 0; j < 2*_nchord-2; j++ )
     { 
-      _panels[i][j]->computeForceMoment(df, dm, momcen);
+      _panels[i][j]->computeForceMoment(pinf, df, dm, momcen);
       force += df;
       moment += dm;
     }
