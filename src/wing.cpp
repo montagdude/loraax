@@ -249,11 +249,12 @@ std::vector<double> Wing::adjustSpacing (
 // Computes wing area and MAC from section data and writes to stdout
 //
 /******************************************************************************/
-void Wing::computeAreaMAC ( std::vector<Section> & sorted_user_sections ) const
+void Wing::computeAreaMAC ( const std::vector<Section> &
+                            sorted_user_sections ) const
 {
   unsigned int i, nsecs;
-  double span, area, cenx, ceny, cbar, cbarx;
-  double xT1, xL1, y1, xT2, xL2, y2;
+  double span, area, cenx, dceny, ceny, cenz, cbar, cbarx;
+  double xT1, xL1, y1, z1, xT2, xL2, y2, z2;
   double mT, mL, bT, bL, mp, mm, bp, bm;
 
   nsecs = sorted_user_sections.size();
@@ -261,16 +262,20 @@ void Wing::computeAreaMAC ( std::vector<Section> & sorted_user_sections ) const
   area = 0.;
   cenx = 0.;
   ceny = 0.;
+  cenz = 0.;
   cbar = 0.;
   for ( i = 0; i < nsecs-1; i++ )
   {
     xL1 = sorted_user_sections[i].xle();
     xT1 = sorted_user_sections[i].xle() + sorted_user_sections[i].chord();
     y1 = sorted_user_sections[i].y();
+    z1 = sorted_user_sections[i].zle();
     xL2 = sorted_user_sections[i+1].xle();
     xT2 = sorted_user_sections[i+1].xle() + sorted_user_sections[i+1].chord();
     y2 = sorted_user_sections[i+1].y();
+    z2 = sorted_user_sections[i+1].zle();
 
+//FIXME: should still calculate centroid
     if (y2 - y1 < 1.E-12)
       continue;
 
@@ -293,12 +298,16 @@ void Wing::computeAreaMAC ( std::vector<Section> & sorted_user_sections ) const
 
     area += 0.5*(mT - mL)*(std::pow(y2,2.) - std::pow(y1,2.))
          +  (bT - bL)*(y2 - y1);  
+//FIXME: should take dihedral into account
     cenx += 0.5 * (
             1./3.*mp*mm*(std::pow(y2,3.) - std::pow(y1,3.))
          +  0.5*(mp*bm + mm*bp)*(std::pow(y2,2.) - std::pow(y1,2.))
          +  bp*bm*(y2 - y1) );
-    ceny += 1./3.*mm*(std::pow(y2,3.) - std::pow(y1,3.))
-         +  0.5*bm*(std::pow(y2,2.) - std::pow(y1,2.));
+    dceny = 1./3.*mm*(std::pow(y2,3.) - std::pow(y1,3.))
+          +  0.5*bm*(std::pow(y2,2.) - std::pow(y1,2.));
+    ceny += dceny;
+//FIXME: this won't work for vertical panels
+    cenz += (dceny - y1) / (y2 - y1) * (z2 - z1) + z1;
     cbar += 1./3.*std::pow(mm,2.)*(std::pow(y2,3.) - std::pow(y1,3.))
          +  mm*bm*(std::pow(y2,2.) - std::pow(y1,2.))
          +  std::pow(bm,2.)*(y2 - y1);
@@ -307,6 +316,7 @@ void Wing::computeAreaMAC ( std::vector<Section> & sorted_user_sections ) const
   {
     cenx /= area;
     ceny /= area;
+    cenz /= area;
     cbar /= area;
     cbarx = cenx - 0.25*cbar;
   }
@@ -320,8 +330,9 @@ void Wing::computeAreaMAC ( std::vector<Section> & sorted_user_sections ) const
             << std::setprecision(5) << area << std::endl;
   std::cout << "  Mean aerodynamic chord: "
             << std::setprecision(5) << cbar << std::endl;
-  std::cout << "  Mean aerodynamic chord location (x, y): "
-            << std::setprecision(5) << cbarx << ",  " << ceny << std::endl;
+  std::cout << "  MAC location (x, y, z): "
+            << std::setprecision(5) << cbarx << ",  " << ceny << ", " 
+            << cenz << std::endl;
 }
 
 /******************************************************************************/

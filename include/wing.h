@@ -55,7 +55,8 @@ class Wing {
     std::vector<double> adjustSpacing ( 
                                const std::vector<double> & nom_stations ) const;
 
-    void computeAreaMAC ( std::vector<Section> & sorted_user_sections ) const;
+    void computeAreaMAC ( const std::vector<Section> &
+                          sorted_user_sections ) const;
 
   public:
 
