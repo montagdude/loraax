@@ -1265,10 +1265,9 @@ void Wing::computeForceMoment ( const double & sref, const double & lref,
   force << 0., 0., 0.;
   moment << 0., 0., 0.;
 
-  // Only include top and bottom surface panels, since side panels cancel out
-  // with mirror contribution
+  // Compute on top and bottom surfaces
 
-  for ( i = 0; i < _nspan-1; i++ )
+  for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
   {
     for ( j = 0; j < 2*_nchord-2; j++ )
     { 
