@@ -8,29 +8,32 @@
 <!-- Freestream reference conditions. Freestream speed must be given in units of
      length/sec, where length is the length unit inherent in your aircraft
      geometry. In other words, if your geometry file has units of inches, the
-     freestream speed should be given in inches/sec, NOT mph. The density and
-     viscosity units must also be consistent with this definition. If you don't
-     use consistent units, the computed Reynolds number will be wrong, and the
-     time step you choose may not be appropriate for the freestream speed. For
-     convenience, here are values of density and viscosity at sea level in some
-     common unit systems:
+     freestream speed should be given in inches/sec, NOT mph. The density,
+     pressure, and viscosity units must also be consistent with this definition.
+     If you don't use consistent units, the computed Reynolds number will be
+     wrong, and dimensional forces and moments will be wrong. For convenience,
+     here are values of density, viscosity, and pressure at sea level on a
+     standard day in some common unit systems:
 
      meters / kilograms / seconds:
-       density = 1.225
-       viscosity = 1.81e-05
+       density = 1.2252
+       viscosity = 1.7894e-05
+       pressure = 101325
 
      inches / snails / seconds:
-       density = 
-       viscosity = 
+       density = 1.1465e-07
+       viscosity = 2.5953e-09
+       pressure = 14.6959
 
      feet / slugs / seconds:
-       density = 
-       viscosity = 
+       density = 2.3773e-03
+       viscosity = 3.7372e-07
+       pressure = 2116.22
 -->
   <FreestreamSpeed>1</FreestreamSpeed>
-  <FreestreamStaticPressure>101300</FreestreamStaticPressure>
-  <FreestreamDensity>1.225</FreestreamDensity>
-  <FreestreamViscosity>1.81e-05</FreestreamViscosity>
+  <FreestreamStaticPressure>101325</FreestreamStaticPressure>
+  <FreestreamDensity>1.2252</FreestreamDensity>
+  <FreestreamViscosity>1.7894e-05</FreestreamViscosity>
 
 <!-- Angle of attack, in degrees. -->
   <AngleOfAttack>5.</AngleOfAttack>
@@ -39,11 +42,11 @@
      local flow velocity. Behind this, the wake is aligned with the freestream
      over a distance of 1000 * RollupDist. (So make sure RollupDist is long
      enough!) -->
-  <RollupDist>30</RollupDist>
+  <RollupDist>40</RollupDist>
 
 <!-- Number of streamwise divisions in the rolling-up portion of the wake. Also
      defines the time step: dt = RollupDist / (FreestreamSpeed * WakeSteps) -->
-  <WakeSteps>40</WakeSteps>
+  <WakeSteps>50</WakeSteps>
 
 <!-- Initial wake angle for the convecting part of the wake (within RollupDist).
      Defaults to angle of attack, but sometimes that may result in an unstable
