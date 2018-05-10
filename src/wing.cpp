@@ -256,9 +256,11 @@ void Wing::computeAreaMAC ( const std::vector<Section> &
   double span, area, cenx, dceny, ceny, cenz, cbar, cbarx;
   double xT1, xL1, y1, z1, xT2, xL2, y2, z2;
   double mT, mL, bT, bL, mp, mm, bp, bm;
+  double ar, tr;
 
   nsecs = sorted_user_sections.size();
   span = 2.*sorted_user_sections[nsecs-1].y();
+  tr = sorted_user_sections[nsecs-1].chord() / sorted_user_sections[0].chord();
   area = 0.;
   cenx = 0.;
   ceny = 0.;
@@ -275,7 +277,6 @@ void Wing::computeAreaMAC ( const std::vector<Section> &
     y2 = sorted_user_sections[i+1].y();
     z2 = sorted_user_sections[i+1].zle();
 
-//FIXME: should still calculate centroid
     if (y2 - y1 < 1.E-12)
       continue;
 
@@ -298,7 +299,6 @@ void Wing::computeAreaMAC ( const std::vector<Section> &
 
     area += 0.5*(mT - mL)*(std::pow(y2,2.) - std::pow(y1,2.))
          +  (bT - bL)*(y2 - y1);  
-//FIXME: should take dihedral into account
     cenx += 0.5 * (
             1./3.*mp*mm*(std::pow(y2,3.) - std::pow(y1,3.))
          +  0.5*(mp*bm + mm*bp)*(std::pow(y2,2.) - std::pow(y1,2.))
@@ -306,7 +306,6 @@ void Wing::computeAreaMAC ( const std::vector<Section> &
     dceny = 1./3.*mm*(std::pow(y2,3.) - std::pow(y1,3.))
           +  0.5*bm*(std::pow(y2,2.) - std::pow(y1,2.));
     ceny += dceny;
-//FIXME: this won't work for vertical panels
     cenz += (dceny - y1) / (y2 - y1) * (z2 - z1) + z1;
     cbar += 1./3.*std::pow(mm,2.)*(std::pow(y2,3.) - std::pow(y1,3.))
          +  mm*bm*(std::pow(y2,2.) - std::pow(y1,2.))
@@ -319,20 +318,25 @@ void Wing::computeAreaMAC ( const std::vector<Section> &
     cenz /= area;
     cbar /= area;
     cbarx = cenx - 0.25*cbar;
+    ar = std::pow(0.5*span,2.) / (0.5*area);
   }
   area *= 2.;	// Mirror image
 
   std::cout.setf(std::ios_base::scientific);
-  std::cout << "Geometry information for wing " << _name << ":" << std::endl;
+  std::cout << "Geometric information for wing " << _name << ":" << std::endl;
   std::cout << "  Span: "
             << std::setprecision(5) << span << std::endl;
-  std::cout << "  Area: "
+  std::cout << "  Planform area: "
             << std::setprecision(5) << area << std::endl;
   std::cout << "  Mean aerodynamic chord: "
             << std::setprecision(5) << cbar << std::endl;
-  std::cout << "  MAC location (x, y, z): "
+  std::cout << "  Halfspan MAC location: "
             << std::setprecision(5) << cbarx << ",  " << ceny << ", " 
             << cenz << std::endl;
+  std::cout << "  Aspect ratio: "
+            << std::setprecision(5) << ar << std::endl;
+  std::cout << "  Taper ratio: "
+            << std::setprecision(5) << tr << std::endl;
 }
 
 /******************************************************************************/
