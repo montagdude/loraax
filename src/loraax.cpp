@@ -18,7 +18,7 @@ void create_or_backup_dir ( const std::string & dirname )
 
   pdir = opendir(dirname.c_str());
   if (pdir != NULL)
-  { 
+  {
     pdir = opendir("backup");
     if (pdir == NULL)
       mkdir("backup", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
@@ -37,8 +37,8 @@ void create_or_backup_dir ( const std::string & dirname )
   mkdir(dirname.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 }
 
-int main (int argc, char* argv[]) 
-{ 
+int main (int argc, char* argv[])
+{
   const std::string version = "0.1";
   CLOParser parser;
   std::string geom_file;
@@ -64,7 +64,7 @@ int main (int argc, char* argv[])
   std::cout << "Freestream Mach: "
             << std::setprecision(5) << std::setw(8) << std::left << minf
             << std::endl;
-    
+
   // Read geometry
 
   std::cout << "Reading and discretizing geometry ..." << std::endl;
@@ -154,5 +154,5 @@ int main (int argc, char* argv[])
   std::cout << "Writing final VTK visualization ..." << std::endl;
   ac.writeViz(casename, iter-1);
 
-  return 0; 
+  return 0;
 }

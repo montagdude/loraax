@@ -116,6 +116,7 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   if (foil.teGap() > 1.E-14)
   {
     foil.modifyTEGap(geom_opts, 0.0, 0.9);
+    foil.smoothPaneling(geom_opts);
     foil.splineFit();
   }
 

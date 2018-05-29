@@ -14,22 +14,51 @@ extern "C"
 //
 // Airfoil class. Stores and manipulates airfoil coordinates and solves BL
 // equations with Xfoil.
-// 
+//
 /******************************************************************************/
 
 /******************************************************************************/
 //
-// Default constructor
+// Helper function to avoid reusing code between copy constructor and copy
+// assignment
+//
+/******************************************************************************/
+void Airfoil::copyData ( const Airfoil & foil )
+{
+  // Copy xfoil data
+  if (_allocated)
+    xfoil_cleanup(&_xdg);
+  if (foil._allocated)
+    xfoil_init(&_xdg);
+    xfoil_copy(&foil._xdg, &_xdg);
+
+  // Copy the rest of the class data
+  _allocated = foil._allocated;
+  _nb = foil._nb;
+  _n = foil._n;
+  _s = foil._s;
+  _xs = foil._xs;
+  _zs = foil._zs;
+  _sle = foil._sle;
+  _unit_transform = foil._unit_transform;
+  _cl = foil._cl;
+  _cd = foil._cd;
+  _cm = foil._cm;
+  _cp = foil._cp;
+  _cf = foil._cf;
+}
+
+/******************************************************************************/
+//
+// Constructor, copy constructor, copy assignment, destructor
 //
 /******************************************************************************/
 Airfoil::Airfoil ()
 {
+  xfoil_init(&_xdg);
+  _allocated = true;
   _nb = 0;
   _n = 0;
-  _xb.resize(0);
-  _zb.resize(0);
-  _x.resize(0);
-  _z.resize(0);
   _s.resize(0);
   _xs.resize(0);
   _zs.resize(0);
@@ -42,6 +71,38 @@ Airfoil::Airfoil ()
   _cf.resize(0);
 }
 
+Airfoil::Airfoil ( const Airfoil & foil )
+{
+  copyData(foil);
+}
+
+Airfoil & Airfoil::operator = ( const Airfoil & foil )
+{
+  copyData(foil);
+  return *this;
+}
+
+Airfoil::~Airfoil()
+{
+  if (_allocated)
+  {
+    xfoil_cleanup(&_xdg);
+    _nb = 0;
+    _n = 0;
+    _s.resize(0);
+    _xs.resize(0);
+    _zs.resize(0);
+    _y = 0.;
+    _unit_transform = false;
+    _cl = 0.;
+    _cd = 0.;
+    _cm = 0.;
+    _cp.resize(0);
+    _cf.resize(0);
+  }
+  _allocated = false;
+}
+
 /******************************************************************************/
 //
 // Reads airfoil coordinates from file. Returns 0 on success, 1 on failure to
@@ -52,8 +113,10 @@ int Airfoil::readCoordinates ( const std::string & fname )
 {
   std::ifstream f;
   std::string line;
+  std::vector<double> xb, zb;
   std::vector<std::string> xz;
   double x, z;
+  int i;
   int retval = 0;
 
   f.open(fname.c_str());
@@ -62,22 +125,23 @@ int Airfoil::readCoordinates ( const std::string & fname )
   // Start reading coordinates or skip if header line
 
   _nb = 0;
-  _xb.resize(0);
-  _zb.resize(0);
-  std::getline(f, line); 
+  xb.resize(0);
+  zb.resize(0);
+  std::getline(f, line);
   xz = split_string(bracket_name(line));
   if ( (xz.size() == 2) && (string2double(xz[0], x) == 0) &&
        (string2double(xz[1], z) == 0) )
   {
     _nb += 1;
-    _xb.push_back(x);
-    _zb.push_back(z);
+    xb.push_back(x);
+    zb.push_back(z);
   }
 
   // Read rest of coordinates
+
   while (1)
   {
-    std::getline(f, line); 
+    std::getline(f, line);
     if (f.eof()) { break; }
 
     xz = split_string(bracket_name(line));
@@ -90,12 +154,25 @@ int Airfoil::readCoordinates ( const std::string & fname )
     else
     {
       _nb += 1;
-      _xb.push_back(x);
-      _zb.push_back(z);
-    } 
+      xb.push_back(x);
+      zb.push_back(z);
+    }
   }
-    
   f.close();
+
+  // Set coordinates in Xfoil
+
+  if (retval == 0)
+  {
+    double xba[_nb], zba[_nb];
+    for ( i = 0; i < _nb; i++ )
+    {
+      xba[i] = xb[i];
+      zba[i] = zb[i];
+    }
+    xfoil_set_buffer_airfoil(&_xdg, xba, zba, &_nb);
+  }
+
   _unit_transform = false;
 
   return retval;
@@ -110,21 +187,19 @@ int Airfoil::naca4Coordinates ( const std::string & des,
                                 const int & npointside )
 {
   double x[2*npointside], z[2*npointside];
-  int n;
-  unsigned int i;
+  int i;
 
   if (des.size() != 4)
     return 1;
 
-  naca_4_digit(des.c_str(), &npointside, x, z, &n); 
-  _nb = n;
-  _xb.resize(_nb);
-  _zb.resize(_nb);
+  naca_4_digit(des.c_str(), &npointside, x, z, &_nb);
+  double xba[_nb], zba[_nb];
   for ( i = 0; i < _nb; i++ )
   {
-    _xb[i] = x[i];
-    _zb[i] = z[i];
+    xba[i] = x[i];
+    zba[i] = z[i];
   }
+  xfoil_set_buffer_airfoil(&_xdg, xba, zba, &_nb);
 
   _unit_transform = false;
 
@@ -140,24 +215,22 @@ int Airfoil::naca5Coordinates ( const std::string & des,
                                 const int & npointside )
 {
   double x[2*npointside], z[2*npointside];
-  int n, stat;
-  unsigned int i;
+  int i, stat;
 
   if (des.size() != 5)
     return 1;
 
-  naca_5_digit(des.c_str(), &npointside, x, z, &n, &stat); 
+  naca_5_digit(des.c_str(), &npointside, x, z, &_nb, &stat);
   if (stat != 0)
     return 2;
 
-  _nb = n;
-  _xb.resize(_nb);
-  _zb.resize(_nb);
+  double xba[_nb], zba[_nb];
   for ( i = 0; i < _nb; i++ )
   {
-    _xb[i] = x[i];
-    _zb[i] = z[i];
+    xba[i] = x[i];
+    zba[i] = z[i];
   }
+  xfoil_set_buffer_airfoil(&_xdg, xba, zba, &_nb);
 
   _unit_transform = false;
 
@@ -172,12 +245,19 @@ int Airfoil::naca5Coordinates ( const std::string & des,
 int Airfoil::setCoordinates ( const std::vector<double> & x,
                               const std::vector<double> & z )
 {
+  int i;
+
   if (x.size() != z.size())
     return 1;
 
   _nb = x.size();
-  _xb = x;
-  _zb = z;
+  double xba[_nb], zba[_nb];
+  for ( i = 0; i < _nb; i++ )
+  {
+    xba[i] = x[i];
+    zba[i] = z[i];
+  }
+  xfoil_set_buffer_airfoil(&_xdg, xba, zba, &_nb);
 
   _unit_transform = false;
 
@@ -198,7 +278,7 @@ int Airfoil::setCoordinates ( const std::vector<double> & x,
 int Airfoil::interpCoordinates ( const Airfoil & foil1, const Airfoil & foil2,
                                  const double interpfrac )
 {
-  unsigned int i;
+  int i;
   std::vector<double> x1, z1, x2, z2;
 
   if ( (foil1.nSmoothed() == 0) || (foil2.nSmoothed() == 0) )
@@ -220,15 +300,15 @@ int Airfoil::interpCoordinates ( const Airfoil & foil1, const Airfoil & foil2,
   }
 
   _nb = foil1.nSmoothed();
-  _xb.resize(_nb);
-  _zb.resize(_nb);
+  double xba[_nb], zba[_nb];
   foil1.smoothedCoordinates(x1, z1);
   foil2.smoothedCoordinates(x2, z2);
   for ( i = 0; i < _nb; i++ )
   {
-    _xb[i] = (1.-interpfrac)*x1[i] + interpfrac*x2[i];
-    _zb[i] = (1.-interpfrac)*z1[i] + interpfrac*z2[i];
+    xba[i] = (1.-interpfrac)*x1[i] + interpfrac*x2[i];
+    zba[i] = (1.-interpfrac)*z1[i] + interpfrac*z2[i];
   }
+  xfoil_set_buffer_airfoil(&_xdg, xba, zba, &_nb);
 
   _unit_transform = false;
 
@@ -244,9 +324,9 @@ int Airfoil::interpCoordinates ( const Airfoil & foil1, const Airfoil & foil2,
 void Airfoil::ccwOrderCoordinates ()
 {
   double cross;
-  unsigned int i;
+  int i;
   double dx1, dx2, dz1, dz2;
-  std::vector<double> xrev(_nb), zrev(_nb);
+  double xrev[_nb], zrev[_nb];
 
 #ifdef DEBUG
   if (_nb == 0)
@@ -260,11 +340,11 @@ void Airfoil::ccwOrderCoordinates ()
 
   cross = 0.;
   for ( i = 1; i < _nb-1; i++ )
-  { 
-    dx1 = _xb[i-1] - _xb[i];
-    dx2 = _xb[i+1] - _xb[i];
-    dz1 = _zb[i-1] - _zb[i];
-    dz2 = _zb[i+1] - _zb[i];
+  {
+    dx1 = _xdg.xfd.XB[i-1] - _xdg.xfd.XB[i];
+    dx2 = _xdg.xfd.XB[i+1] - _xdg.xfd.XB[i];
+    dz1 = _xdg.xfd.YB[i-1] - _xdg.xfd.YB[i];
+    dz2 = _xdg.xfd.YB[i+1] - _xdg.xfd.YB[i];
     cross += (dz2*dx1 - dx2*dz1);
   }
   if (cross < 0.) { return; }
@@ -273,11 +353,10 @@ void Airfoil::ccwOrderCoordinates ()
 
   for ( i = 0; i < _nb; i++ )
   {
-    xrev[i] = _xb[_nb-i-1];
-    zrev[i] = _zb[_nb-i-1];
+    xrev[i] = _xdg.xfd.XB[_nb-i-1];
+    zrev[i] = _xdg.xfd.YB[_nb-i-1];
   }
-  _xb = xrev;
-  _zb = zrev;
+  xfoil_set_buffer_airfoil(&_xdg, xrev, zrev, &_nb);
 }
 
 /******************************************************************************/
@@ -287,9 +366,8 @@ void Airfoil::ccwOrderCoordinates ()
 /******************************************************************************/
 int Airfoil::splineFit ()
 {
-  double x[_nb], z[_nb], s[_nb], xs[_nb], zs[_nb];
-  unsigned int i;
-  int n;
+  double s[_nb], xs[_nb], zs[_nb];
+  int i;
 
   if (_nb == 0)
   {
@@ -299,16 +377,10 @@ int Airfoil::splineFit ()
     return 1;
   }
 
-  n = _nb;
   _s.resize(_nb);
   _xs.resize(_nb);
   _zs.resize(_nb);
-  for ( i = 0; i < _nb; i++ )
-  {
-    x[i] = _xb[i];
-    z[i] = _zb[i];
-  }
-  xfoil_spline_coordinates(x, z, &n, s, xs, zs);
+  xfoil_spline_coordinates(_xdg.xfd.XB, _xdg.xfd.YB, &_nb, s, xs, zs);
 
   for ( i = 0; i < _nb; i++ )
   {
@@ -317,7 +389,7 @@ int Airfoil::splineFit ()
     _zs[i] = zs[i];
   }
 
-  return 0;  
+  return 0;
 }
 
 /******************************************************************************/
@@ -342,9 +414,8 @@ bool Airfoil::splined () const
 /******************************************************************************/
 int Airfoil::splineInterp ( const double & sc, double & xc, double & zc ) const
 {
-  double x[_nb], z[_nb], s[_nb], xs[_nb], zs[_nb];
-  unsigned int i;
-  int n;
+  double s[_nb], xs[_nb], zs[_nb];
+  int i;
 
   if (! splined())
   {
@@ -354,16 +425,13 @@ int Airfoil::splineInterp ( const double & sc, double & xc, double & zc ) const
     return 1;
   }
 
-  n = _nb;
   for ( i = 0; i < _nb; i++ )
   {
-    x[i] = _xb[i];
-    z[i] = _zb[i];
     s[i] = _s[i];
     xs[i] = _xs[i];
     zs[i] = _zs[i];
   }
-  xfoil_eval_spline(x, z, s, xs, zs, &n, &sc, &xc, &zc);
+  xfoil_eval_spline(_xdg.xfd.XB, _xdg.xfd.YB, s, xs, zs, &_nb, &sc, &xc, &zc);
 
   return 0;
 }
@@ -376,9 +444,8 @@ int Airfoil::splineInterp ( const double & sc, double & xc, double & zc ) const
 int Airfoil::unitTransform ()
 {
   double xle, zle, xte, chord;
-  double x[_nb], z[_nb], s[_nb], xs[_nb], zs[_nb];
-  unsigned int i;
-  int n;
+  double s[_nb], xs[_nb], zs[_nb];
+  int i;
 
   if (_nb == 0)
   {
@@ -396,23 +463,20 @@ int Airfoil::unitTransform ()
     return 2;
   }
 
-  n = _nb;
   for ( i = 0; i < _nb; i++ )
   {
-    x[i] = _xb[i];
-    z[i] = _zb[i];
     s[i] = _s[i];
     xs[i] = _xs[i];
     zs[i] = _zs[i];
   }
-  xfoil_lefind(x, z, s, xs, zs, &n, &_sle, &xle, &zle);
+  xfoil_lefind(_xdg.xfd.XB, _xdg.xfd.YB, s, xs, zs, &_nb, &_sle, &xle, &zle);
 
   xte = -1E+06;
   for ( i = 0; i < _nb; i++ )
   {
-    if (_xb[i] > xte) { xte = _xb[i]; }
+    if (_xdg.xfd.XB[i] > xte) { xte = _xdg.xfd.XB[i]; }
   }
-  chord = xte - xle; 
+  chord = xte - xle;
   if (chord <= 0.)
   {
 #ifdef DEBUG
@@ -425,10 +489,10 @@ int Airfoil::unitTransform ()
 
   for ( i = 0; i < _nb; i++ )
   {
-    _xb[i] -= xle;
-    _zb[i] -= zle;
-    _xb[i] /= chord;
-    _zb[i] /= chord;
+    _xdg.xfd.XB[i] -= xle;
+    _xdg.xfd.YB[i] -= zle;
+    _xdg.xfd.XB[i] /= chord;
+    _xdg.xfd.YB[i] /= chord;
   }
 
   // Refit spline to transformed coordinates
@@ -436,13 +500,11 @@ int Airfoil::unitTransform ()
   splineFit();
   for ( i = 0; i < _nb; i++ )
   {
-    x[i] = _xb[i];
-    z[i] = _zb[i];
     s[i] = _s[i];
     xs[i] = _xs[i];
     zs[i] = _zs[i];
   }
-  xfoil_lefind(x, z, s, xs, zs, &n, &_sle, &xle, &zle);
+  xfoil_lefind(_xdg.xfd.XB, _xdg.xfd.YB, s, xs, zs, &_nb, &_sle, &xle, &zle);
 
   _unit_transform = true;
 
@@ -458,10 +520,7 @@ int Airfoil::unitTransform ()
 /******************************************************************************/
 int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
 {
-  unsigned int i;
-  int npointin, npointout, stat;
-  double xin[_nb], zin[_nb];
-  double xout[geom_opts.npan], zout[geom_opts.npan];
+  int stat;
 
   if (_nb == 0)
   {
@@ -479,37 +538,13 @@ int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
     return 2;
   }
 
-  for ( i = 0; i < _nb; i++ )
-  {
-    xin[i] = _xb[i]; 
-    zin[i] = _zb[i]; 
-  }
-
-  npointin = _nb;
-  npointout = geom_opts.npan;
-  xfoil_init();
-  xfoil_set_paneling(&geom_opts);
-  xfoil_set_airfoil(xin, zin, &npointin, &stat);
-  if (stat != 0)
-  {
-    conditional_stop(1, "Airfoil::smoothPaneling", "Failed to set airfoil.");
-    return 3;
-  }
-  xfoil_smooth_paneling(&stat);
+  _n = geom_opts.npan;
+  xfoil_set_paneling(&_xdg, &geom_opts);
+  xfoil_smooth_paneling(&_xdg, &stat);
   if (stat != 0)
   {
     conditional_stop(1, "Airfoil::smoothPaneling", "Airfoil smoothing failed.");
     return 3;
-  }
-  xfoil_get_airfoil(xout, zout, &npointout);
-
-  _n = npointout;
-  _x.resize(_n);
-  _z.resize(_n);
-  for ( i = 0; i < _n; i++ )
-  {
-    _x[i] = xout[i];
-    _z[i] = zout[i];
   }
 
   return 0;
@@ -524,8 +559,8 @@ double Airfoil::teGap () const
 {
   double dx, dz, gap;
 
-  dx = _xb[0] - _xb[_nb-1];
-  dz = _zb[0] - _zb[_nb-1];
+  dx = _xdg.xfd.XB[0] - _xdg.xfd.XB[_nb-1];
+  dz = _xdg.xfd.YB[0] - _xdg.xfd.YB[_nb-1];
   gap = std::sqrt(std::pow(dx,2.) + std::pow(dz,2.));
 
   return gap;
@@ -544,10 +579,7 @@ double Airfoil::teGap () const
 int Airfoil::modifyTEGap ( const xfoil_geom_options_type & geom_opts,
                            const double & newgap, const double & blendloc )
 {
-  unsigned int i;
-  int npointin, npointout, stat;
-  double xin[_nb], zin[_nb];
-  double *xout, *zout;
+  int stat;
 
   if (_nb == 0)
   {
@@ -565,43 +597,24 @@ int Airfoil::modifyTEGap ( const xfoil_geom_options_type & geom_opts,
     return 2;
   }
 
-  for ( i = 0; i < _nb; i++ )
-  {
-    xin[i] = _xb[i]; 
-    zin[i] = _zb[i]; 
-  }
-
-  npointin = _nb;
-  xfoil_init();
-  xfoil_set_paneling(&geom_opts);
-  xfoil_set_airfoil(xin, zin, &npointin, &stat);
-  if (stat != 0)
-  {
-    conditional_stop(1, "Airfoil::modifyTEGap", "Failed to set airfoil.");
-    return 3;
-  }
-  xfoil_modify_tegap(&newgap, &blendloc, &npointout, &stat);
+  xfoil_modify_tegap(&_xdg, &newgap, &blendloc, &_nb, &stat);
   if (stat != 0)
   {
     conditional_stop(1, "Airfoil::modifyTEGap", "TE gap modification failed.");
     return 3;
   }
-  xout = (double*)std::malloc(npointout*sizeof(double));
-  zout = (double*)std::malloc(npointout*sizeof(double));
-  xfoil_get_airfoil(xout, zout, &npointout);
-
-  _nb = npointout;
-  _xb.resize(_nb);
-  _zb.resize(_nb);
-  for ( i = 0; i < _nb; i++ )
-  {
-    _xb[i] = xout[i];
-    _zb[i] = zout[i];
-  }
-  std::free(xout);
-  std::free(zout);
 
   return 0;
+}
+
+/******************************************************************************/
+//
+// Set xfoil options
+//
+/******************************************************************************/
+void Airfoil::setXfoilOptions ( const xfoil_options_type & xfoil_opts )
+{
+  xfoil_defaults(&_xdg, &xfoil_opts);
 }
 
 /******************************************************************************/
@@ -609,11 +622,13 @@ int Airfoil::modifyTEGap ( const xfoil_geom_options_type & geom_opts,
 // Get airfoil data
 //
 /******************************************************************************/
-unsigned int Airfoil::nBuffer () const { return _nb; }
-unsigned int Airfoil::nSmoothed () const { return _n; }
+int Airfoil::nBuffer () const { return _nb; }
+int Airfoil::nSmoothed () const { return _n; }
 void Airfoil::bufferCoordinates ( std::vector<double> & xb,
                                   std::vector<double> & zb ) const
 {
+  int i;
+
 #ifdef DEBUG
   if (_nb == 0)
   {
@@ -622,13 +637,20 @@ void Airfoil::bufferCoordinates ( std::vector<double> & xb,
   }
 #endif
 
-  xb = _xb;
-  zb = _zb;
+  xb.resize(_nb);
+  zb.resize(_nb);
+  for ( i = 0; i < _nb; i++ )
+  {
+    xb[i] = _xdg.xfd.XB[i];
+    zb[i] = _xdg.xfd.YB[i];
+  }
 }
 
 void Airfoil::smoothedCoordinates ( std::vector<double> & x,
                                     std::vector<double> & z ) const
 {
+  int i;
+
 #ifdef DEBUG
   if (_n == 0)
   {
@@ -637,6 +659,11 @@ void Airfoil::smoothedCoordinates ( std::vector<double> & x,
   }
 #endif
 
-  x = _x;
-  z = _z;
+  x.resize(_n);
+  z.resize(_n);
+  for ( i = 0; i < _n; i++ )
+  {
+    x[i] = _xdg.xfd.X[i];
+    z[i] = _xdg.xfd.Y[i];
+  }
 }

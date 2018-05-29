@@ -189,8 +189,6 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
     return 2;
   xfoil_run_opts.viscous_mode = viscous;
   xfoil_run_opts.silent_mode = true;
-  xfoil_init();
-  xfoil_defaults(&xfoil_run_opts);
 
   XMLElement *xfgeom = main->FirstChildElement("XfoilPaneling");
   if (! xfgeom)

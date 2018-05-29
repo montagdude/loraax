@@ -21,7 +21,7 @@ using namespace tinyxml2;
 /******************************************************************************/
 //
 // Aircraft class. Contains some number of wings and related data and members.
-// 
+//
 /******************************************************************************/
 
 /******************************************************************************/
@@ -66,7 +66,7 @@ void Aircraft::setGeometryPointers ()
   pcounter = 0;
   vwcounter = 0;
   wakecounter = 0;
-  for ( i = 0; i < nwings; i++ ) 
+  for ( i = 0; i < nwings; i++ )
   {
     nverts = _wings[i].nVerts();
     for ( j = 0; j < nverts; j++ )
@@ -108,7 +108,7 @@ void Aircraft::setGeometryPointers ()
     {
       _wakepanels[wakecounter] = _wings[i].wake().quadPanel(j);
       wakecounter += 1;
-    } 
+    }
   }
 }
 
@@ -127,7 +127,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
   if (! f.is_open())
   {
     conditional_stop(1, "Aircraft::writeSurfaceViz",
-                     "Unable to open " + fname + " for writing."); 
+                     "Unable to open " + fname + " for writing.");
     return 1;
   }
 
@@ -151,7 +151,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
       << _verts[i]->yViz();
     f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->zViz() << std::endl;
-  } 
+  }
   for ( i = 0; i < int(nverts); i++ )
   {
     f << std::setprecision(7) << std::setw(16) << std::left
@@ -160,7 +160,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
       << -_verts[i]->yViz();
     f << std::setprecision(7) << std::setw(16) << std::left
       << _verts[i]->zViz() << std::endl;
-  } 
+  }
 
   // Write panels and mirror panels
 
@@ -173,11 +173,11 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
   f << "CELLS " << npanels*2 << " " << cellsize*2 << std::endl;
   for ( i = npanels-1; i >= 0; i-- )
   {
-    ncellverts = _panels[i]->nVertices();    
+    ncellverts = _panels[i]->nVertices();
     if ( (ncellverts != 4) && (ncellverts != 3) )
     {
       conditional_stop(1, "Aircraft::writeSurfaceViz",
-                       "Panels must all be quad- or tri-type.");  
+                       "Panels must all be quad- or tri-type.");
       return 1;
     }
     f << ncellverts;
@@ -189,7 +189,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
   }
   for ( i = 0; i < int(npanels); i++ )
   {
-    ncellverts = _panels[i]->nVertices();    
+    ncellverts = _panels[i]->nVertices();
     f << ncellverts;
     for ( j = ncellverts-1; j >= 0; j-- )
     {
@@ -203,7 +203,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
   f << "CELL_TYPES " << npanels*2 << std::endl;
   for ( i = npanels-1; i >= 0; i-- )
   {
-    ncellverts = _panels[i]->nVertices();    
+    ncellverts = _panels[i]->nVertices();
     if (ncellverts == 4)
       f << 9 << std::endl;
     else if (ncellverts == 3)
@@ -211,7 +211,7 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
   }
   for ( i = 0; i < int(npanels); i++ )
   {
-    ncellverts = _panels[i]->nVertices();    
+    ncellverts = _panels[i]->nVertices();
     if (ncellverts == 4)
       f << 9 << std::endl;
     else if (ncellverts == 3)
@@ -237,7 +237,7 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
   unsigned int i, nverts;
 
   nverts = _verts.size();
-  
+
   // Vertex data (incl. mirror panels)
 
   f << "POINT_DATA " << nverts*2 << std::endl;
@@ -322,7 +322,7 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
   if (! f.is_open())
   {
     conditional_stop(1, "Aircraft::writeWakeViz",
-                     "Unable to open " + fname + " for writing."); 
+                     "Unable to open " + fname + " for writing.");
     return 1;
   }
 
@@ -347,7 +347,7 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
       << _wakeverts[i]->yViz();
     f << std::setprecision(7) << std::setw(16) << std::left
       << _wakeverts[i]->zViz() << std::endl;
-  } 
+  }
   for ( i = 0; i < int(nverts); i++ )
   {
     f << std::setprecision(7) << std::setw(16) << std::left
@@ -356,7 +356,7 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
       << -_wakeverts[i]->yViz();
     f << std::setprecision(7) << std::setw(16) << std::left
       << _wakeverts[i]->zViz() << std::endl;
-  } 
+  }
 
   // Write wake panels and mirror panels
 
@@ -402,14 +402,14 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
     ncellverts = _wakepanels[i]->nVertices();
     if (ncellverts == 4)
       f << 9 << std::endl;
-    else if (ncellverts == 3) 
+    else if (ncellverts == 3)
       f << 5 << std::endl;
   }
   for ( i = 0; i < int(npanels); i++ )
   {
     if (ncellverts == 4)
       f << 9 << std::endl;
-    else if (ncellverts == 3) 
+    else if (ncellverts == 3)
       f << 5 << std::endl;
   }
 
@@ -432,7 +432,7 @@ void Aircraft::writeWakeData ( std::ofstream & f ) const
   unsigned int i, nwakeverts;
 
   nwakeverts = _wakeverts.size();
-  
+
   // Point data (incl. mirror elements)
 
   f << "POINT_DATA " << nwakeverts*2 << std::endl;
@@ -735,8 +735,9 @@ int Aircraft::readXML ( const std::string & geom_file )
       newfoil.ccwOrderCoordinates();
       newfoil.splineFit();
       newfoil.unitTransform();
+      newfoil.setXfoilOptions(xfoil_run_opts);
       newfoil.smoothPaneling(xfoil_geom_opts);
-      foils.push_back(newfoil); 
+      foils.push_back(newfoil);
     }
     if (foils.size() < 1)
     {
@@ -745,7 +746,7 @@ int Aircraft::readXML ( const std::string & geom_file )
        return 2;
     }
 
-    _wings[nwings].setAirfoils(foils);    
+    _wings[nwings].setAirfoils(foils);
     _wings[nwings].setupSections(user_sections);
     _wings[nwings].createPanels(next_global_vertidx, next_global_elemidx);
     nwings += 1;
@@ -829,7 +830,7 @@ void Aircraft::setDoubletStrengths ()
 void Aircraft::setWakeDoubletStrengths ( bool init )
 {
   unsigned int i, j, k, nwings, nstrips, nwakepans, nwakeunk, nwakeverts;
-  double mu; 
+  double mu;
   WakeStrip *strip;
 
   nwings = _wings.size();
@@ -838,7 +839,7 @@ void Aircraft::setWakeDoubletStrengths ( bool init )
     nstrips = _wings[i].nWStrips();
 #pragma omp parallel for private(j,strip,mu,nwakepans,nwakeunk,k)
     for ( j = 0; j < nstrips; j++ )
-    { 
+    {
       strip = _wings[i].wStrip(j);
       mu = strip->topTEPan()->doubletStrength()
          - strip->botTEPan()->doubletStrength();
@@ -879,7 +880,7 @@ void Aircraft::constructSystem ( unsigned int iter )
   int toptepan, bottepan;
   Eigen::Vector3d col;
   WakeStrip * strip;
-  double stripic; 
+  double stripic;
   bool onpanel;
 
   npanels = _panels.size();
@@ -948,14 +949,14 @@ void Aircraft::constructSystem ( unsigned int iter )
 
     for ( k = 0; k < nwings; k++ )
     {
-      nstrips = _wings[k].nWStrips(); 
+      nstrips = _wings[k].nWStrips();
       for ( l = 0; l < nstrips; l++ )
       {
         strip = _wings[k].wStrip(l);
         nwakepans = strip->nPanels();
 
         // During initial step, all wake panels in a strip have strength equal
-        // to mu_topte - mu_botte 
+        // to mu_topte - mu_botte
 
         if (iter == 1)
         {

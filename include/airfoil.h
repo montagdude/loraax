@@ -21,26 +21,37 @@ class Airfoil: public SectionalObject {
 
   private:
 
+    // Xfoil data
+
+    xfoil_data_group _xdg;
+    bool _allocated;
+
     // Geometric data
 
-    unsigned int _nb, _n;		// Number of points (buffer, smoothed)
-    std::vector<double> _xb, _zb;	// Input coordinates
+    int _nb, _n;		        // Number of points (buffer, smoothed)
     std::vector<double> _s, _xs, _zs;   // Spline fit of buffer coordinates
     double _sle;                        // Leading edge spline parameter
-    std::vector<double> _x, _z;		// Smoothed coordinates
 
     bool _unit_transform;		// Transform flag (call unitTransform)
 
     // Aero data
-    
+
     double _cl, _cd, _cm;
     std::vector<double> _cp, _cf;
 
+    // Helper function to avoid reusing code between copy constructor and copy
+    // assignment
+
+    void copyData ( const Airfoil & foil );
+
   public:
 
-    // Constructor
+    // Constructor, copy constructor, copy assignment, destructor
 
-    Airfoil (); 
+    Airfoil ();
+    Airfoil ( const Airfoil & foil );
+    Airfoil & operator = ( const Airfoil & foil );
+    ~Airfoil ();
 
     // Setting airfoil coordinates
 
@@ -81,10 +92,14 @@ class Airfoil: public SectionalObject {
     int modifyTEGap ( const xfoil_geom_options_type & geom_opts,
                       const double & newgap, const double & blendloc );
 
+    // Set xfoil options
+
+    void setXfoilOptions ( const xfoil_options_type & xfoil_opts );
+
     // Airfoil data
 
-    unsigned int nBuffer () const;
-    unsigned int nSmoothed () const;
+    int nBuffer () const;
+    int nSmoothed () const;
     void bufferCoordinates ( std::vector<double> & xb,
                              std::vector<double> & zb ) const;
     void smoothedCoordinates ( std::vector<double> & x,

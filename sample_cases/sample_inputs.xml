@@ -1,9 +1,9 @@
 <Main>
 <!-- Case name -->
-  <CaseName>wonky</CaseName>
+  <CaseName>wortmann_ar4</CaseName>
 
 <!-- Aircraft definition. -->
-  <GeometryFile>wonky_aircraft.xml</GeometryFile>
+  <GeometryFile>wortmann_ar4.xml</GeometryFile>
 
 <!-- Freestream reference conditions. Freestream speed must be given in units of
      length/sec, where length is the length unit inherent in your aircraft
@@ -42,7 +42,7 @@
      local flow velocity. Behind this, the wake is aligned with the freestream
      over a distance of 1000 * RollupDist. (So make sure RollupDist is long
      enough!) -->
-  <RollupDist>40</RollupDist>
+  <RollupDist>8</RollupDist>
 
 <!-- Number of streamwise divisions in the rolling-up portion of the wake. Also
      defines the time step: dt = RollupDist / (FreestreamSpeed * WakeSteps) -->

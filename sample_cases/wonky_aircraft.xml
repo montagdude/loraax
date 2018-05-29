@@ -4,7 +4,7 @@
     <RefLength>6.85961e+00</RefLength>
     <MomentCenX>3.85529e+00</MomentCenX>
     <MomentCenY>0.0</MomentCenY>
-    <MomentCenZ>0.0</MomentCenZ>
+    <MomentCenZ>1.65959e+00</MomentCenZ>
   </Reference>
   <Wing name="Main">
     <Paneling>
