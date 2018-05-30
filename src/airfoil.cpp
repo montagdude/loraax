@@ -25,15 +25,6 @@ extern "C"
 /******************************************************************************/
 void Airfoil::copyData ( const Airfoil & foil )
 {
-  // Copy xfoil data
-  if (_allocated)
-    xfoil_cleanup(&_xdg);
-  if (foil._allocated)
-    xfoil_init(&_xdg);
-    xfoil_copy(&foil._xdg, &_xdg);
-
-  // Copy the rest of the class data
-  _allocated = foil._allocated;
   _nb = foil._nb;
   _n = foil._n;
   _s = foil._s;
@@ -73,12 +64,51 @@ Airfoil::Airfoil ()
 
 Airfoil::Airfoil ( const Airfoil & foil )
 {
+  // Initialize xfoil and copy xfoil data
+
+  xfoil_init(&_xdg);
+  _allocated = true;
+
+  if (foil._allocated)
+    xfoil_copy(&foil._xdg, &_xdg);
+  else
+  {
+    xfoil_cleanup(&_xdg);
+    _allocated = false;
+  }
+
+  // Copy the rest of the class data
+
   copyData(foil);
 }
 
 Airfoil & Airfoil::operator = ( const Airfoil & foil )
 {
+  // Copy xfoil data. Need to account for all combinations of this and
+  // other airfoil having Xfoil data allocated or not.
+
+  if (_allocated)
+    if (foil._allocated)
+      xfoil_copy(&foil._xdg, &_xdg);
+    else
+    {
+      xfoil_cleanup(&_xdg);
+      _allocated = false;
+    }
+  else
+  {
+    if (foil._allocated)
+    {
+      xfoil_init(&_xdg);
+      _allocated = true;
+      xfoil_copy(&foil._xdg, &_xdg);
+    }
+  }
+
+  // Copy the rest of the class data
+
   copyData(foil);
+
   return *this;
 }
 
