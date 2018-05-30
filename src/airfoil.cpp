@@ -25,6 +25,7 @@ extern "C"
 /******************************************************************************/
 void Airfoil::copyData ( const Airfoil & foil )
 {
+  xfoil_copy(&foil._xdg, &_xdg);
   _nb = foil._nb;
   _n = foil._n;
   _s = foil._s;
@@ -47,7 +48,6 @@ void Airfoil::copyData ( const Airfoil & foil )
 Airfoil::Airfoil ()
 {
   xfoil_init(&_xdg);
-  _allocated = true;
   _nb = 0;
   _n = 0;
   _s.resize(0);
@@ -64,73 +64,31 @@ Airfoil::Airfoil ()
 
 Airfoil::Airfoil ( const Airfoil & foil )
 {
-  // Initialize xfoil and copy xfoil data
-
   xfoil_init(&_xdg);
-  _allocated = true;
-
-  if (foil._allocated)
-    xfoil_copy(&foil._xdg, &_xdg);
-  else
-  {
-    xfoil_cleanup(&_xdg);
-    _allocated = false;
-  }
-
-  // Copy the rest of the class data
-
   copyData(foil);
 }
 
 Airfoil & Airfoil::operator = ( const Airfoil & foil )
 {
-  // Copy xfoil data. Need to account for all combinations of this and
-  // other airfoil having Xfoil data allocated or not.
-
-  if (_allocated)
-    if (foil._allocated)
-      xfoil_copy(&foil._xdg, &_xdg);
-    else
-    {
-      xfoil_cleanup(&_xdg);
-      _allocated = false;
-    }
-  else
-  {
-    if (foil._allocated)
-    {
-      xfoil_init(&_xdg);
-      _allocated = true;
-      xfoil_copy(&foil._xdg, &_xdg);
-    }
-  }
-
-  // Copy the rest of the class data
-
   copyData(foil);
-
   return *this;
 }
 
 Airfoil::~Airfoil()
 {
-  if (_allocated)
-  {
-    xfoil_cleanup(&_xdg);
-    _nb = 0;
-    _n = 0;
-    _s.resize(0);
-    _xs.resize(0);
-    _zs.resize(0);
-    _y = 0.;
-    _unit_transform = false;
-    _cl = 0.;
-    _cd = 0.;
-    _cm = 0.;
-    _cp.resize(0);
-    _cf.resize(0);
-  }
-  _allocated = false;
+  xfoil_cleanup(&_xdg);
+  _nb = 0;
+  _n = 0;
+  _s.resize(0);
+  _xs.resize(0);
+  _zs.resize(0);
+  _y = 0.;
+  _unit_transform = false;
+  _cl = 0.;
+  _cd = 0.;
+  _cm = 0.;
+  _cp.resize(0);
+  _cf.resize(0);
 }
 
 /******************************************************************************/
@@ -543,12 +501,25 @@ int Airfoil::unitTransform ()
 
 /******************************************************************************/
 //
+// Sets Xfoil paneling and run options
+//
+/******************************************************************************/
+void Airfoil::setXfoilOptions ( const xfoil_options_type & xfoil_opts,
+                                const xfoil_geom_options_type & geom_opts )
+{
+  xfoil_defaults(&_xdg, &xfoil_opts);
+  xfoil_set_paneling(&_xdg, &geom_opts);
+  _n = geom_opts.npan;
+}
+
+/******************************************************************************/
+//
 // Generates smoothed coordinates. Returns 1 and does nothing if buffer airfoil
 // has not been loaded. Returns 2 and does nothing if unitTransform has not been
 // called. Returns 3 if smoothing failed.
 //
 /******************************************************************************/
-int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
+int Airfoil::smoothPaneling ()
 {
   int stat;
 
@@ -568,8 +539,6 @@ int Airfoil::smoothPaneling ( const xfoil_geom_options_type & geom_opts )
     return 2;
   }
 
-  _n = geom_opts.npan;
-  xfoil_set_paneling(&_xdg, &geom_opts);
   xfoil_smooth_paneling(&_xdg, &stat);
   if (stat != 0)
   {
@@ -606,8 +575,7 @@ double Airfoil::teGap () const
 // splineInterp, smoothPaneling, etc. again afterwards.
 //
 /******************************************************************************/
-int Airfoil::modifyTEGap ( const xfoil_geom_options_type & geom_opts,
-                           const double & newgap, const double & blendloc )
+int Airfoil::modifyTEGap ( const double & newgap, const double & blendloc )
 {
   int stat;
 
@@ -635,16 +603,6 @@ int Airfoil::modifyTEGap ( const xfoil_geom_options_type & geom_opts,
   }
 
   return 0;
-}
-
-/******************************************************************************/
-//
-// Set xfoil options
-//
-/******************************************************************************/
-void Airfoil::setXfoilOptions ( const xfoil_options_type & xfoil_opts )
-{
-  xfoil_defaults(&_xdg, &xfoil_opts);
 }
 
 /******************************************************************************/

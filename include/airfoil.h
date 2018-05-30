@@ -24,7 +24,6 @@ class Airfoil: public SectionalObject {
     // Xfoil data
 
     xfoil_data_group _xdg;
-    bool _allocated;
 
     // Geometric data
 
@@ -80,21 +79,21 @@ class Airfoil: public SectionalObject {
 
     int unitTransform ();
 
+    // Set xfoil options. Should do this before most other operations.
+
+    void setXfoilOptions ( const xfoil_options_type & xfoil_opts,
+                           const xfoil_geom_options_type & geom_opts );
+
     // Generate smoothed coordinates from buffer coordinates
 
-    int smoothPaneling ( const xfoil_geom_options_type & geom_opts );
+    int smoothPaneling ();
 
     // Returns or modifies trailing edge gap. Note: modifyTEGap only only
     // modifies the buffer airfoil coordinates. You may want to call
     // splineInterp, smoothPaneling, etc. again afterwards.
 
     double teGap () const;
-    int modifyTEGap ( const xfoil_geom_options_type & geom_opts,
-                      const double & newgap, const double & blendloc );
-
-    // Set xfoil options
-
-    void setXfoilOptions ( const xfoil_options_type & xfoil_opts );
+    int modifyTEGap ( const double & newgap, const double & blendloc );
 
     // Airfoil data
 

@@ -619,7 +619,8 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
     _sections[i].airfoil().ccwOrderCoordinates();
     _sections[i].airfoil().splineFit();
     _sections[i].airfoil().unitTransform();
-    _sections[i].airfoil().smoothPaneling(xfoil_geom_opts);
+    _sections[i].airfoil().setXfoilOptions(xfoil_run_opts, xfoil_geom_opts);
+    _sections[i].airfoil().smoothPaneling();
 
     // Set section position, orientation, and scale
 
@@ -675,7 +676,7 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 
     // Set vertices from spacing distribution
 
-    _sections[i].setVertices(_nchord, _lesprat, _tesprat, xfoil_geom_opts);
+    _sections[i].setVertices(_nchord, _lesprat, _tesprat);
   }
 
   return 0; 

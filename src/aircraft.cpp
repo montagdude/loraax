@@ -735,8 +735,8 @@ int Aircraft::readXML ( const std::string & geom_file )
       newfoil.ccwOrderCoordinates();
       newfoil.splineFit();
       newfoil.unitTransform();
-      newfoil.setXfoilOptions(xfoil_run_opts);
-      newfoil.smoothPaneling(xfoil_geom_opts);
+      newfoil.setXfoilOptions(xfoil_run_opts, xfoil_geom_opts);
+      newfoil.smoothPaneling();
       foils.push_back(newfoil);
     }
     if (foils.size() < 1)

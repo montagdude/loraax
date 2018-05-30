@@ -5,10 +5,6 @@
 
 #include <vector>
 #include <string>
-extern "C"
-{
-  #include <xfoil_interface.h>
-}
 #include "sectional_object.h"
 #include "vertex.h"
 #include "airfoil.h"
@@ -35,6 +31,7 @@ class Section: public SectionalObject {
 
     double _fn, _fa;	// Normal and axial force/span
     double _cl, _cd;	// Sectional lift and drag coefficients
+    double _cl2d;     // Cl based on in-plane velocity vector 
 
   public:
 
@@ -61,8 +58,7 @@ class Section: public SectionalObject {
     // Set vertices from spacing distribution
 
     void setVertices ( unsigned int nchord, const double & lesprat,
-                       const double & tesprat,
-                       const xfoil_geom_options_type & geom_opts );
+                       const double & tesprat );
 
     // Access airfoil
 

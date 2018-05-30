@@ -2,10 +2,6 @@
 #include <string>
 #include <Eigen/Core>
 #include <cmath>
-extern "C"
-{
-  #include <xfoil_interface.h>
-}
 #include "util.h"
 #include "algorithms.h"
 #include "transformations.h"
@@ -85,8 +81,7 @@ Vertex & Section::vert ( unsigned int idx )
 //
 /******************************************************************************/
 void Section::setVertices ( unsigned int nchord, const double & lesprat,
-                            const double & tesprat,
-                            const xfoil_geom_options_type & geom_opts )
+                            const double & tesprat )
 {
   Airfoil foil;
   double slen, sle, unisp, lesp, tesp;
@@ -115,8 +110,8 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   foil = _foil;
   if (foil.teGap() > 1.E-14)
   {
-    foil.modifyTEGap(geom_opts, 0.0, 0.9);
-    foil.smoothPaneling(geom_opts);
+    foil.modifyTEGap(0.0, 0.9);
+    foil.smoothPaneling();
     foil.splineFit();
   }
 
