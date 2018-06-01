@@ -186,11 +186,12 @@ Airfoil & Section::airfoil () { return _foil; }
 //
 /******************************************************************************/
 void Section::computePressureForce ( const double & alpha, const double & uinf,
-                                     const double & rhoinf )
+                                     const double & rhoinf,
+                                     const Eigen::Vector3d & uinfvec )
 {
   unsigned int i;
-  double nx, nz, pave, qinf, lift, drag;
-  Eigen::Vector3d force;
+  double nx, nz, pave, qinf, lift, drag, uinfp;
+  Eigen::Vector3d force, uinfvec_p;
   Eigen::Matrix3d rotation;
 
   _fn = 0.;
@@ -222,6 +223,18 @@ void Section::computePressureForce ( const double & alpha, const double & uinf,
   drag =  force(0)*cos(alpha*M_PI/180.) + force(2)*sin(alpha*M_PI/180.);
   _cl = lift/(qinf*_chord);
   _cd = drag/(qinf*_chord);
+  
+  /** To get 2D Cl:
+      1. Transform uinfvec to section frame -> uinfvec_p
+      2. 2D angle of attack is atan(uinfvec_p[2]/uinfvec_p[0])
+      3. 2D lift is -fa*sin(alpha2d) + fn*cos(alpha2d)
+  **/
+  //FIXME: this needs to be checked
+  
+  uinfvec_p = rotation.transpose() * uinfvec;
+  uinfp = uinfvec_p.norm();
+  _cl2d = -_fa*uinfvec_p[2]/uinfp + _fn*uinfvec_p[0]/uinfp;
+  _cl2d /= qinf*_chord;
 }
 
 /******************************************************************************/

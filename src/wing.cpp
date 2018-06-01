@@ -1387,7 +1387,7 @@ void Wing::computeSectionPressureForces ()
 #pragma omp parallel for private(i)
   for ( i = 0; i < _nspan; i++ )
   {
-    _sections[i].computePressureForce(alpha, uinf, rhoinf);
+    _sections[i].computePressureForce(alpha, uinf, rhoinf, uinfvec);
   }
 }
 

@@ -68,7 +68,8 @@ class Section: public SectionalObject {
     // Computes pressure forces
 
     void computePressureForce ( const double & alpha, const double & uinf,
-                                const double & rhoinf );
+                                const double & rhoinf,
+                                const Eigen::Vector3d & uinfvec );
 
     // Sectional lift and drag coefficients
 
