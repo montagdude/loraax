@@ -655,3 +655,13 @@ void Airfoil::smoothedCoordinates ( std::vector<double> & x,
     z[i] = _xdg.xfd.Y[i];
   }
 }
+
+/******************************************************************************/
+//
+// Set Reynolds number in Xfoil
+//
+/******************************************************************************/
+void Airfoil::setReynoldsNumber ( const double & re )
+{
+  xfoil_set_reynolds_number(&_xdg, &re);
+}

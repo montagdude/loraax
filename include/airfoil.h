@@ -103,6 +103,10 @@ class Airfoil: public SectionalObject {
                              std::vector<double> & zb ) const;
     void smoothedCoordinates ( std::vector<double> & x,
                                std::vector<double> & z ) const;
+                               
+    // Running Xfoil 
+    
+    void setReynoldsNumber ( const double & re );
 };
 
 #endif

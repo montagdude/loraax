@@ -231,3 +231,17 @@ void Section::computePressureForce ( const double & alpha, const double & uinf,
 /******************************************************************************/
 const double & Section::liftCoefficient () const { return _cl; }
 const double & Section::dragCoefficient () const { return _cd; }
+
+/******************************************************************************/
+//
+// Computes Reynolds number based on local chord. Also sets is for airfoil.
+//
+/******************************************************************************/
+void Section::computeReynoldsNumber ( const double & rhoinf,
+                                     const double & uinf, const double & muinf )
+{
+  _re = rhoinf * uinf * _chord / muinf;
+  _foil.setReynoldsNumber(_re);
+} 
+
+const double & Section::reynoldsNumber () const { return _re; }

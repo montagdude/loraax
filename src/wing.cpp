@@ -677,6 +677,11 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
     // Set vertices from spacing distribution
 
     _sections[i].setVertices(_nchord, _lesprat, _tesprat);
+    
+    // Set Reynolds number (if viscous)
+    
+    if (viscous) 
+      _sections[i].computeReynoldsNumber(rhoinf, uinf, muinf);
   }
 
   return 0; 
@@ -1422,8 +1427,10 @@ int Wing::writeSectionForces ( int iter ) const
                   "Unable to open " + fname + " for writing.");
     return 1;
   }
-  f << "\"xle\",\"y\",\"y_flat\",\"zle\",\"Cl\",\"Cd\",\"cCl\",\"cCd\""
-    << std::endl;
+  f << "\"xle\",\"y\",\"y_flat\",\"zle\",\"Cl\",\"Cd\",\"cCl\",\"cCd\"";
+  if (viscous)
+    f << ",\"Re\"";
+  f << std::endl;
 
   // Write data for sections and mirror image
   
@@ -1439,7 +1446,11 @@ int Wing::writeSectionForces ( int iter ) const
     f << std::setprecision(6) << _sections[i].chord() *
                                  _sections[i].liftCoefficient() << ",";
     f << std::setprecision(6) << _sections[i].chord() *
-                                 _sections[i].dragCoefficient() << std::endl;
+                                 _sections[i].dragCoefficient();
+    if (viscous) 
+      f << std::setprecision(6) << ","
+        << _sections[i].reynoldsNumber();
+    f << std::endl;
   }
   for ( i = 1; i < int(_nspan); i++ )
   {
@@ -1452,7 +1463,11 @@ int Wing::writeSectionForces ( int iter ) const
     f << std::setprecision(6) << _sections[i].chord() *
                                  _sections[i].liftCoefficient() << ",";
     f << std::setprecision(6) << _sections[i].chord() *
-                                 _sections[i].dragCoefficient() << std::endl;
+                                 _sections[i].dragCoefficient();
+    if (viscous) 
+      f << std::setprecision(6) << ","
+        << _sections[i].reynoldsNumber();
+    f << std::endl;
   }
   f.close();
 

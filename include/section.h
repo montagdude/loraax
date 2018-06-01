@@ -32,6 +32,7 @@ class Section: public SectionalObject {
     double _fn, _fa;	// Normal and axial force/span
     double _cl, _cd;	// Sectional lift and drag coefficients
     double _cl2d;     // Cl based on in-plane velocity vector 
+    double _re;       // Reynolds number
 
   public:
 
@@ -73,6 +74,12 @@ class Section: public SectionalObject {
 
     const double & liftCoefficient () const;
     const double & dragCoefficient () const;
+    
+    // Computes Reynolds number and sets it for airfoil
+    
+    void computeReynoldsNumber ( const double & rhoinf, const double & uinf,
+                                 const double & muinf );
+    const double & reynoldsNumber () const; 
 };
 
 #endif
