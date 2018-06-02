@@ -246,7 +246,8 @@ std::vector<double> Wing::adjustSpacing (
 
 /******************************************************************************/
 //
-// Computes wing area and MAC from section data and writes to stdout
+// Computes wing area and MAC from section data and writes to stdout. Also
+// writes Re based on MAC.
 //
 /******************************************************************************/
 void Wing::computeAreaMAC ( const std::vector<Section> &
@@ -337,6 +338,9 @@ void Wing::computeAreaMAC ( const std::vector<Section> &
             << std::setprecision(5) << ar << std::endl;
   std::cout << "  Taper ratio: "
             << std::setprecision(5) << tr << std::endl;
+  std::cout << "  Re based on MAC: "
+            << std::setprecision(5) << rhoinf * uinf * cbar / muinf
+            << std::endl;
 }
 
 /******************************************************************************/
