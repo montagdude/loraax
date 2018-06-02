@@ -33,9 +33,6 @@ void Airfoil::copyData ( const Airfoil & foil )
   _zs = foil._zs;
   _sle = foil._sle;
   _unit_transform = foil._unit_transform;
-  _cl = foil._cl;
-  _cd = foil._cd;
-  _cm = foil._cm;
   _cp = foil._cp;
   _cf = foil._cf;
 }
@@ -55,9 +52,6 @@ Airfoil::Airfoil ()
   _zs.resize(0);
   _y = 0.;
   _unit_transform = false;
-  _cl = 0.;
-  _cd = 0.;
-  _cm = 0.;
   _cp.resize(0);
   _cf.resize(0);
 }
@@ -84,9 +78,6 @@ Airfoil::~Airfoil()
   _zs.resize(0);
   _y = 0.;
   _unit_transform = false;
-  _cl = 0.;
-  _cd = 0.;
-  _cm = 0.;
   _cp.resize(0);
   _cf.resize(0);
 }
@@ -664,4 +655,33 @@ void Airfoil::smoothedCoordinates ( std::vector<double> & x,
 void Airfoil::setReynoldsNumber ( const double & re )
 {
   xfoil_set_reynolds_number(&_xdg, &re);
+}
+
+/******************************************************************************/
+//
+// Set Mach number in Xfoil
+//
+/******************************************************************************/
+void Airfoil::setMachNumber ( const double & mach )
+{
+  xfoil_set_mach_number(&_xdg, &mach);
+}
+
+/******************************************************************************/
+//
+// Run Xfoil at specified lift coefficient
+// stat: 0 for success, 1 if convergence failed
+//
+/******************************************************************************/
+int Airfoil::runXfoil ( const double & clspec )
+{
+  double alpha, cl, cd, cm;
+  bool converged;
+  int stat;
+  
+  xfoil_speccl(&_xdg, &clspec, &alpha, &cl, &cd, &cm, &converged, &stat);
+  if (converged)
+    return 0;
+  else
+    return 1;
 }

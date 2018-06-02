@@ -1032,7 +1032,7 @@ void Aircraft::computeSurfaceQuantities ()
 // Computes or access forces and moments
 //
 /******************************************************************************/
-void Aircraft::computeForceMoment ()
+void Aircraft::computePressureForceMoment ()
 {
   unsigned int i, nwings;
 
@@ -1045,7 +1045,7 @@ void Aircraft::computeForceMoment ()
   _cm = 0.;
   for ( i = 0; i < nwings; i++ )
   {
-    _wings[i].computeForceMoment(_sref, _lref, _momcen);
+    _wings[i].computePressureForceMoment(_sref, _lref, _momcen);
     _lift += _wings[i].lift();
     _drag += _wings[i].drag();
     _moment += _wings[i].pitchingMoment();
@@ -1133,6 +1133,22 @@ void Aircraft::computeSectionPressureForces ()
   for ( i = 0; i < nwings; i++ )
   {
     _wings[i].computeSectionPressureForces();
+  }
+}
+
+/******************************************************************************/
+//
+// BL calculations with xfoil
+//
+/******************************************************************************/
+void Aircraft::computeBL ()
+{
+  unsigned int i, nwings;
+
+  nwings = _wings.size();
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].computeBL();
   }
 }
 

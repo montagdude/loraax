@@ -678,10 +678,16 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 
     _sections[i].setVertices(_nchord, _lesprat, _tesprat);
     
-    // Set Reynolds number (if viscous)
+    // Set Reynolds number and Mach number if viscous
     
     if (viscous) 
+    {
       _sections[i].computeReynoldsNumber(rhoinf, uinf, muinf);
+      if (compressible)
+        _sections[i].setMachNumber(minf);
+      else
+        _sections[i].setMachNumber(0.0);
+    }
   }
 
   return 0; 
@@ -1276,8 +1282,8 @@ WakeStrip * Wing::wStrip ( unsigned int wsidx )
 // Compute or access forces and moments
 //
 /******************************************************************************/
-void Wing::computeForceMoment ( const double & sref, const double & lref,
-                                const Eigen::Vector3d & momcen )
+void Wing::computePressureForceMoment ( const double & sref,
+                           const double & lref, const Eigen::Vector3d & momcen )
 {
   unsigned int i, j;
   Eigen::Vector3d df, dm, force, moment;
@@ -1387,7 +1393,28 @@ void Wing::computeSectionPressureForces ()
 #pragma omp parallel for private(i)
   for ( i = 0; i < _nspan; i++ )
   {
-    _sections[i].computePressureForce(alpha, uinf, rhoinf, uinfvec);
+    _sections[i].computePressureForce(alpha, uinf, rhoinf);
+  }
+}
+
+/******************************************************************************/
+//
+// Computes viscous forces (and skin friction, etc.) using Xfoil at sections
+//
+/******************************************************************************/
+void Wing::computeBL ()
+{
+  unsigned int i;
+
+#pragma omp parallel for private(i)
+  for ( i = 0; i < _nspan; i++ )
+  {
+    _sections[i].computeBL(uinfvec, rhoinf);
+    if (not _sections[i].blConverged())
+    {
+      std::cout << "    Warning: Xfoil BL calculations did not converge "
+                << "for section " << i+1 << "." << std::endl;
+    }
   }
 }
 

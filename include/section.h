@@ -28,11 +28,10 @@ class Section: public SectionalObject {
 			// Vertices defining panel endpoints, and non-rotated,
                         // non-translated version of same
     Airfoil _foil;	// Airfoil at this section
-
-    double _fn, _fa;	// Normal and axial force/span
-    double _cl, _cd;	// Sectional lift and drag coefficients
-    double _cl2d;     // Cl based on in-plane velocity vector 
-    double _re;       // Reynolds number
+    double _re;         // Reynolds number
+    double _fa, _fn;    // Axial and normal force components in section frame
+    double _cl, _cd;    // Sectional lift and drag coefficients
+    bool _converged;    // Whether Xfoil BL calculations converged
 
   public:
 
@@ -65,11 +64,15 @@ class Section: public SectionalObject {
 
     Airfoil & airfoil ();
 
-    // Computes pressure forces
+    // Computes section pressure force
 
     void computePressureForce ( const double & alpha, const double & uinf,
-                                const double & rhoinf,
-                                const Eigen::Vector3d & uinfvec );
+                                const double & rhoinf );
+
+    // BL calculations with Xfoil
+
+    void computeBL ( const Eigen::Vector3d & uinfvec, const double & rhoinf ); 
+    bool blConverged () const;
 
     // Sectional lift and drag coefficients
 
@@ -81,6 +84,10 @@ class Section: public SectionalObject {
     void computeReynoldsNumber ( const double & rhoinf, const double & uinf,
                                  const double & muinf );
     const double & reynoldsNumber () const; 
+    
+    // Sets Mach number for airfoil
+    
+    void setMachNumber ( const double & mach );
 };
 
 #endif

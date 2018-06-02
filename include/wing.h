@@ -118,8 +118,8 @@ class Wing {
 
     // Compute or access forces and moments
 
-    void computeForceMoment ( const double & sref, const double & lref,
-                              const Eigen::Vector3d & momcen );
+    void computePressureForceMoment ( const double & sref, const double & lref,
+                                      const Eigen::Vector3d & momcen );
     const double & lift () const;
     const double & drag () const;
     const double & pitchingMoment () const;
@@ -134,6 +134,11 @@ class Wing {
     // Compute sectional pressure forces
 
     void computeSectionPressureForces (); 
+
+    // Compute viscous forces (and skin friction, etc.) using Xfoil at sections.
+    // Also computes section viscous forces as part of the process.
+
+    void computeBL ();
 
     // Write sectional forces to file
 

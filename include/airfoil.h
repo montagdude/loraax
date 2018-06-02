@@ -35,7 +35,6 @@ class Airfoil: public SectionalObject {
 
     // Aero data
 
-    double _cl, _cd, _cm;
     std::vector<double> _cp, _cf;
 
     // Helper function to avoid reusing code between copy constructor and copy
@@ -107,6 +106,8 @@ class Airfoil: public SectionalObject {
     // Running Xfoil 
     
     void setReynoldsNumber ( const double & re );
+    void setMachNumber ( const double & mach );
+    int runXfoil ( const double & clspec );
 };
 
 #endif
