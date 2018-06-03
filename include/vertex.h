@@ -27,7 +27,8 @@ class Vertex {
 					//   wake vertices that are far
 					//   downstream.
 
-    // Vertex data: source strength, doublet strength, Vx, Vy, Vz, pressure, cp
+    // Vertex data: source strength, doublet strength, Vx, Vy, Vz, pressure, cp,
+    // cf, uedge, deltastar, ampl
 
     std::vector<double> _data;
 

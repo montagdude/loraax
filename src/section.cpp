@@ -18,6 +18,33 @@
 
 /******************************************************************************/
 //
+// Interpolates BL data from airfoil points to section vertices and sets in
+// vertex data
+//
+/******************************************************************************/
+void Section::setVertexBLData ( const std::vector<double> & bldata,
+                                unsigned int dataidx )
+{
+  unsigned int i, j1, j2;
+  double interpval;
+
+#ifdef DEBUG
+  if ( int(bldata.size()) != _foil.nSmoothed() )
+    conditional_stop(1, "Section::setVertexBLData", "Wrong size input vector.");
+#endif
+
+  for ( i = 0; i < _nverts; i++ )
+  {
+    j1 = _foilinterp[i].point1;
+    j2 = _foilinterp[i].point2;
+    interpval = bldata[j1]*_foilinterp[i].weight1
+              + bldata[j2]*_foilinterp[i].weight2;
+    _verts[i].setData(dataidx, interpval);
+  }
+}
+
+/******************************************************************************/
+//
 // Default constructor
 //
 /******************************************************************************/
@@ -37,6 +64,7 @@ Section::Section ()
   _cl = 0.;
   _cd = 0.;
   _converged = false;
+  _foilinterp.resize(0);
 }
 
 /******************************************************************************/
@@ -92,9 +120,10 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
   Airfoil foil;
   double slen, sle, unisp, lesp, tesp;
   double a4top, a5top, a4bot, a5bot;
+  double sscale, svs;
   std::vector<double> sv;
   std::vector<double> xf, zf;			// Vertices in foil coordinates
-  unsigned int i;
+  unsigned int i, j, nsmoothed;
   Eigen::Matrix3d rotation;
 
 #ifdef DEBUG
@@ -176,7 +205,39 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
 
     _uverts[i].setCoordinates(xf[i], 0.0, zf[i]);
     _uverts[i].scale(_chord);
-  } 
+  }
+
+  // Finds interpolation points on airfoil for section vertices
+
+  _foilinterp.resize(_nverts);
+  nsmoothed = _foil.nSmoothed();
+
+  sscale = _foil.sSmoothed(nsmoothed-1) / (sv[_nverts-1] + 1.E-12);
+    // Scale section to airfoil length, leaving a little room for roundoff error
+
+  for ( i = 0; i < _nverts; i++ )
+  {
+    _foilinterp[i].weight1 = 0.;
+    _foilinterp[i].weight2 = 0.;
+    svs = sv[i] * sscale;
+    for ( j = 0; j < nsmoothed-1; j++ )
+    {
+      if ( (svs >= _foil.sSmoothed(j)) && (svs <= _foil.sSmoothed(j+1)) )
+      {
+        _foilinterp[i].point1 = j;
+        _foilinterp[i].point2 = j+1;
+        _foilinterp[i].weight2 = (svs - _foil.sSmoothed(j))
+                               / (_foil.sSmoothed(j+1) - _foil.sSmoothed(j));
+        _foilinterp[i].weight1 = 1. - _foilinterp[i].weight2;
+        break;
+      }
+    }
+#ifdef DEBUG
+    if ( (_foilinterp[i].weight1 == 0.) && (_foilinterp[i].weight2 == 0.) )
+      print_warning("Section::setVertices",
+                    "Could not find airfoil->section interpolants." );
+#endif
+  }
 } 
 
 /******************************************************************************/
@@ -241,6 +302,8 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
   Eigen::Vector3d uinfvec_p;
   double qinf, uinfp, cl2d;
   Eigen::Matrix3d inertial2section;
+  std::vector<double> bldata;
+  int stat;
 
   qinf = 0.5*rhoinf*uinfvec.squaredNorm();
 
@@ -263,6 +326,19 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
     _converged = false;
   else
     _converged = true;
+
+  // Interpolate BL quantities to vertices. These will be overwritten for
+  // unconverged sections if interpolation/extrapolation is possible.
+
+  bldata = _foil.blData("cf", stat);
+  setVertexBLData(bldata, 7);
+  bldata = _foil.blData("uedge", stat);
+  setVertexBLData(bldata, 8);
+  bldata = _foil.blData("deltastar", stat);
+  setVertexBLData(bldata, 9);
+  bldata = _foil.blData("ampl", stat);
+  setVertexBLData(bldata, 10);
+  
   //FIXME: get viscous Cd from skin friction. If Xfoil did not converge, need
   //to interpolate from neighboring sections first.
 }

@@ -31,10 +31,10 @@ void Airfoil::copyData ( const Airfoil & foil )
   _s = foil._s;
   _xs = foil._xs;
   _zs = foil._zs;
+  _ssmoothed = foil._ssmoothed;
   _sle = foil._sle;
+  _y = foil._y;
   _unit_transform = foil._unit_transform;
-  _cp = foil._cp;
-  _cf = foil._cf;
 }
 
 /******************************************************************************/
@@ -50,10 +50,9 @@ Airfoil::Airfoil ()
   _s.resize(0);
   _xs.resize(0);
   _zs.resize(0);
+  _ssmoothed.resize(0);
   _y = 0.;
   _unit_transform = false;
-  _cp.resize(0);
-  _cf.resize(0);
 }
 
 Airfoil::Airfoil ( const Airfoil & foil )
@@ -76,10 +75,9 @@ Airfoil::~Airfoil()
   _s.resize(0);
   _xs.resize(0);
   _zs.resize(0);
+  _ssmoothed.resize(0);
   _y = 0.;
   _unit_transform = false;
-  _cp.resize(0);
-  _cf.resize(0);
 }
 
 /******************************************************************************/
@@ -512,7 +510,8 @@ void Airfoil::setXfoilOptions ( const xfoil_options_type & xfoil_opts,
 /******************************************************************************/
 int Airfoil::smoothPaneling ()
 {
-  int stat;
+  int stat, i;
+  double dx, dz;
 
   if (_nb == 0)
   {
@@ -537,7 +536,37 @@ int Airfoil::smoothPaneling ()
     return 3;
   }
 
+  // Compute smoothed spline vector
+
+  _ssmoothed.resize(_n);
+  _ssmoothed[0] = 0.;
+  for ( i = 1; i < _n; i++ )
+  {
+    dx = _xdg.xfd.X[i] - _xdg.xfd.X[i-1];
+    dz = _xdg.xfd.Y[i] - _xdg.xfd.Y[i-1];
+    _ssmoothed[i] = _ssmoothed[i-1]
+                  + std::sqrt(std::pow(dx,2.) + std::pow(dz,2.));
+  }
+
   return 0;
+}
+
+/******************************************************************************/
+//
+// Returns smoothed spline vector s at given idx. Warning: only does bounds
+// checking in debug mode.
+//
+/******************************************************************************/
+const double & Airfoil::sSmoothed ( int idx ) const
+{
+  if (idx >= _n)
+  {
+#ifdef DEBUG
+    conditional_stop(1, "Airfoil::sSmoothed", "Index out of bounds.");
+#endif
+  }
+
+  return _ssmoothed[idx];
 }
 
 /******************************************************************************/
@@ -684,4 +713,48 @@ int Airfoil::runXfoil ( const double & clspec )
     return 0;
   else
     return 1;
+}
+
+/******************************************************************************/
+//
+// Returns BL data from Xfoil at current airfoil coordinates. Possible values
+// of varname include: cp, cf, uedge, deltastar, ampl. Output vector has
+// dimension nSmoothed.
+// stat: 0 on success, 1 for unrecognized varname
+//
+/******************************************************************************/
+std::vector<double> Airfoil::blData ( const std::string & varname,
+                                      int & stat ) const
+{
+  std::vector<double> outvec(_n, 0.);
+  double buffer[_n];
+  int i;
+
+  stat = 0;
+  if (varname == "cp")
+    xfoil_get_cp(&_xdg, &_n, buffer);
+  else if (varname == "cf")
+    xfoil_get_cf(&_xdg, &_n, buffer);
+  else if (varname == "uedge")
+    xfoil_get_uedge(&_xdg, &_n, buffer);
+  else if (varname == "deltastar")
+    xfoil_get_deltastar(&_xdg, &_n, buffer);
+  else if (varname == "ampl")
+    xfoil_get_ampl(&_xdg, &_n, buffer);
+  else
+  {
+#ifdef DEBUG
+    print_warning("Airfoil::blData", "Unrecognized variable " + varname + ".");
+#endif
+    stat = 1;
+  }
+
+  if (stat == 0)
+  {
+    for ( i = 0; i < _n; i++ )
+    {
+      outvec[i] = buffer[i];
+    }
+  }
+  return outvec;
 }

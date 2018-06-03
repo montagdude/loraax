@@ -9,6 +9,15 @@
 #include "vertex.h"
 #include "airfoil.h"
 
+/** Struct used for interpolation. Gives bounds and weights. **/
+struct interpdata
+{
+  int point1;
+  int point2;
+  double weight1;
+  double weight2;
+};
+
 /******************************************************************************/
 //
 // Section class. Defines a wing section.
@@ -27,11 +36,20 @@ class Section: public SectionalObject {
     std::vector<Vertex>	_verts, _uverts;
 			// Vertices defining panel endpoints, and non-rotated,
                         // non-translated version of same
+
     Airfoil _foil;	// Airfoil at this section
     double _re;         // Reynolds number
     double _fa, _fn;    // Axial and normal force components in section frame
     double _cl, _cd;    // Sectional lift and drag coefficients
     bool _converged;    // Whether Xfoil BL calculations converged
+    std::vector<interpdata> _foilinterp;
+                        // Airfoil interpolation points & weights for verts
+
+    // Interpolates BL data from airfoil points to section vertices and sets
+    // vertex data
+
+    void setVertexBLData ( const std::vector<double> & bldata,
+                           unsigned int dataidx );
 
   public:
 

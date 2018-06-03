@@ -31,8 +31,8 @@ Vertex::Vertex ()
   _xviz = 0.;
   _yviz = 0.;
   _zviz = 0.;
-  _data.resize(7);
-  for ( i = 0; i < 7; i++ ) { _data[i] = 0.; }
+  _data.resize(11);
+  for ( i = 0; i < 11; i++ ) { _data[i] = 0.; }
   _waketime = 0.;
 }
 
@@ -233,6 +233,8 @@ void Vertex::interpFromPanels ()
   unsigned int i;
   double dx, dy, dz, dist, weightsum;
   Eigen::Vector3d cen;
+
+  // Only inviscid quantities (1 - 7) are originally computed at panel centroids
 
   for ( i = 0; i < 7; i++ )
   {

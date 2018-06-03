@@ -29,13 +29,10 @@ class Airfoil: public SectionalObject {
 
     int _nb, _n;		        // Number of points (buffer, smoothed)
     std::vector<double> _s, _xs, _zs;   // Spline fit of buffer coordinates
+    std::vector<double> _ssmoothed;     // Spline vector for smoothed airfoilk
     double _sle;                        // Leading edge spline parameter
 
     bool _unit_transform;		// Transform flag (call unitTransform)
-
-    // Aero data
-
-    std::vector<double> _cp, _cf;
 
     // Helper function to avoid reusing code between copy constructor and copy
     // assignment
@@ -87,6 +84,10 @@ class Airfoil: public SectionalObject {
 
     int smoothPaneling ();
 
+    // Smoothed s vector at given idx
+
+    const double & sSmoothed ( int idx ) const;
+
     // Returns or modifies trailing edge gap. Note: modifyTEGap only only
     // modifies the buffer airfoil coordinates. You may want to call
     // splineInterp, smoothPaneling, etc. again afterwards.
@@ -103,11 +104,13 @@ class Airfoil: public SectionalObject {
     void smoothedCoordinates ( std::vector<double> & x,
                                std::vector<double> & z ) const;
                                
-    // Running Xfoil 
+    // Running Xfoil and returning BL data
     
     void setReynoldsNumber ( const double & re );
     void setMachNumber ( const double & mach );
     int runXfoil ( const double & clspec );
+    std::vector<double> blData ( const std::string & varname,
+                                 int & stat ) const;
 };
 
 #endif
