@@ -116,10 +116,19 @@ class Wing {
     unsigned int nWStrips () const;
     WakeStrip * wStrip ( unsigned int wsidx );
 
+    // Compute sectional pressure forces
+
+    void computeSectionPressureForces (); 
+
+    // Compute viscous forces (and skin friction, etc.) using Xfoil at sections.
+    // Also computes section viscous forces as part of the process.
+
+    void computeBL ();
+
     // Compute or access forces and moments
 
-    void computePressureForceMoment ( const double & sref, const double & lref,
-                                      const Eigen::Vector3d & momcen );
+    void computeForceMoment ( const double & sref, const double & lref,
+                              const Eigen::Vector3d & momcen );
     const double & lift () const;
     const double & drag () const;
     const double & pitchingMoment () const;
@@ -130,15 +139,6 @@ class Wing {
     // Write forces and moments to file
 
     int writeForceMoment ( int iter ) const;
-
-    // Compute sectional pressure forces
-
-    void computeSectionPressureForces (); 
-
-    // Compute viscous forces (and skin friction, etc.) using Xfoil at sections.
-    // Also computes section viscous forces as part of the process.
-
-    void computeBL ();
 
     // Write sectional forces to file
 

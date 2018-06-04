@@ -1279,11 +1279,66 @@ WakeStrip * Wing::wStrip ( unsigned int wsidx )
 
 /******************************************************************************/
 //
+// Computes pressure forces at sections
+//
+/******************************************************************************/
+void Wing::computeSectionPressureForces ()
+{
+  unsigned int i;
+
+#pragma omp parallel for private(i)
+  for ( i = 0; i < _nspan; i++ )
+  {
+    _sections[i].computePressureForce(alpha, uinf, rhoinf);
+  }
+}
+
+/******************************************************************************/
+//
+// Computes viscous forces (and skin friction, etc.) using Xfoil at sections
+//
+/******************************************************************************/
+void Wing::computeBL ()
+{
+  unsigned int i, j, k;
+  double weighttop, weightbot, var;
+
+#pragma omp parallel for private(i)
+  for ( i = 0; i < _nspan; i++ )
+  {
+    _sections[i].computeBL(uinfvec, rhoinf);
+    if (not _sections[i].blConverged())
+    {
+      std::cout << "    Warning: Xfoil BL calculations did not converge "
+                << "for section " << i+1 << "." << std::endl;
+    }
+  }
+
+  // Inteprolate BL quantities to tip vertices
+  
+  for ( i = 1; i < _ntipcap-1; i++ )
+  {
+    weightbot = double(i) / double(_ntipcap-1);
+    weighttop = 1. - weightbot;
+    for ( j = 1; j < _nchord-1; j++ )
+    {
+      for ( k = Vertex::firstBLData; k < Vertex::dataSize; k++ )
+      {
+        var = weighttop*_sections[_nspan-1].vert(j).data(k)
+            + weightbot*_sections[_nspan-1].vert(2*_nchord-2-j).data(k);
+        _tipverts[i-1][j-1].setData(k, var);
+      }
+    }
+  }
+}
+
+/******************************************************************************/
+//
 // Compute or access forces and moments
 //
 /******************************************************************************/
-void Wing::computePressureForceMoment ( const double & sref,
-                           const double & lref, const Eigen::Vector3d & momcen )
+void Wing::computeForceMoment ( const double & sref, const double & lref,
+                                const Eigen::Vector3d & momcen )
 {
   unsigned int i, j;
   Eigen::Vector3d df, dm, force, moment;
@@ -1379,61 +1434,6 @@ int Wing::writeForceMoment ( int iter ) const
   f.close();
 
   return 0;
-}
-
-/******************************************************************************/
-//
-// Computes pressure forces at sections
-//
-/******************************************************************************/
-void Wing::computeSectionPressureForces ()
-{
-  unsigned int i;
-
-#pragma omp parallel for private(i)
-  for ( i = 0; i < _nspan; i++ )
-  {
-    _sections[i].computePressureForce(alpha, uinf, rhoinf);
-  }
-}
-
-/******************************************************************************/
-//
-// Computes viscous forces (and skin friction, etc.) using Xfoil at sections
-//
-/******************************************************************************/
-void Wing::computeBL ()
-{
-  unsigned int i, j, k;
-  double weighttop, weightbot, var;
-
-#pragma omp parallel for private(i)
-  for ( i = 0; i < _nspan; i++ )
-  {
-    _sections[i].computeBL(uinfvec, rhoinf);
-    if (not _sections[i].blConverged())
-    {
-      std::cout << "    Warning: Xfoil BL calculations did not converge "
-                << "for section " << i+1 << "." << std::endl;
-    }
-  }
-
-  // Inteprolate BL quantities to tip vertices
-  
-  for ( i = 1; i < _ntipcap-1; i++ )
-  {
-    weightbot = double(i) / double(_ntipcap-1);
-    weighttop = 1. - weightbot;
-    for ( j = 1; j < _nchord-1; j++ )
-    {
-      for ( k = Vertex::firstBLData; k < Vertex::dataSize; k++ )
-      {
-        var = weighttop*_sections[_nspan-1].vert(j).data(k)
-            + weightbot*_sections[_nspan-1].vert(2*_nchord-2-j).data(k);
-        _tipverts[i-1][j-1].setData(k, var);
-      }
-    }
-  }
 }
 
 /******************************************************************************/

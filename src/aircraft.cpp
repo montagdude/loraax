@@ -1023,10 +1023,42 @@ void Aircraft::computeSurfaceQuantities ()
 
 /******************************************************************************/
 //
+// Computes pressure forces at sections
+//
+/******************************************************************************/
+void Aircraft::computeSectionPressureForces ()
+{
+  unsigned int i, nwings;
+
+  nwings = _wings.size();
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].computeSectionPressureForces();
+  }
+}
+
+/******************************************************************************/
+//
+// BL calculations with xfoil
+//
+/******************************************************************************/
+void Aircraft::computeBL ()
+{
+  unsigned int i, nwings;
+
+  nwings = _wings.size();
+  for ( i = 0; i < nwings; i++ )
+  {
+    _wings[i].computeBL();
+  }
+}
+
+/******************************************************************************/
+//
 // Computes or access forces and moments
 //
 /******************************************************************************/
-void Aircraft::computePressureForceMoment ()
+void Aircraft::computeForceMoment ()
 {
   unsigned int i, nwings;
 
@@ -1039,7 +1071,7 @@ void Aircraft::computePressureForceMoment ()
   _cm = 0.;
   for ( i = 0; i < nwings; i++ )
   {
-    _wings[i].computePressureForceMoment(_sref, _lref, _momcen);
+    _wings[i].computeForceMoment(_sref, _lref, _momcen);
     _lift += _wings[i].lift();
     _drag += _wings[i].drag();
     _moment += _wings[i].pitchingMoment();
@@ -1112,38 +1144,6 @@ int Aircraft::writeForceMoment ( int iter ) const
   }
 
   return 0;
-}
-
-/******************************************************************************/
-//
-// Computes pressure forces at sections
-//
-/******************************************************************************/
-void Aircraft::computeSectionPressureForces ()
-{
-  unsigned int i, nwings;
-
-  nwings = _wings.size();
-  for ( i = 0; i < nwings; i++ )
-  {
-    _wings[i].computeSectionPressureForces();
-  }
-}
-
-/******************************************************************************/
-//
-// BL calculations with xfoil
-//
-/******************************************************************************/
-void Aircraft::computeBL ()
-{
-  unsigned int i, nwings;
-
-  nwings = _wings.size();
-  for ( i = 0; i < nwings; i++ )
-  {
-    _wings[i].computeBL();
-  }
 }
 
 /******************************************************************************/

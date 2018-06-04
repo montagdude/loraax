@@ -87,9 +87,17 @@ class Aircraft {
 
     void computeSurfaceQuantities ();
 
+    // Computes sectional pressure forces
+
+    void computeSectionPressureForces (); 
+
+    // BL calculations with Xfoil
+
+    void computeBL (); 
+
     // Computes or access forces and moments
 
-    void computePressureForceMoment ();
+    void computeForceMoment ();
     const double & lift () const;
     const double & drag () const;
     const double & pitchingMoment () const;
@@ -100,14 +108,6 @@ class Aircraft {
     // Write forces and moments to file
 
     int writeForceMoment ( int iter ) const;
-
-    // Computes sectional pressure forces
-
-    void computeSectionPressureForces (); 
-
-    // BL calculations with Xfoil
-
-    void computeBL (); 
 
     // Write section forces to file
 

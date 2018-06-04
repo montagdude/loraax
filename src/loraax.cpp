@@ -122,16 +122,19 @@ int main (int argc, char* argv[])
     std::cout << "  Computing surface velocity and pressure ..." << std::endl;
     ac.computeSurfaceQuantities();
 
-    // Compute forces and moments
+    // Viscous BL computations with Xfoil
 
-    std::cout << "  Computing forces and moments ..." << std::endl;
-    ac.computePressureForceMoment();
     ac.computeSectionPressureForces();
     if (viscous)
     {
       std::cout << "  Computing viscous BL with Xfoil ..." << std::endl;
       ac.computeBL();
     }
+
+    // Compute forces and moments
+
+    std::cout << "  Computing forces and moments ..." << std::endl;
+    ac.computeForceMoment();
     ac.writeForceMoment(iter);
     std::cout << "  CL: " << std::setprecision(5) << std::setw(8) << std::left
               << ac.liftCoefficient();
