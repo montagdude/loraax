@@ -241,30 +241,11 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
   // Vertex data (incl. mirror panels)
 
   f << "POINT_DATA " << nverts*2 << std::endl;
-  f << "SCALARS source_strength double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  f.setf(std::ios_base::scientific);
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(7) << _verts[i]->data(0) << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(7) << _verts[i]->data(0) << std::endl;
-  }
-
-  f << "SCALARS doublet_strength double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(7) << _verts[i]->data(1) << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(7) << _verts[i]->data(1) << std::endl;
-  }
+  writeSurfaceScalar(f, "source_strength", 0);
+  writeSurfaceScalar(f, "doublet_strength", 1);
 
   f << "Vectors velocity double" << std::endl;
+  f.setf(std::ios_base::scientific);
   for ( i = 0; i < nverts; i++ )
   {
     f << std::setprecision(7) << std::setw(16) << std::left
@@ -284,26 +265,39 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
       << _verts[i]->data(4) << std::endl;
   }
 
-  f << "SCALARS pressure double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nverts; i++ )
+  writeSurfaceScalar(f, "pressure", 5);
+  writeSurfaceScalar(f, "pressure_coefficient", 6);
+  if (viscous)
   {
-    f << std::setprecision(7) << _verts[i]->data(5) << std::endl;
+    writeSurfaceScalar(f, "skin_friction_coefficient", 7);
+    writeSurfaceScalar(f, "displacement_thickness", 9);
+    writeSurfaceScalar(f, "log_amplification_ratio", 10);
   }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(7) << _verts[i]->data(5) << std::endl;
-  }
+}
 
-  f << "SCALARS pressure_coefficient double 1" << std::endl;
+/******************************************************************************/
+//
+// Writes surface scalar to VTK viz file
+//
+/******************************************************************************/
+void Aircraft::writeSurfaceScalar ( std::ofstream & f,
+                                    const std::string & varname,
+                                    unsigned int varidx ) const
+{
+  unsigned int i, nverts;
+
+  nverts = _verts.size();
+
+  f << "SCALARS " << varname << " double 1" << std::endl;
   f << "LOOKUP_TABLE default" << std::endl;
+  f.setf(std::ios_base::scientific);
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(7) << _verts[i]->data(6) << std::endl;
+    f << std::setprecision(7) << _verts[i]->data(varidx) << std::endl;
   }
   for ( i = 0; i < nverts; i++ )
   {
-    f << std::setprecision(7) << _verts[i]->data(6) << std::endl;
+    f << std::setprecision(7) << _verts[i]->data(varidx) << std::endl;
   }
 }
 

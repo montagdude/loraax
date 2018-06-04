@@ -1420,6 +1420,8 @@ void Wing::computeBL ()
                 << "for section " << i+1 << "." << std::endl;
     }
   }
+
+//FIXME: average BL data at wingtip
 }
 
 /******************************************************************************/

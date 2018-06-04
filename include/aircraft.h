@@ -51,6 +51,8 @@ class Aircraft {
 
     int writeSurfaceViz ( const std::string & fname ) const;
     void writeSurfaceData ( std::ofstream & f ) const;
+    void writeSurfaceScalar ( std::ofstream & f, const std::string & varname,
+                              unsigned int varidx ) const;
     int writeWakeViz ( const std::string & fname ) const;
     void writeWakeData ( std::ofstream & f ) const;
     int writeWakeStripViz ( const std::string & prefix );
