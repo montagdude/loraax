@@ -31,8 +31,8 @@ Vertex::Vertex ()
   _xviz = 0.;
   _yviz = 0.;
   _zviz = 0.;
-  _data.resize(11);
-  for ( i = 0; i < 11; i++ ) { _data[i] = 0.; }
+  _data.resize(Vertex::dataSize);
+  for ( i = 0; i < Vertex::dataSize; i++ ) { _data[i] = 0.; }
   _waketime = 0.;
 }
 
@@ -212,8 +212,6 @@ const double & Vertex::data ( unsigned int idx ) const
   return _data[idx];
 }
 
-unsigned int Vertex::dataSize () const { return _data.size(); }
-
 /******************************************************************************/
 //
 // Set or access wake time variable
@@ -234,9 +232,9 @@ void Vertex::interpFromPanels ()
   double dx, dy, dz, dist, weightsum;
   Eigen::Vector3d cen;
 
-  // Only inviscid quantities (1 - 7) are originally computed at panel centroids
+  // Only inviscid quantities are originally computed at panel centroids
 
-  for ( i = 0; i < 7; i++ )
+  for ( i = 0; i < Vertex::firstBLData; i++ )
   {
     _data[i] = 0.;
   }
@@ -257,7 +255,7 @@ void Vertex::interpFromPanels ()
     _data[6] += _panels[i]->pressureCoefficient()/dist;
     weightsum += 1./dist;
   }
-  for ( i = 0; i < 7; i++ )
+  for ( i = 0; i < Vertex::firstBLData; i++ )
   {
     _data[i] /= weightsum;
   }

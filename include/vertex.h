@@ -36,6 +36,9 @@ class Vertex {
 
   public:
 
+    const static int dataSize = 11;     // Total number of data vars
+    const static int firstBLData = 7;   // Index of first data var from BL calcs
+
     // Constructor
 
     Vertex ();
@@ -76,7 +79,6 @@ class Vertex {
 
     int setData ( unsigned int idx, const double & var );
     const double & data ( unsigned int idx ) const;
-    unsigned int dataSize () const;
 
     // Setting or accessing wake time variables
 

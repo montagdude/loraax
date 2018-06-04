@@ -1098,7 +1098,7 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
 /******************************************************************************/
 void Wing::computeSurfaceQuantities ()
 {
-  unsigned int i, j, nverts, datasize;
+  unsigned int i, j, nverts;
   double s12, s1, s2;
   Eigen::Matrix3d A;
   Eigen::Vector3d x, b;
@@ -1130,7 +1130,7 @@ void Wing::computeSurfaceQuantities ()
      from these two panels. */
 
   // Top trailing edge
-#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,datasize,j,b,x)
+#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
   for ( i = 0; i < _nspan-1; i++ )
   {
     v0 = &_sections[i].vert(0);
@@ -1144,8 +1144,7 @@ void Wing::computeSurfaceQuantities ()
          std::pow(s2,2.),  s2,  1.;
     lu.compute(A);
 
-    datasize = v0->dataSize();
-    for ( j = 0; j < datasize; j++ )
+    for ( j = 0; j < Vertex::dataSize; j++ )
     { 
       b << v0->data(j), v1->data(j), v2->data(j);
       x = lu.solve(b);
@@ -1154,7 +1153,7 @@ void Wing::computeSurfaceQuantities ()
   }
 
   // Bottom trailing edge
-#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,datasize,j,b,x)
+#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
   for ( i = 0; i < _nspan-1; i++ )
   {
     v0 = &_sections[i].vert(2*_nchord-2);
@@ -1168,8 +1167,7 @@ void Wing::computeSurfaceQuantities ()
          std::pow(s2,2.),  s2,  1.;
     lu.compute(A);
 
-    datasize = v0->dataSize();
-    for ( j = 0; j < datasize; j++ )
+    for ( j = 0; j < Vertex::dataSize; j++ )
     { 
       b << v0->data(j), v1->data(j), v2->data(j);
       x = lu.solve(b);
@@ -1178,7 +1176,7 @@ void Wing::computeSurfaceQuantities ()
   }
 
   // Centerline
-#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,datasize,j,b,x)
+#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
   for ( i = 1; i < 2*_nchord-2; i++ )
   {
     v0 = &_sections[0].vert(i);
@@ -1192,8 +1190,7 @@ void Wing::computeSurfaceQuantities ()
          std::pow(s2,2.),  s2,  1.;
     lu.compute(A);
 
-    datasize = v0->dataSize();
-    for ( j = 0; j < datasize; j++ )
+    for ( j = 0; j < Vertex::dataSize; j++ )
     { 
       b << v0->data(j), v1->data(j), v2->data(j);
       x = lu.solve(b);
@@ -1202,7 +1199,7 @@ void Wing::computeSurfaceQuantities ()
   }
 
   // Tip
-#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,datasize,j,b,x)
+#pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
   for ( i = 1; i < 2*_nchord-2; i++ )
   {
     v0 = &_sections[_nspan-1].vert(i);
@@ -1216,8 +1213,7 @@ void Wing::computeSurfaceQuantities ()
          std::pow(s2,2.),  s2,  1.;
     lu.compute(A);
 
-    datasize = v0->dataSize();
-    for ( j = 0; j < datasize; j++ )
+    for ( j = 0; j < Vertex::dataSize; j++ )
     { 
       b << v0->data(j), v1->data(j), v2->data(j);
       x = lu.solve(b);
@@ -1408,7 +1404,7 @@ void Wing::computeSectionPressureForces ()
 /******************************************************************************/
 void Wing::computeBL ()
 {
-  unsigned int i, j, k, datasize;
+  unsigned int i, j, k;
   double weighttop, weightbot, var;
 
 #pragma omp parallel for private(i)
@@ -1424,14 +1420,13 @@ void Wing::computeBL ()
 
   // Inteprolate BL quantities to tip vertices
   
-  datasize = _sections[0].vert(0).dataSize();
   for ( i = 1; i < _ntipcap-1; i++ )
   {
     weightbot = double(i) / double(_ntipcap-1);
     weighttop = 1. - weightbot;
     for ( j = 1; j < _nchord-1; j++ )
     {
-      for ( k = 7; k < datasize; k++ )
+      for ( k = Vertex::firstBLData; k < Vertex::dataSize; k++ )
       {
         var = weighttop*_sections[_nspan-1].vert(j).data(k)
             + weightbot*_sections[_nspan-1].vert(2*_nchord-2-j).data(k);
