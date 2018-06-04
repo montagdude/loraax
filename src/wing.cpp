@@ -1408,7 +1408,8 @@ void Wing::computeSectionPressureForces ()
 /******************************************************************************/
 void Wing::computeBL ()
 {
-  unsigned int i;
+  unsigned int i, j, k, datasize;
+  double weighttop, weightbot, var;
 
 #pragma omp parallel for private(i)
   for ( i = 0; i < _nspan; i++ )
@@ -1421,7 +1422,23 @@ void Wing::computeBL ()
     }
   }
 
-//FIXME: average BL data at wingtip
+  // Inteprolate BL quantities to tip vertices
+  
+  datasize = _sections[0].vert(0).dataSize();
+  for ( i = 1; i < _ntipcap-1; i++ )
+  {
+    weightbot = double(i) / double(_ntipcap-1);
+    weighttop = 1. - weightbot;
+    for ( j = 1; j < _nchord-1; j++ )
+    {
+      for ( k = 7; k < datasize; k++ )
+      {
+        var = weighttop*_sections[_nspan-1].vert(j).data(k)
+            + weightbot*_sections[_nspan-1].vert(2*_nchord-2-j).data(k);
+        _tipverts[i-1][j-1].setData(k, var);
+      }
+    }
+  }
 }
 
 /******************************************************************************/
