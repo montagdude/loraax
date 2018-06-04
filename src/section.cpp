@@ -19,11 +19,11 @@
 /******************************************************************************/
 //
 // Interpolates BL data from airfoil points to section vertices and sets in
-// vertex data
+// vertex data. scale is optional and defaults to 1.
 //
 /******************************************************************************/
 void Section::setVertexBLData ( const std::vector<double> & bldata,
-                                unsigned int dataidx )
+                                unsigned int dataidx, double scale )
 {
   unsigned int i, j1, j2;
   double interpval;
@@ -39,7 +39,7 @@ void Section::setVertexBLData ( const std::vector<double> & bldata,
     j2 = _foilinterp[i].point2;
     interpval = bldata[j1]*_foilinterp[i].weight1
               + bldata[j2]*_foilinterp[i].weight2;
-    _verts[i].setData(dataidx, interpval);
+    _verts[i].setData(dataidx, interpval*scale);
   }
 }
 
@@ -328,16 +328,15 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
     _converged = true;
 
   // Interpolate BL quantities to vertices. These will be overwritten for
-  // unconverged sections if interpolation/extrapolation is possible.
+  // unconverged sections if interpolation/extrapolation is possible. Perform
+  // scaling as needed.
 
   bldata = _foil.blData("cf", stat);
   setVertexBLData(bldata, 7);
-  bldata = _foil.blData("uedge", stat);
-  setVertexBLData(bldata, 8);
   bldata = _foil.blData("deltastar", stat);
-  setVertexBLData(bldata, 9);
+  setVertexBLData(bldata, 8, _chord);
   bldata = _foil.blData("ampl", stat);
-  setVertexBLData(bldata, 10);
+  setVertexBLData(bldata, 9);
   
   //FIXME: get viscous Cd from skin friction. If Xfoil did not converge, need
   //to interpolate from neighboring sections first.

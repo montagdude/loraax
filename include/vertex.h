@@ -28,7 +28,7 @@ class Vertex {
 					//   downstream.
 
     // Vertex data: source strength, doublet strength, Vx, Vy, Vz, pressure, cp,
-    // cf, uedge, deltastar, ampl
+    // cf, deltastar, ampl, d/ds(uedge*deltastar)
 
     std::vector<double> _data;
 

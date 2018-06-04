@@ -270,8 +270,8 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
   if (viscous)
   {
     writeSurfaceScalar(f, "skin_friction_coefficient", 7);
-    writeSurfaceScalar(f, "displacement_thickness", 9);
-    writeSurfaceScalar(f, "log_amplification_ratio", 10);
+    writeSurfaceScalar(f, "displacement_thickness", 8);
+    writeSurfaceScalar(f, "log_amplification_ratio", 9);
   }
 }
 

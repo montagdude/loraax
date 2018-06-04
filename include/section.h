@@ -49,7 +49,7 @@ class Section: public SectionalObject {
     // vertex data
 
     void setVertexBLData ( const std::vector<double> & bldata,
-                           unsigned int dataidx );
+                           unsigned int dataidx, double scale=1.0 );
 
   public:
 
