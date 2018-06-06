@@ -1,0 +1,32 @@
+<Main>
+  <CaseName>StreakWing</CaseName>
+  <GeometryFile>StreakWing.xml</GeometryFile>
+  <FreestreamSpeed>287.4</FreestreamSpeed>
+  <FreestreamStaticPressure>14.7</FreestreamStaticPressure>
+  <FreestreamDensity>1.1463e-7</FreestreamDensity>
+  <FreestreamViscosity>2.5953e-09</FreestreamViscosity>
+  <AngleOfAttack>7.</AngleOfAttack>
+  <WakeSteps>30</WakeSteps>
+  <RollupDist>60</RollupDist>
+<!--
+  <InitialWakeAngle>7.0</InitialWakeAngle>
+-->
+  <Viscous>true</Viscous>
+  <Compressible>false</Compressible>
+  <StoppingTolerance>1e-06</StoppingTolerance>
+  <MaxSteps>60</MaxSteps>
+  <VisualizationFrequency>1</VisualizationFrequency>
+  <XfoilRunOptions>
+    <ncrit>9.0</ncrit>
+    <xtript>1.0</xtript>
+    <xtripb>1.0</xtripb>
+    <maxit>100</maxit>
+    <vaccel>0.01</vaccel>
+  </XfoilRunOptions>
+  <XfoilPaneling>
+    <npan>160</npan>
+    <cvpar>1.0</cvpar>
+    <cterat>0.15</cterat>
+    <ctrrat>0.2</ctrrat>
+  </XfoilPaneling>
+</Main>

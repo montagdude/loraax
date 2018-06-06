@@ -1,0 +1,42 @@
+<Aircraft>
+  <Reference>
+    <RefArea>0.25</RefArea>
+    <RefLength>0.25</RefLength>
+    <MomentCenX>0.0625</MomentCenX>
+    <MomentCenY>0.0</MomentCenY>
+    <MomentCenZ>0.0</MomentCenZ>
+  </Reference>
+  <Wing name="Main">
+    <Paneling>
+      <NChord>71</NChord>
+      <NSpan>31</NSpan>
+      <LESpaceRat>0.2</LESpaceRat>
+      <TESpaceRat>0.4</TESpaceRat>
+      <RootSpaceRat>0.75</RootSpaceRat>
+      <TipSpaceRat>0.3</TipSpaceRat>
+    </Paneling>
+    <Sections>
+      <!-- Note that sections do not need to be given in order -->
+      <Section name="Root">
+        <!-- Y is not needed for root section -->
+        <XLE>0.</XLE>
+        <ZLE>0.</ZLE>
+        <Chord>0.25</Chord>
+        <Twist>0.</Twist>
+      </Section>
+      <Section>
+        <XLE>0.0</XLE>
+        <Y>0.5</Y>
+        <ZLE>0</ZLE>
+        <Chord>0.25</Chord>
+        <Twist>0.</Twist>
+      </Section>
+    </Sections>
+    <Airfoils>
+      <Airfoil name="Root">
+        <Source>file</Source>
+        <Path>fx63137sm.dat</Path>
+      </Airfoil>
+    </Airfoils>
+  </Wing>
+</Aircraft>

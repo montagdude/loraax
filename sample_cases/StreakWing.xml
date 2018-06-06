@@ -1,0 +1,42 @@
+<Aircraft>
+  <Reference>
+    <RefArea>364.25</RefArea>
+    <RefLength>7.96774</RefLength>
+    <MomentCenX>4.02419</MomentCenX>
+    <MomentCenY>0.0</MomentCenY>
+    <MomentCenZ>0.0</MomentCenZ>
+  </Reference>
+  <Wing name="Bottom">
+    <Paneling>
+      <NChord>81</NChord>
+      <NSpan>31</NSpan>
+      <LESpaceRat>0.2</LESpaceRat>
+      <TESpaceRat>0.4</TESpaceRat>
+      <RootSpaceRat>0.75</RootSpaceRat>
+      <TipSpaceRat>0.3</TipSpaceRat>
+    </Paneling>
+    <Sections>
+      <!-- Note that sections do not need to be given in order -->
+      <Section name="Root">
+        <!-- Y is not needed for root section -->
+        <XLE>0.</XLE>
+        <ZLE>0.</ZLE>
+        <Chord>10</Chord>
+        <Twist>0.</Twist>
+      </Section>
+      <Section>
+        <XLE>4.5</XLE>
+        <Y>23.5</Y>
+        <ZLE>0</ZLE>
+        <Chord>5.5</Chord>
+        <Twist>0</Twist>
+      </Section>
+    </Sections>
+    <Airfoils>
+      <Airfoil name="Root">
+        <Source>file</Source>
+        <Path>mh32_smoothed.dat</Path>
+      </Airfoil>
+    </Airfoils>
+  </Wing>
+</Aircraft>
