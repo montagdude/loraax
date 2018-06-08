@@ -20,26 +20,27 @@ class Panel: public Element {
 
   protected:
 
-    double _sigma, _mu;            // Source and doublet strength
-    double _length;                // A characteristic length
-    double _area;                  // Face area
-    Eigen::Vector3d _norm;         // Outward-facing normal
-    Eigen::Vector3d _cen;          // Face centroid
-    Eigen::Vector3d _colloc;	   // Collocation point (defaults to centroid)
-    bool _colloc_is_centroid;	   // Whether collocation point is centroid
+    double _sigma, _mu;				// Source and doublet strength
+    double _length;					// A characteristic length
+    double _area;					// Face area
+    Eigen::Vector3d _norm;			// Outward-facing normal
+    Eigen::Vector3d _tan;			// Surface tangent vector in streamwise dir.
+    Eigen::Vector3d _cen;			// Face centroid
+    Eigen::Vector3d _colloc;		// Collocation point (defaults to centroid)
+    bool _colloc_is_centroid;		// Whether collocation point is centroid
     Eigen::Matrix3d _trans, _invtrans;
-                                   // Transform from inertial frame to panel
-                                   // frame and vice versa
+									// Transform from inertial frame to panel
+									// frame and vice versa
     std::vector<double> _xtrans, _ytrans;
-                                   // Panel endpoint coordinates in panel frame
-    Eigen::Vector3d _vel;	   // Flow velocity at centroid
-    double _cp, _p;		   // Pressure coefficient and pressure
+									// Panel endpoint coordinates in panel frame
+    Eigen::Vector3d _vel;	   		// Flow velocity at centroid
+    double _cp, _p;					// Pressure coefficient and pressure
 
     Panel * _right, * _left, * _front, * _back;
-				   // Neighbor panels
-    Eigen::Matrix3d _jac;	   // Grid metrics jacobian matrix
+				   					// Neighbor panels
+    Eigen::Matrix3d _jac;	   		// Grid metrics jacobian matrix
     Eigen::PartialPivLU<Eigen::Matrix3d> _lu;
-				   // Factorization of jacobian matrix 
+				   					// Factorization of jacobian matrix 
 
     const static double _farfield_distance_factor = 8.;
 
@@ -151,9 +152,12 @@ class Panel: public Element {
 
     // Compute force and moment contributions
 
-    void computeForceMoment ( const double & pinf, Eigen::Vector3d & force,
-                              Eigen::Vector3d & moment,
-                              const Eigen::Vector3d & moment_center ) const;
+    void computeForceMoment ( const double & uinf, const double & rhoinf,
+                              const double & pinf,
+                              const Eigen::Vector3d & moment_center,
+                              bool viscous, Eigen::Vector3d & fp,
+                              Eigen::Vector3d & fv, Eigen::Vector3d & mp,
+                              Eigen::Vector3d & mv ) const;
 };
 
 #endif

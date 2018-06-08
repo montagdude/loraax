@@ -59,10 +59,6 @@ Section::Section ()
   _verts.resize(0); 
   _uverts.resize(0); 
   _re = 0.;
-  _fa = 0.;
-  _fn = 0.;
-  _cl = 0.;
-  _cd = 0.;
   _converged = false;
   _foilinterp.resize(0);
 }
@@ -249,46 +245,26 @@ Airfoil & Section::airfoil () { return _foil; }
 
 /******************************************************************************/
 //
-// Computes pressure forces / span
+// Computes Reynolds number based on local chord. Also sets is for airfoil.
 //
 /******************************************************************************/
-void Section::computePressureForce ( const double & alpha, const double & uinf,
-                                     const double & rhoinf )
+void Section::computeReynoldsNumber ( const double & rhoinf,
+                                     const double & uinf, const double & muinf )
 {
-  unsigned int i;
-  double nx, nz, pave, qinf, lift, drag;
-  Eigen::Vector3d force;
-  Eigen::Matrix3d section2inertial;
+  _re = rhoinf * uinf * _chord / muinf;
+  _foil.setReynoldsNumber(_re);
+} 
 
-  _fn = 0.;
-  _fa = 0.;
-  for ( i = 1; i < _nverts; i++ )
-  {
-    // Dimensional edge normal vector
+const double & Section::reynoldsNumber () const { return _re; }
 
-    nx = _uverts[i].z() - _uverts[i-1].z();
-    nz = _uverts[i-1].x() - _uverts[i].x();
-
-    // Integrate pressure
-
-    pave = 0.5*(_verts[i].data(5) + _verts[i-1].data(5));
-    _fn -= pave*nz;
-    _fa -= pave*nx;
-  }
-
-  // Rotate forces to inertial frame
-
-  section2inertial = inverse_euler_rotation(_roll, _twist, 0.0, "123");
-  force << _fa, 0., _fn;
-  force = section2inertial*force;
-
-  // Sectional lift and drag coefficients
- 
-  qinf = 0.5*rhoinf*std::pow(uinf,2.);
-  lift = -force(0)*sin(alpha*M_PI/180.) + force(2)*cos(alpha*M_PI/180.);
-  drag =  force(0)*cos(alpha*M_PI/180.) + force(2)*sin(alpha*M_PI/180.);
-  _cl = lift/(qinf*_chord);
-  _cd = drag/(qinf*_chord);
+/******************************************************************************/
+//
+// Sets Mach number for airfoil
+//
+/******************************************************************************/
+void Section::setMachNumber ( const double & minf )
+{
+  _foil.setMachNumber(minf); 
 }
 
 /******************************************************************************/
@@ -297,15 +273,22 @@ void Section::computePressureForce ( const double & alpha, const double & uinf,
 //
 /******************************************************************************/
 void Section::computeBL ( const Eigen::Vector3d & uinfvec,
-                          const double & rhoinf )
+                          const double & rhoinf, const double & alpha )
 {
   Eigen::Vector3d uinfvec_p;
-  double qinf, uinfp, cl2d;
+  double qinf, uinf, uinfp, cl2d;
   Eigen::Matrix3d inertial2section;
   std::vector<double> bldata;
   int stat;
 
   qinf = 0.5*rhoinf*uinfvec.squaredNorm();
+  uinf = uinfvec.norm();
+
+  // Sectional lift must be computed as an input to Xfoil. Sectional forces and
+  // moments will be recomputed after running Xfoil for the purpose of writing
+  // data to the sectional output files.
+
+  computeForceMoment(alpha, uinf, rhoinf, true);
 
   /** To get 2D Cl:
       1. Transform uinfvec to section frame -> uinfvec_p
@@ -337,41 +320,112 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
   setVertexBLData(bldata, 8, _chord);
   bldata = _foil.blData("ampl", stat);
   setVertexBLData(bldata, 9);
-  
-  //FIXME: get viscous Cd from skin friction. If Xfoil did not converge, need
-  //to interpolate from neighboring sections first.
 }
 
 bool Section::blConverged () const { return _converged; }
 
 /******************************************************************************/
 //
-// Sectional lift and drag coefficients
+// Computes force and moment / unit span
 //
 /******************************************************************************/
-const double & Section::liftCoefficient () const { return _cl; }
-const double & Section::dragCoefficient () const { return _cd; }
-
-/******************************************************************************/
-//
-// Computes Reynolds number based on local chord. Also sets is for airfoil.
-//
-/******************************************************************************/
-void Section::computeReynoldsNumber ( const double & rhoinf,
-                                     const double & uinf, const double & muinf )
+void Section::computeForceMoment ( const double & alpha, const double & uinf,
+                                   const double & rhoinf, bool viscous )
 {
-  _re = rhoinf * uinf * _chord / muinf;
-  _foil.setReynoldsNumber(_re);
-} 
+  unsigned int i;
+  double nx, nz, tx, tz, cenx, cenz, pave, cfave, qinf;
+  double fap, fav, fnp, fnv, mp, mv, liftp, liftv, dragp, dragv;
+  double dfap, dfav, dfnp, dfnv;
+  Eigen::Vector3d forcep, forcev, momentp, momentv;
+  Eigen::Matrix3d section2inertial;
 
-const double & Section::reynoldsNumber () const { return _re; }
+  fap = 0.;
+  fav = 0.;
+  fnp = 0.;
+  fnv = 0.;
+  mp = 0.;
+  mv = 0.;
+  qinf = 0.5*rhoinf*std::pow(uinf,2.);
+  for ( i = 1; i < _nverts; i++ )
+  {
+    // Dimensional edge normal vector and edge center
 
-/******************************************************************************/
-//
-// Sets Mach number for airfoil
-//
-/******************************************************************************/
-void Section::setMachNumber ( const double & minf )
-{
-  _foil.setMachNumber(minf); 
+    nx = _uverts[i].z() - _uverts[i-1].z();
+    nz = _uverts[i-1].x() - _uverts[i].x();
+	cenx = 0.5*(_uverts[i].x() + _uverts[i-1].x());
+	cenz = 0.5*(_uverts[i].z() + _uverts[i-1].z());
+
+    // Integrate pressure
+
+    pave = 0.5*(_verts[i].data(5) + _verts[i-1].data(5));
+    dfnp = -pave*nz;
+    dfap = -pave*nx;
+	fnp += dfnp;
+	fap += dfap;
+	mp += dfnp * (0.25*_chord - cenx) + dfap*cenz;
+
+	// Viscous contribution
+
+	if (viscous)
+	{
+	  tx = _uverts[i].x() - _uverts[i-1].x();
+	  tz = _uverts[i].z() - _uverts[i-1].z();
+	  if (tx < 0)
+	  {
+		tx *= -1.;
+		tz *= -1.;
+	  }
+      cfave = 0.5*(_verts[i].data(7) + _verts[i-1].data(7));
+	  dfnv = cfave*qinf*tz;
+	  dfav = cfave*qinf*tx;
+	  fnv += dfnv;
+	  fav += dfav;
+	  mv += dfnv * (0.25*_chord - cenx) + dfav*cenz;
+	}
+  }
+  _fn = fnp + fnv;
+  _fa = fap + fav;
+
+  // Rotate forces and moments to inertial frame
+
+  section2inertial = inverse_euler_rotation(_roll, _twist, 0.0, "123");
+  forcep << fap, 0., fnp;
+  forcep = section2inertial*forcep;
+  forcev << fav, 0., fnv;
+  forcev = section2inertial*forcev;
+  momentp << 0., mp, 0.;
+  momentp = section2inertial*momentp;
+  momentv << 0., mv, 0.;
+  momentv = section2inertial*momentv;
+
+  // Sectional lift, drag, and moment coefficients
+ 
+  liftp = -forcep(0)*sin(alpha*M_PI/180.) + forcep(2)*cos(alpha*M_PI/180.);
+  liftv = -forcev(0)*sin(alpha*M_PI/180.) + forcev(2)*cos(alpha*M_PI/180.);
+  dragp =  forcep(0)*cos(alpha*M_PI/180.) + forcep(2)*sin(alpha*M_PI/180.);
+  dragv =  forcev(0)*cos(alpha*M_PI/180.) + forcev(2)*sin(alpha*M_PI/180.);
+
+  _clp = liftp/(qinf*_chord);
+  _clv = liftv/(qinf*_chord);
+  _cdp = dragp/(qinf*_chord);
+  _cdv = dragv/(qinf*_chord);
+  _cmp = momentp(1)/(qinf*_chord*_chord);
+  _cmv = momentv(1)/(qinf*_chord*_chord);
 }
+
+/******************************************************************************/
+//
+// Sectional force and moment coefficients
+//
+/******************************************************************************/
+double Section::liftCoefficient () const { return _clp + _clv; }
+const double & Section::pressureLiftCoefficient () const { return _clp; }
+const double & Section::viscousLiftCoefficient () const { return _clv; }
+
+double Section::dragCoefficient () const { return _cdp + _cdv; }
+const double & Section::pressureDragCoefficient () const { return _cdp; }
+const double & Section::viscousDragCoefficient () const { return _cdv; }
+
+double Section::pitchingMomentCoefficient () const { return _cmp + _cmv; }
+const double & Section::pressurePitchingMomentCoefficient () const { return _cmp; }
+const double & Section::viscousPitchingMomentCoefficient () const { return _cmv; }

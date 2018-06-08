@@ -29,18 +29,19 @@ class Section: public SectionalObject {
 
     double _xle, _zle;	// Leading edge location
     double _chord;
-    double _twist;	// Twist angle, positive leading edge up
-    double _roll;	// Roll angle, positive CCW viewed from back
+    double _twist;		// Twist angle, positive leading edge up
+    double _roll;		// Roll angle, positive CCW viewed from back
 
     unsigned int _nverts;
     std::vector<Vertex>	_verts, _uverts;
-			// Vertices defining panel endpoints, and non-rotated,
+						// Vertices defining panel endpoints, and non-rotated,
                         // non-translated version of same
 
-    Airfoil _foil;	// Airfoil at this section
+    Airfoil _foil;		// Airfoil at this section
     double _re;         // Reynolds number
-    double _fa, _fn;    // Axial and normal force components in section frame
-    double _cl, _cd;    // Sectional lift and drag coefficients
+	double _fa, _fn;	// Axial and normal force/span in section frame
+	double _clp, _clv, _cdp, _cdv, _cmp, _cmv;
+						// Sectional lift, drag, and moment coefficients
     bool _converged;    // Whether Xfoil BL calculations converged
     std::vector<interpdata> _foilinterp;
                         // Airfoil interpolation points & weights for verts
@@ -82,21 +83,6 @@ class Section: public SectionalObject {
 
     Airfoil & airfoil ();
 
-    // Computes section pressure force
-
-    void computePressureForce ( const double & alpha, const double & uinf,
-                                const double & rhoinf );
-
-    // BL calculations with Xfoil
-
-    void computeBL ( const Eigen::Vector3d & uinfvec, const double & rhoinf ); 
-    bool blConverged () const;
-
-    // Sectional lift and drag coefficients
-
-    const double & liftCoefficient () const;
-    const double & dragCoefficient () const;
-    
     // Computes Reynolds number and sets it for airfoil
     
     void computeReynoldsNumber ( const double & rhoinf, const double & uinf,
@@ -106,6 +92,33 @@ class Section: public SectionalObject {
     // Sets Mach number for airfoil
     
     void setMachNumber ( const double & mach );
+
+    // BL calculations with Xfoil
+
+    void computeBL ( const Eigen::Vector3d & uinfvec, const double & rhoinf,
+		             const double & alpha );
+    bool blConverged () const;
+
+    // Computes section forces and moments
+
+    void computeForceMoment ( const double & alpha, const double & uinf,
+                              const double & rhoinf, bool viscous );
+
+    // Sectional force and moment coefficients
+
+    double liftCoefficient () const;
+	const double & pressureLiftCoefficient () const;
+	const double & viscousLiftCoefficient () const;
+
+    double dragCoefficient () const;
+	const double & pressureDragCoefficient () const;
+	const double & viscousDragCoefficient () const;
+
+    double pitchingMomentCoefficient () const;
+	const double & pressurePitchingMomentCoefficient () const;
+	const double & viscousPitchingMomentCoefficient () const;
+    
+
 };
 
 #endif

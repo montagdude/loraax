@@ -25,32 +25,36 @@ class Wing {
 
     std::string _name;
     unsigned int _nchord, _nspan;	// Number of points along chord and
-					//   span. nchord is on each side (top
-					//   and bottom); total is 2*nchord-1.
-    unsigned int _ntipcap;		// Number of points along the arc
-                                        //   forming the tip cap. Now fixed at
-                                        //   3, and tips are not rounded.
+									//   span. nchord is on each side (top
+									//   and bottom); total is 2*nchord-1.
+    unsigned int _ntipcap;			// Number of points along the arc
+									//   forming the tip cap. Now fixed at
+									//   3, and tips are not rounded.
     double _lesprat, _tesprat;		// LE and TE spacing ratios relative to
-					//   uniform
+									//   uniform
     double _rootsprat, _tipsprat;	// Root and tip spacing ratios relative
-					//   to uniform
+									//   to uniform
 
     std::vector<Section> _sections;	// Spanwise sections used for
-					//   calculations, set by _nspan and
-					//   root & tip spacing rations
+									//   calculations, set by _nspan and
+									//   root & tip spacing rations
     std::vector<Airfoil> _foils;  	// User-specified airfoils
     std::vector<Vertex *> _verts;	// Pointers to vertices on wing
     std::vector<std::vector<Vertex> > _tipverts;
-                                        // Vertices on interior of wing cap
+									// Vertices on interior of wing cap
     std::vector<QuadPanel> _quads;	// Quad panels
     std::vector<TriPanel> _tris;	// Tri panels at tip
     std::vector<std::vector<Panel *> > _panels;
-                                        // Pointers to panels arranged in i-j
-                                        //   coordinate directions
-    Wake _wake;				// Wake
-    std::vector<WakeStrip> _wakestrips;	// Wake strips behind TE panels
-    double _lift, _drag, _moment;	// Dimensional forces and moments
-    double _cl, _cd, _cm;		// Force and moment coefficients
+									// Pointers to panels arranged in i-j
+									//   coordinate directions
+    Wake _wake;						// Wake
+    std::vector<WakeStrip> _wakestrips;	
+									// Wake strips behind TE panels
+	double _liftp, _liftv;			// Dimensional forces and moments
+	double _dragp, _dragv;
+	double _momentp, _momentv;
+	double _clp, _clv, _cdp, _cdv;	// Force coefficients
+	double _cmp, _cmv;				// Moment coefficients
 
     std::vector<double> adjustSpacing ( 
                                const std::vector<double> & nom_stations ) const;
@@ -116,33 +120,46 @@ class Wing {
     unsigned int nWStrips () const;
     WakeStrip * wStrip ( unsigned int wsidx );
 
-    // Compute sectional pressure forces
-
-    void computeSectionPressureForces (); 
-
-    // Compute viscous forces (and skin friction, etc.) using Xfoil at sections.
-    // Also computes section viscous forces as part of the process.
+    // Compute viscous forces (and skin friction, etc.) using Xfoil at sections
 
     void computeBL ();
 
-    // Compute or access forces and moments
+    // Compute forces and moments, including sectional
 
     void computeForceMoment ( const double & sref, const double & lref,
                               const Eigen::Vector3d & momcen );
-    const double & lift () const;
-    const double & drag () const;
-    const double & pitchingMoment () const;
-    const double & liftCoefficient () const;
-    const double & dragCoefficient () const;
-    const double & pitchingMomentCoefficient () const;
+
+	double lift () const;
+	const double & pressureLift () const;
+	const double & viscousLift () const;
+	
+	double drag () const;
+	const double & pressureDrag () const;
+	const double & viscousDrag () const;
+	
+	double pitchingMoment () const;
+	const double & pressurePitchingMoment () const;
+	const double & viscousPitchingMoment () const;
+	
+	double liftCoefficient () const;
+	const double & pressureLiftCoefficient () const;
+	const double & viscousLiftCoefficient () const;
+	
+	double dragCoefficient () const;
+	const double & pressureDragCoefficient () const;
+	const double & viscousDragCoefficient () const;
+	
+	double pitchingMomentCoefficient () const;
+	const double & pressurePitchingMomentCoefficient () const;
+	const double & viscousPitchingMomentCoefficient () const;
 
     // Write forces and moments to file
 
     int writeForceMoment ( int iter ) const;
 
-    // Write sectional forces to file
+    // Write sectional force and moment coefficients to file
 
-    int writeSectionForces ( int iter ) const;
+    int writeSectionForceMoment ( int iter ) const;
 };
 
 #endif

@@ -22,10 +22,10 @@ class Vertex {
     double _x, _y, _z;
     std::vector<Panel *> _panels;	// Neighboring panels
     unsigned int _npanels;
-    bool _vizcoords;		 	// Separate coordinates for
+    bool _vizcoords;		 		// Separate coordinates for
     double _xviz, _yviz, _zviz;	 	//   visualization. Used for trailing
-					//   wake vertices that are far
-					//   downstream.
+									//   wake vertices that are far
+									//   downstream.
 
     // Vertex data: source strength, doublet strength, Vx, Vy, Vz, pressure, cp,
     // cf, deltastar, ampl, d/ds(uedge*deltastar)

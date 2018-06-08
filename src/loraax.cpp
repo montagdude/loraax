@@ -124,7 +124,6 @@ int main (int argc, char* argv[])
 
     // Viscous BL computations with Xfoil
 
-    ac.computeSectionPressureForces();
     if (viscous)
     {
       std::cout << "  Computing viscous BL with Xfoil ..." << std::endl;
@@ -149,7 +148,7 @@ int main (int argc, char* argv[])
     {
       std::cout << "  Writing VTK visualization ..." << std::endl;
       ac.writeViz(casename, iter);
-      ac.writeSectionForces(iter);
+      ac.writeSectionForceMoment(iter);
       viz_iter = 0;
     }
 

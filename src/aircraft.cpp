@@ -1023,22 +1023,6 @@ void Aircraft::computeSurfaceQuantities ()
 
 /******************************************************************************/
 //
-// Computes pressure forces at sections
-//
-/******************************************************************************/
-void Aircraft::computeSectionPressureForces ()
-{
-  unsigned int i, nwings;
-
-  nwings = _wings.size();
-  for ( i = 0; i < nwings; i++ )
-  {
-    _wings[i].computeSectionPressureForces();
-  }
-}
-
-/******************************************************************************/
-//
 // BL calculations with xfoil
 //
 /******************************************************************************/
@@ -1063,30 +1047,281 @@ void Aircraft::computeForceMoment ()
   unsigned int i, nwings;
 
   nwings = _wings.size();
-  _lift = 0.;
-  _drag = 0.;
-  _moment = 0.;
-  _cl = 0.;
-  _cd = 0.;
-  _cm = 0.;
   for ( i = 0; i < nwings; i++ )
   {
     _wings[i].computeForceMoment(_sref, _lref, _momcen);
-    _lift += _wings[i].lift();
-    _drag += _wings[i].drag();
-    _moment += _wings[i].pitchingMoment();
-    _cl += _wings[i].liftCoefficient();
-    _cd += _wings[i].dragCoefficient();
-    _cm += _wings[i].pitchingMomentCoefficient();
   }
 }
 
-const double & Aircraft::lift () const { return _lift; }
-const double & Aircraft::drag () const { return _drag; }
-const double & Aircraft::pitchingMoment () const { return _moment; }
-const double & Aircraft::liftCoefficient () const { return _cl; }
-const double & Aircraft::dragCoefficient () const { return _cd; }
-const double & Aircraft::pitchingMomentCoefficient () const { return _cm; }
+double Aircraft::lift () const
+{
+  unsigned int i, nwings;
+  double lift;
+
+  nwings = _wings.size();
+  lift = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    lift += _wings[i].lift();
+  }
+
+  return lift;
+}
+
+double Aircraft::pressureLift () const
+{
+  unsigned int i, nwings;
+  double liftp;
+
+  nwings = _wings.size();
+  liftp = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    liftp += _wings[i].pressureLift();
+  }
+
+  return liftp;
+}
+
+double Aircraft::viscousLift () const
+{
+  unsigned int i, nwings;
+  double liftv;
+
+  nwings = _wings.size();
+  liftv = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    liftv += _wings[i].viscousLift();
+  }
+
+  return liftv;
+}
+
+double Aircraft::drag () const
+{
+  unsigned int i, nwings;
+  double drag;
+
+  nwings = _wings.size();
+  drag = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    drag += _wings[i].drag();
+  }
+
+  return drag;
+}
+
+double Aircraft::pressureDrag () const
+{
+  unsigned int i, nwings;
+  double dragp;
+
+  nwings = _wings.size();
+  dragp = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    dragp += _wings[i].pressureDrag();
+  }
+
+  return dragp;
+}
+
+double Aircraft::viscousDrag () const
+{
+  unsigned int i, nwings;
+  double dragv;
+
+  nwings = _wings.size();
+  dragv = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    dragv += _wings[i].viscousDrag();
+  }
+
+  return dragv;
+}
+
+double Aircraft::pitchingMoment () const
+{
+  unsigned int i, nwings;
+  double moment;
+
+  nwings = _wings.size();
+  moment = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    moment += _wings[i].pitchingMoment();
+  }
+
+  return moment;
+}
+
+double Aircraft::pressurePitchingMoment () const
+{
+  unsigned int i, nwings;
+  double momentp;
+
+  nwings = _wings.size();
+  momentp = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    momentp += _wings[i].pressurePitchingMoment();
+  }
+
+  return momentp;
+}
+
+double Aircraft::viscousPitchingMoment () const
+{
+  unsigned int i, nwings;
+  double momentv;
+
+  nwings = _wings.size();
+  momentv = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    momentv += _wings[i].viscousPitchingMoment();
+  }
+
+  return momentv;
+}
+
+double Aircraft::liftCoefficient () const
+{
+  unsigned int i, nwings;
+  double cl;
+
+  nwings = _wings.size();
+  cl = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    cl += _wings[i].liftCoefficient();
+  }
+
+  return cl;
+}
+
+double Aircraft::pressureLiftCoefficient () const
+{
+  unsigned int i, nwings;
+  double clp;
+
+  nwings = _wings.size();
+  clp = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    clp += _wings[i].pressureLiftCoefficient();
+  }
+
+  return clp;
+}
+
+double Aircraft::viscousLiftCoefficient () const
+{
+  unsigned int i, nwings;
+  double clv;
+
+  nwings = _wings.size();
+  clv = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    clv += _wings[i].viscousLiftCoefficient();
+  }
+
+  return clv;
+}
+
+double Aircraft::dragCoefficient () const
+{
+  unsigned int i, nwings;
+  double cd;
+
+  nwings = _wings.size();
+  cd = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    cd += _wings[i].dragCoefficient();
+  }
+
+  return cd;
+}
+
+double Aircraft::pressureDragCoefficient () const
+{
+  unsigned int i, nwings;
+  double cdp;
+
+  nwings = _wings.size();
+  cdp = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    cdp += _wings[i].pressureDragCoefficient();
+  }
+
+  return cdp;
+}
+
+double Aircraft::viscousDragCoefficient () const
+{
+  unsigned int i, nwings;
+  double cdv;
+
+  nwings = _wings.size();
+  cdv = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    cdv += _wings[i].viscousDragCoefficient();
+  }
+
+  return cdv;
+}
+
+double Aircraft::pitchingMomentCoefficient () const
+{
+  unsigned int i, nwings;
+  double cm;
+
+  nwings = _wings.size();
+  cm = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    cm += _wings[i].pitchingMomentCoefficient();
+  }
+
+  return cm;
+}
+
+double Aircraft::pressurePitchingMomentCoefficient () const
+{
+  unsigned int i, nwings;
+  double cmp;
+
+  nwings = _wings.size();
+  cmp = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    cmp += _wings[i].pressurePitchingMomentCoefficient();
+  }
+
+  return cmp;
+}
+
+double Aircraft::viscousPitchingMomentCoefficient () const
+{
+  unsigned int i, nwings;
+  double cmv;
+
+  nwings = _wings.size();
+  cmv = 0.;
+  for ( i = 0; i < nwings; i++ )
+  {
+    cmv += _wings[i].viscousPitchingMomentCoefficient();
+  }
+
+  return cmv;
+}
 
 /******************************************************************************/
 //
@@ -1112,8 +1347,20 @@ int Aircraft::writeForceMoment ( int iter ) const
                     "Unable to open " + fname + " for writing.");
       return 1;
     }
-    f << "\"Iter\",\"Lift\",\"Drag\",\"Pitching moment\","
-      << "\"CL\",\"CD\",\"Cm\"" << std::endl;
+	if (viscous)
+	{
+      f << "\"Iter\",\"Lift\",\"Liftp\",\"Liftv\","
+		<<          "\"Drag\",\"Dragp\",\"Dragv\","
+		<<"\"Pitching_moment\",\"Pitching_momentp\",\"Pitching_momentv\","
+		<<"\"CL\",\"CLp\",\"CLv\","
+		<<"\"CD\",\"CDp\",\"CDv\","
+		<<"\"Cm\",\"Cmp\",\"Cmv\"" << std::endl;
+	}
+	else
+	{
+      f << "\"Iter\",\"Lift\",\"Drag\",\"Pitching moment\","
+        << "\"CL\",\"CD\",\"Cm\"" << std::endl;
+	}
   }
   else
   {
@@ -1127,12 +1374,37 @@ int Aircraft::writeForceMoment ( int iter ) const
   }
   f << iter << ",";
   f.setf(std::ios_base::scientific);
-  f << std::setprecision(7) << _lift << ",";
-  f << std::setprecision(7) << _drag << ",";
-  f << std::setprecision(7) << _moment << ",";
-  f << std::setprecision(7) << _cl << ",";
-  f << std::setprecision(7) << _cd << ",";
-  f << std::setprecision(7) << _cm << "" << std::endl;
+  f << std::setprecision(7);
+  if (viscous)
+  {
+    f << lift() << ",";
+    f << pressureLift() << ",";
+    f << viscousLift() << ",";
+    f << drag() << ",";
+    f << pressureDrag() << ",";
+    f << viscousDrag() << ",";
+    f << pitchingMoment() << ",";
+    f << pressurePitchingMoment() << ",";
+    f << viscousPitchingMoment() << ",";
+    f << liftCoefficient() << ",";
+    f << pressureLiftCoefficient() << ",";
+    f << viscousLiftCoefficient() << ",";
+    f << dragCoefficient() << ",";
+    f << pressureDragCoefficient() << ",";
+    f << viscousDragCoefficient() << ",";
+    f << pitchingMomentCoefficient() << ",";
+    f << pressurePitchingMomentCoefficient() << ",";
+    f << viscousPitchingMomentCoefficient() << std::endl;
+  }
+  else
+  {
+    f << pressureLift() << ",";
+    f << pressureDrag() << ",";
+    f << pressurePitchingMoment() << ",";
+    f << pressureLiftCoefficient() << ",";
+    f << pressureDragCoefficient() << ",";
+    f << pressurePitchingMomentCoefficient() << "" << std::endl;
+  }
 
   f.close();
 
@@ -1148,17 +1420,17 @@ int Aircraft::writeForceMoment ( int iter ) const
 
 /******************************************************************************/
 //
-// Writes sectional forces to files
+// Writes sectional force and moment coefficients to file
 //
 /******************************************************************************/
-void Aircraft::writeSectionForces ( int iter ) const
+void Aircraft::writeSectionForceMoment ( int iter ) const
 {
   unsigned int i, nwings;
 
   nwings = _wings.size();
   for ( i = 0; i < nwings; i++ )
   {
-    _wings[i].writeSectionForces(iter);
+    _wings[i].writeSectionForceMoment(iter);
   }
 }
 

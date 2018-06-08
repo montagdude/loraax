@@ -1279,22 +1279,6 @@ WakeStrip * Wing::wStrip ( unsigned int wsidx )
 
 /******************************************************************************/
 //
-// Computes pressure forces at sections
-//
-/******************************************************************************/
-void Wing::computeSectionPressureForces ()
-{
-  unsigned int i;
-
-#pragma omp parallel for private(i)
-  for ( i = 0; i < _nspan; i++ )
-  {
-    _sections[i].computePressureForce(alpha, uinf, rhoinf);
-  }
-}
-
-/******************************************************************************/
-//
 // Computes viscous forces (and skin friction, etc.) using Xfoil at sections
 //
 /******************************************************************************/
@@ -1306,7 +1290,7 @@ void Wing::computeBL ()
 #pragma omp parallel for private(i)
   for ( i = 0; i < _nspan; i++ )
   {
-    _sections[i].computeBL(uinfvec, rhoinf);
+    _sections[i].computeBL(uinfvec, rhoinf, alpha);
     if (not _sections[i].blConverged())
     {
       std::cout << "    Warning: Xfoil BL calculations did not converge "
@@ -1334,18 +1318,21 @@ void Wing::computeBL ()
 
 /******************************************************************************/
 //
-// Compute or access forces and moments
+// Compute or access forces and moments. Compute part includes section forces
+// and moments.
 //
 /******************************************************************************/
 void Wing::computeForceMoment ( const double & sref, const double & lref,
                                 const Eigen::Vector3d & momcen )
 {
   unsigned int i, j;
-  Eigen::Vector3d df, dm, force, moment;
+  Eigen::Vector3d dfp, dfv, dmp, dmv, fp, fv, mp, mv;
   double qinf;
 
-  force << 0., 0., 0.;
-  moment << 0., 0., 0.;
+  fp << 0., 0., 0.;
+  fv << 0., 0., 0.;
+  mp << 0., 0., 0.;
+  mv << 0., 0., 0.;
 
   // Compute on top and bottom surfaces
 
@@ -1353,38 +1340,78 @@ void Wing::computeForceMoment ( const double & sref, const double & lref,
   {
     for ( j = 0; j < 2*_nchord-2; j++ )
     { 
-      _panels[i][j]->computeForceMoment(pinf, df, dm, momcen);
-      force += df;
-      moment += dm;
+      _panels[i][j]->computeForceMoment(uinf, rhoinf, pinf, momcen, viscous,
+			                            dfp, dfv, dmp, dmv);
+      fp += dfp;
+	  fv += dfv;
+	  mp += dmp;
+	  mv += dmv;
     }
   }
 
   // Account for mirror image
 
-  force(0)  *= 2.;
-  force(1)  =  0.;
-  force(2)  *= 2.;
-  moment(0) =  0.;
-  moment(1) *= 2.;
-  moment(2) =  0.;
+  fp(0)  *= 2.;
+  fp(1)  =  0.;
+  fp(2)  *= 2.;
+  fv(0)  *= 2.;
+  fv(1)  =  0.;
+  fv(2)  *= 2.;
+  mp(0) =  0.;
+  mp(1) *= 2.;
+  mp(2) =  0.;
+  mv(0) =  0.;
+  mv(1) *= 2.;
+  mv(2) =  0.;
 
   // Convert to wind frame
 
   qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-  _lift = -force(0)*sin(alpha*M_PI/180.) + force(2)*cos(alpha*M_PI/180.);
-  _drag =  force(0)*cos(alpha*M_PI/180.) + force(2)*sin(alpha*M_PI/180.);
-  _moment = moment(1);
-  _cl = _lift/(qinf*sref);
-  _cd = _drag/(qinf*sref);
-  _cm = _moment/(qinf*sref*lref);
+  _liftp = -fp(0)*sin(alpha*M_PI/180.) + fp(2)*cos(alpha*M_PI/180.);
+  _liftv = -fv(0)*sin(alpha*M_PI/180.) + fv(2)*cos(alpha*M_PI/180.);
+  _dragp =  fp(0)*cos(alpha*M_PI/180.) + fp(2)*sin(alpha*M_PI/180.);
+  _dragv =  fv(0)*cos(alpha*M_PI/180.) + fv(2)*sin(alpha*M_PI/180.);
+  _momentp = mp(1);
+  _momentv = mv(1);
+  _clp = _liftp/(qinf*sref);
+  _clv = _liftv/(qinf*sref);
+  _cdp = _dragp/(qinf*sref);
+  _cdv = _dragv/(qinf*sref);
+  _cmp = _momentp/(qinf*sref*lref);
+  _cmv = _momentv/(qinf*sref*lref);
+
+  // Compute section forces and moments
+
+#pragma omp parallel for private(i)
+  for ( i = 0; i < _nspan; i++ )
+  {
+    _sections[i].computeForceMoment(alpha, uinf, rhoinf, viscous);
+  }
 }
 
-const double & Wing::lift () const { return _lift; }
-const double & Wing::drag () const { return _drag; }
-const double & Wing::pitchingMoment () const { return _moment; }
-const double & Wing::liftCoefficient () const { return _cl; }
-const double & Wing::dragCoefficient () const { return _cd; }
-const double & Wing::pitchingMomentCoefficient () const { return _cm; }
+double Wing::lift () const { return _liftp + _liftv; }
+const double & Wing::pressureLift () const { return _liftp; }
+const double & Wing::viscousLift () const { return _liftv; }
+
+double Wing::drag () const { return _dragp + _dragv; }
+const double & Wing::pressureDrag () const { return _dragp; }
+const double & Wing::viscousDrag () const { return _dragv; }
+
+double Wing::pitchingMoment () const { return _momentp + _momentv; }
+const double & Wing::pressurePitchingMoment () const { return _momentp; }
+const double & Wing::viscousPitchingMoment () const { return _momentv; }
+
+double Wing::liftCoefficient () const { return _clp + _clv; }
+const double & Wing::pressureLiftCoefficient () const { return _clp; }
+const double & Wing::viscousLiftCoefficient () const { return _clv; }
+
+double Wing::dragCoefficient () const { return _cdp + _cdv; }
+const double & Wing::pressureDragCoefficient () const { return _cdp; }
+const double & Wing::viscousDragCoefficient () const { return _cdv; }
+
+double Wing::pitchingMomentCoefficient () const { return _cmp + _cmv; }
+const double & Wing::pressurePitchingMomentCoefficient () const { return _cmp; }
+const double & Wing::viscousPitchingMomentCoefficient () const { return _cmv; }
 
 /******************************************************************************/
 //
@@ -1409,8 +1436,20 @@ int Wing::writeForceMoment ( int iter ) const
                     "Unable to open " + fname + " for writing.");
       return 1;
     }
-    f << "\"Iter\",\"Lift\",\"Drag\",\"Pitching moment\","
-      << "\"CL\",\"CD\",\"Cm\"" << std::endl;
+	if (viscous)
+	{
+      f << "\"Iter\",\"Lift\",\"Liftp\",\"Liftv\","
+		<<          "\"Drag\",\"Dragp\",\"Dragv\","
+		<<"\"Pitching_moment\",\"Pitching_momentp\",\"Pitching_momentv\","
+		<<"\"CL\",\"CLp\",\"CLv\","
+		<<"\"CD\",\"CDp\",\"CDv\","
+		<<"\"Cm\",\"Cmp\",\"Cmv\"" << std::endl;
+	}
+	else
+	{
+      f << "\"Iter\",\"Lift\",\"Drag\",\"Pitching moment\","
+        << "\"CL\",\"CD\",\"Cm\"" << std::endl;
+	}
   }
   else
   {
@@ -1424,12 +1463,37 @@ int Wing::writeForceMoment ( int iter ) const
   }
   f << iter << ",";
   f.setf(std::ios_base::scientific);
-  f << std::setprecision(6) << _lift << ",";
-  f << std::setprecision(6) << _drag << ",";
-  f << std::setprecision(6) << _moment << ",";
-  f << std::setprecision(6) << _cl << ",";
-  f << std::setprecision(6) << _cd << ",";
-  f << std::setprecision(6) << _cm << std::endl;
+  f << std::setprecision(7);
+  if (viscous)
+  {
+    f << _liftp + _liftv << ",";
+    f << _liftp << ",";
+    f << _liftv << ",";
+    f << _dragp + _dragv << ",";
+    f << _dragp << ",";
+    f << _dragv << ",";
+    f << _momentp + _momentv << ",";
+    f << _momentp << ",";
+    f << _momentv << ",";
+    f << _clp + _clv << ",";
+    f << _clp << ",";
+    f << _clv << ",";
+    f << _cdp + _cdv << ",";
+    f << _cdp << ",";
+    f << _cdv << ",";
+    f << _cmp + _cmv << ",";
+    f << _cmp << ",";
+    f << _cmv << std::endl;
+  }
+  else
+  {
+    f << _liftp << ",";
+    f << _dragp << ",";
+    f << _momentp << ",";
+    f << _clp << ",";
+    f << _cdp << ",";
+    f << _cmp << std::endl;
+  }
 
   f.close();
 
@@ -1441,7 +1505,7 @@ int Wing::writeForceMoment ( int iter ) const
 // Writes sectional forces to file
 //
 /******************************************************************************/
-int Wing::writeSectionForces ( int iter ) const
+int Wing::writeSectionForceMoment ( int iter ) const
 {
   std::ofstream f;
   std::string fname;
@@ -1472,47 +1536,82 @@ int Wing::writeSectionForces ( int iter ) const
                   "Unable to open " + fname + " for writing.");
     return 1;
   }
-  f << "\"xle\",\"y\",\"y_flat\",\"zle\",\"Cl\",\"Cd\",\"cCl\",\"cCd\"";
+  f << "\"xle\",\"y\",\"y_flat\",\"zle\",\"c\",";
   if (viscous)
-    f << ",\"Re\"";
-  f << std::endl;
+  {
+	f << "\"Re\",\"Cl\",\"Clp\",\"Clv\",\"Cd\",\"Cdp\",\"Cdv\","
+	  <<        "\"Cm\",\"Cmp\",\"Cmv\",\"cCl\",\"cCd\"" << std::endl;
+  }
+  else
+  {
+	f << "\"Cl\",\"Cd\",\"Cm\",\"cCl\",\"cCd\"" << std::endl;
+  }
 
   // Write data for sections and mirror image
   
   f.setf(std::ios_base::scientific);
+  f << std::setprecision(7);
   for ( i = _nspan-1; i >= 0; i-- )
   {
-    f << std::setprecision(6) << _sections[i].xle() << ",";
-    f << std::setprecision(6) << _sections[i].y() << ",";
-    f << std::setprecision(6) << y_flat[i] << ",";
-    f << std::setprecision(6) << _sections[i].zle() << ",";
-    f << std::setprecision(6) << _sections[i].liftCoefficient() << ",";
-    f << std::setprecision(6) << _sections[i].dragCoefficient() << ",";
-    f << std::setprecision(6) << _sections[i].chord() *
-                                 _sections[i].liftCoefficient() << ",";
-    f << std::setprecision(6) << _sections[i].chord() *
-                                 _sections[i].dragCoefficient();
-    if (viscous) 
-      f << std::setprecision(6) << ","
-        << _sections[i].reynoldsNumber();
-    f << std::endl;
+    f << _sections[i].xle() << ",";
+    f << _sections[i].y() << ",";
+    f << y_flat[i] << ",";
+    f << _sections[i].zle() << ",";
+    f << _sections[i].chord() << ",";
+	if (viscous)
+	{
+	  f << _sections[i].reynoldsNumber() << ",";
+	  f << _sections[i].liftCoefficient() << ",";
+	  f << _sections[i].pressureLiftCoefficient() << ",";
+	  f << _sections[i].viscousLiftCoefficient() << ",";
+	  f << _sections[i].dragCoefficient() << ",";
+	  f << _sections[i].pressureDragCoefficient() << ",";
+	  f << _sections[i].viscousDragCoefficient() << ",";
+	  f << _sections[i].pitchingMomentCoefficient() << ",";
+	  f << _sections[i].pressurePitchingMomentCoefficient() << ",";
+	  f << _sections[i].viscousPitchingMomentCoefficient() << ",";
+	  f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+	  f << _sections[i].chord() * _sections[i].dragCoefficient() << std::endl;
+	}
+	else
+	{
+	  f << _sections[i].liftCoefficient() << ",";
+	  f << _sections[i].dragCoefficient() << ",";
+	  f << _sections[i].pitchingMomentCoefficient() << ",";
+	  f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+	  f << _sections[i].chord() * _sections[i].dragCoefficient() << std::endl;
+	}
   }
   for ( i = 1; i < int(_nspan); i++ )
   {
-    f << std::setprecision(6) << _sections[i].xle() << ",";
-    f << std::setprecision(6) << -_sections[i].y() << ",";
-    f << std::setprecision(6) << -y_flat[i] << ",";
-    f << std::setprecision(6) << _sections[i].zle() << ",";
-    f << std::setprecision(6) << _sections[i].liftCoefficient() << ",";
-    f << std::setprecision(6) << _sections[i].dragCoefficient() << ",";
-    f << std::setprecision(6) << _sections[i].chord() *
-                                 _sections[i].liftCoefficient() << ",";
-    f << std::setprecision(6) << _sections[i].chord() *
-                                 _sections[i].dragCoefficient();
-    if (viscous) 
-      f << std::setprecision(6) << ","
-        << _sections[i].reynoldsNumber();
-    f << std::endl;
+    f << _sections[i].xle() << ",";
+    f << -_sections[i].y() << ",";
+    f << -y_flat[i] << ",";
+    f << _sections[i].zle() << ",";
+    f << _sections[i].chord() << ",";
+	if (viscous)
+	{
+	  f << _sections[i].reynoldsNumber() << ",";
+	  f << _sections[i].liftCoefficient() << ",";
+	  f << _sections[i].pressureLiftCoefficient() << ",";
+	  f << _sections[i].viscousLiftCoefficient() << ",";
+	  f << _sections[i].dragCoefficient() << ",";
+	  f << _sections[i].pressureDragCoefficient() << ",";
+	  f << _sections[i].viscousDragCoefficient() << ",";
+	  f << _sections[i].pitchingMomentCoefficient() << ",";
+	  f << _sections[i].pressurePitchingMomentCoefficient() << ",";
+	  f << _sections[i].viscousPitchingMomentCoefficient() << ",";
+	  f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+	  f << _sections[i].chord() * _sections[i].dragCoefficient() << std::endl;
+	}
+	else
+	{
+	  f << _sections[i].liftCoefficient() << ",";
+	  f << _sections[i].dragCoefficient() << ",";
+	  f << _sections[i].pitchingMomentCoefficient() << ",";
+	  f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+	  f << _sections[i].chord() * _sections[i].dragCoefficient() << std::endl;
+	}
   }
   f.close();
 

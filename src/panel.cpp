@@ -35,6 +35,9 @@ Panel::Panel ()
   _left = NULL;
   _front = NULL;
   _back = NULL;
+
+  //FIXME
+  _tan << 1., 0., 0.;
 } 
 
 /******************************************************************************/
@@ -317,11 +320,44 @@ const double & Panel::pressureCoefficient () const { return _cp; }
 // Compute force and moment contributions
 //
 /******************************************************************************/
-void Panel::computeForceMoment ( const double & pinf, Eigen::Vector3d & force,
-                                 Eigen::Vector3d & moment,
-                                 const Eigen::Vector3d & moment_center ) const
+void Panel::computeForceMoment ( const double & uinf, const double & rhoinf,
+                                 const double & pinf,
+                                 const Eigen::Vector3d & moment_center,
+                                 bool viscous, Eigen::Vector3d & fp,
+                                 Eigen::Vector3d & fv, Eigen::Vector3d & mp,
+                                 Eigen::Vector3d & mv ) const
 {
-//FIXME: add viscous terms
-  force = -(_p-pinf)*_norm*_area;
-  moment = (_cen - moment_center).cross(force);
+  unsigned int i, nverts;
+  double q, cf, dx, dy, dz, dist, weightsum, tau;
+
+  // Pressure force and moment
+
+  q = 0.5*rhoinf*std::pow(uinf,2.);
+  fp = -(_p-pinf)*_norm*_area;
+  mp = (_cen - moment_center).cross(fp);
+
+  if (viscous)
+  {
+    // Interpolate skin friction from vertices (inverse distance weighting)
+
+    nverts = _verts.size();
+    cf = 0.; 
+    weightsum = 0.;
+    for ( i = 0; i < nverts; i++ )
+    {
+      dx = _verts[i]->x() - _cen(0);
+      dy = _verts[i]->y() - _cen(1);
+      dz = _verts[i]->z() - _cen(2);
+      dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
+      cf += _verts[i]->data(7)/dist;
+      weightsum += 1./dist;
+    }
+    cf /= weightsum;
+    tau = cf * q;
+
+    // Compute viscous force and moment
+
+    fv = tau*_tan*_area;
+    mv = (_cen - moment_center).cross(fv);
+  }
 } 

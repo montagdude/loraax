@@ -23,8 +23,8 @@ class Aircraft {
 
     std::vector<Wing> _wings;		// Wings
 
-    double _sref;			// Reference area
-    double _lref;			// Pitching moment reference length
+    double _sref;					// Reference area
+    double _lref;					// Pitching moment reference length
     Eigen::Vector3d _momcen;		// Pitching moment reference point
 
     std::vector<Vertex *> _verts;	// Pointers to vertices
@@ -33,15 +33,13 @@ class Aircraft {
     std::vector<Panel *> _wakepanels;	// Pointers to wake doublet panels
 
     Eigen::MatrixXd _sourceic, _doubletic;
-					// Aero influence coefficients due to
-					//   sources and doublets on surface
-    Eigen::MatrixXd _aic;		// Aero influence coefficients matrix
-    Eigen::VectorXd _mun;		// Normalized doublet strengths vector
-    Eigen::VectorXd _rhs;		// Right hand side vector
+									// Aero influence coefficients due to
+									//   sources and doublets on surface
+    Eigen::MatrixXd _aic;			// Aero influence coefficients matrix
+    Eigen::VectorXd _mun;			// Normalized doublet strengths vector
+    Eigen::VectorXd _rhs;			// Right hand side vector
     Eigen::PartialPivLU<Eigen::MatrixXd> _lu;
-					// LU factorization of AIC matrix
-    double _lift, _drag, _moment;	// Dimensional forces and moments
-    double _cl, _cd, _cm;		// Force and moment coefficients
+									// LU factorization of AIC matrix
 
     // Set up pointers to vertices, panels, and wake elements
 
@@ -87,10 +85,6 @@ class Aircraft {
 
     void computeSurfaceQuantities ();
 
-    // Computes sectional pressure forces
-
-    void computeSectionPressureForces (); 
-
     // BL calculations with Xfoil
 
     void computeBL (); 
@@ -98,20 +92,38 @@ class Aircraft {
     // Computes or access forces and moments
 
     void computeForceMoment ();
-    const double & lift () const;
-    const double & drag () const;
-    const double & pitchingMoment () const;
-    const double & liftCoefficient () const;
-    const double & dragCoefficient () const;
-    const double & pitchingMomentCoefficient () const;
+
+	double lift () const;
+	double pressureLift () const;
+	double viscousLift () const;
+	
+	double drag () const;
+	double pressureDrag () const;
+	double viscousDrag () const;
+	
+	double pitchingMoment () const;
+	double pressurePitchingMoment () const;
+	double viscousPitchingMoment () const;
+	
+	double liftCoefficient () const;
+	double pressureLiftCoefficient () const;
+	double viscousLiftCoefficient () const;
+	
+	double dragCoefficient () const;
+	double pressureDragCoefficient () const;
+	double viscousDragCoefficient () const;
+	
+	double pitchingMomentCoefficient () const;
+	double pressurePitchingMomentCoefficient () const;
+	double viscousPitchingMomentCoefficient () const;
 
     // Write forces and moments to file
 
     int writeForceMoment ( int iter ) const;
 
-    // Write section forces to file
+    // Write section force and moment coefficients to file
 
-    void writeSectionForces ( int iter ) const;
+    void writeSectionForceMoment ( int iter ) const;
 
     // Convects and updates wake panels
 
