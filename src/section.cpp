@@ -74,6 +74,7 @@ void Section::setGeometry ( const double & xle, const double & y,
 {
   _xle = xle;
   setY(y);
+  _foil.setY(y);
   _zle = zle;
   _chord = chord;
   _twist = twist;
