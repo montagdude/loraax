@@ -25,6 +25,8 @@ Panel::Panel ()
   _mu = 0.0;
   _length = 0.0;
   _area = 0.0;
+  _norm << 0., 0., 0.;
+  _tan << 0., 0., 0.;
   _xtrans.resize(0);
   _vel << 0., 0., 0.;
   _cp = 0.;
@@ -35,9 +37,6 @@ Panel::Panel ()
   _left = NULL;
   _front = NULL;
   _back = NULL;
-
-  //FIXME
-  _tan << 1., 0., 0.;
 } 
 
 /******************************************************************************/
@@ -92,12 +91,14 @@ Panel * Panel::backNeighbor () { return _back; }
 
 /******************************************************************************/
 //
-// Computes and performs LU factorization of grid transformation
+// Computes and performs LU factorization of grid transformation. Also computes
+// surface tangential direction for viscous forces.
 //
 /******************************************************************************/
 int Panel::computeGridTransformation ()
 {
   double dxdxi, dydxi, dzdxi, dxdeta, dydeta, dzdeta, dxdchi, dydchi, dzdchi;
+  Eigen::Vector3d tan_grid;
 
   if (_front == NULL)
   {
@@ -159,6 +160,16 @@ int Panel::computeGridTransformation ()
           dxdeta, dydeta, dzdeta,
           dxdchi, dydchi, dzdchi;
   _lu.compute(_jac);
+
+  // Surface tangential direction, defined as the +/- eta direction in inertial
+  // coordinates. +/- factor applied such that tangential direction has +ve
+  // x-component.
+
+  tan_grid << 0., 1., 0.;
+  _tan = _lu.solve(tan_grid);
+  if (_tan(0) < 0.)
+	_tan *= -1.;
+  _tan /= _tan.norm();
 
   return 0;
 }
@@ -359,5 +370,10 @@ void Panel::computeForceMoment ( const double & uinf, const double & rhoinf,
 
     fv = tau*_tan*_area;
     mv = (_cen - moment_center).cross(fv);
+  }
+  else
+  {
+    fv << 0., 0., 0.;
+	mv << 0., 0., 0.;
   }
 } 
