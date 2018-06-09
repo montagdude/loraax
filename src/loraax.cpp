@@ -160,6 +160,7 @@ int main (int argc, char* argv[])
 
   std::cout << "Writing final VTK visualization ..." << std::endl;
   ac.writeViz(casename, iter-1);
+  ac.writeSectionForceMoment(iter-1);
 
   return 0;
 }
