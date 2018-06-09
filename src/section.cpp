@@ -336,7 +336,7 @@ void Section::computeForceMoment ( const double & alpha, const double & uinf,
                                    const double & rhoinf, bool viscous )
 {
   unsigned int i;
-  double nx, nz, tx, tz, cenx, cenz, pave, cfave, qinf;
+  double nx, nz, tx, tz, Vx, Vz, cenx, cenz, pave, cfave, qinf;
   double fap, fav, fnp, fnv, mp, mv, liftp, liftv, dragp, dragv;
   double dfap, dfav, dfnp, dfnv;
   Eigen::Vector3d forcep, forcev, momentp, momentv;
@@ -371,13 +371,19 @@ void Section::computeForceMoment ( const double & alpha, const double & uinf,
 
 	if (viscous)
 	{
+	  Vx = 0.5*(_verts[i].data(2) + _verts[i-1].data(2));
+	  Vz = 0.5*(_verts[i].data(4) + _verts[i-1].data(4));
+
+	  // Tangent direction is positive in local flow direction
+
 	  tx = _uverts[i].x() - _uverts[i-1].x();
 	  tz = _uverts[i].z() - _uverts[i-1].z();
-	  if (tx < 0)
+	  if (tx*Vx + tz*Vz < 0.)
 	  {
 		tx *= -1.;
 		tz *= -1.;
 	  }
+
       cfave = 0.5*(_verts[i].data(7) + _verts[i-1].data(7));
 	  dfnv = cfave*qinf*tz;
 	  dfav = cfave*qinf*tx;

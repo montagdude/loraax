@@ -161,14 +161,13 @@ int Panel::computeGridTransformation ()
           dxdchi, dydchi, dzdchi;
   _lu.compute(_jac);
 
-  // Surface tangential direction, defined as the +/- eta direction in inertial
-  // coordinates. +/- factor applied such that tangential direction has +ve
-  // x-component.
+  // Surface tangential direction, defined as the surface vector in the
+  // passing through the centroid with no component in the spanwise direction.
+//FIXME: this doesn't always result in no spanwise component. Need to figure out
+//why.
 
   tan_grid << 0., 1., 0.;
   _tan = _lu.solve(tan_grid);
-  if (_tan(0) < 0.)
-	_tan *= -1.;
   _tan /= _tan.norm();
 
   return 0;
@@ -339,7 +338,7 @@ void Panel::computeForceMoment ( const double & uinf, const double & rhoinf,
                                  Eigen::Vector3d & mv ) const
 {
   unsigned int i, nverts;
-  double q, cf, dx, dy, dz, dist, weightsum, tau;
+  double q, cf, dx, dy, dz, dist, weightsum, tau, sign;
 
   // Pressure force and moment
 
@@ -366,9 +365,16 @@ void Panel::computeForceMoment ( const double & uinf, const double & rhoinf,
     cf /= weightsum;
     tau = cf * q;
 
+	// Determine sign on _tan vector; +ve cf corresponds to the flow direction
+
+	if (_vel.transpose()*_tan < 0.)
+	  sign = -1.;
+	else
+	  sign = 1.;
+
     // Compute viscous force and moment
 
-    fv = tau*_tan*_area;
+    fv = sign*tau*_tan*_area;
     mv = (_cen - moment_center).cross(fv);
   }
   else
