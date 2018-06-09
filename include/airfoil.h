@@ -29,7 +29,7 @@ class Airfoil: public SectionalObject {
 
     int _nb, _n;		        // Number of points (buffer, smoothed)
     std::vector<double> _s, _xs, _zs;   // Spline fit of buffer coordinates
-    std::vector<double> _ssmoothed;     // Spline vector for smoothed airfoilk
+    std::vector<double> _ssmoothed;     // Spline vector for smoothed airfoil
     double _sle;                        // Leading edge spline parameter
 
     bool _unit_transform;		// Transform flag (call unitTransform)

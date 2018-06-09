@@ -51,5 +51,8 @@ void conjgrad_search ( std::vector<double> & xopt, double & fmin,
                        double (*objfunc)(const std::vector<double> & x),
                        const std::vector<double> & x0,
                        const conjgrad_options_type & searchopt );
+double centered_difference ( const double & yp1, const double & y0,
+		                     const double & ym1, const double & xp1,
+							 const double & xm1 );
 
 #endif

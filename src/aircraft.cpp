@@ -272,6 +272,7 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
     writeSurfaceScalar(f, "skin_friction_coefficient", 7);
     writeSurfaceScalar(f, "displacement_thickness", 8);
     writeSurfaceScalar(f, "log_amplification_ratio", 9);
+	writeSurfaceScalar(f, "mass_defect_derivative", 10);
   }
 }
 

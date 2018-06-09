@@ -877,3 +877,24 @@ void conjgrad_search ( std::vector<double> & xopt, double & fmin,
   }
   xopt = x;
 }
+
+/******************************************************************************/
+//
+// 2nd-order accurate centered difference with non-uniform step size. x0 is
+// assumed to be 0.
+//
+/******************************************************************************/
+double centered_difference ( const double & yp1, const double & y0,
+		                     const double & ym1, const double & xp1,
+							 const double & xm1 )
+{
+  double a, b;
+
+  // Note: a and b are coefficients for curve fit y = ax^2 + bx + c
+  // dy/dx(x=0) = b
+
+  a = (yp1-y0 - (ym1-y0)*xp1/xm1) / (xp1*xp1 - xp1*xm1);
+  b = (ym1-y0 - a*xm1*xm1) / xm1;
+
+  return b;
+}
