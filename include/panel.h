@@ -91,6 +91,11 @@ class Panel: public Element {
     const double & area () const;
     const Eigen::Vector3d & centroid () const;
     const Eigen::Vector3d & normal () const;
+	const Eigen::Vector3d & tan () const;
+
+	// Set surface tangent direction
+
+	void setTangent ( const Eigen::Vector3d & tan );
 
     // Set/access collocation point. If not set, defaults to centroid.
 

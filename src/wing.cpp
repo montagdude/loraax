@@ -709,6 +709,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
   double phin, phi, r;
   Eigen::Matrix3d trans, T1;
   Eigen::Vector3d cen, r0, rb, ri, point, norm, tang, tangb;
+  Eigen::Vector3d tanl, tanr, tanf, tanb, tan;
   double x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4;
 
   // Set vertex pointers on top and bottom surfaces
@@ -746,6 +747,19 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       _quads[qcounter].addVertex(&_sections[i+1].vert(j));
       _quads[qcounter].addVertex(&_sections[i+1].vert(j+1));
       _quads[qcounter].addVertex(&_sections[i].vert(j+1));
+
+	  // Compute surface tangent vector at centroid
+
+	  tanl << _sections[i].vert(j+1).x() - _sections[i].vert(j).x(),
+	          _sections[i].vert(j+1).y() - _sections[i].vert(j).y(),
+	          _sections[i].vert(j+1).z() - _sections[i].vert(j).z();
+	  tanr << _sections[i+1].vert(j+1).x() - _sections[i+1].vert(j).x(),
+	          _sections[i+1].vert(j+1).y() - _sections[i+1].vert(j).y(),
+	          _sections[i+1].vert(j+1).z() - _sections[i+1].vert(j).z();
+	  tan = 0.5*(tanl + tanr);
+	  tan /= tan.norm();
+	  _quads[qcounter].setTangent(tan);
+
       _panels[i][j] = &_quads[qcounter];
       qcounter += 1;
       next_global_elemidx += 1;
@@ -988,6 +1002,44 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
       }
     }
   }
+
+  // Surface tangent vectors on tip panels
+
+  for ( i = 0; i < (_ntipcap-1)/2; i++ )
+  {
+    for ( j = 0; j < 2*_nchord-2; j++ )
+	{
+      // Tri panels at TE and LE
+
+      if ( (j == 0) || (j == _nchord-1) )
+      {
+		tanf = _panels[_nspan-1+i][j+1]->centroid()
+			 - _panels[_nspan-1+i][j]->centroid();
+		tan = tanf / tanf.norm();
+      }
+      else if ( (j == _nchord-2) || (j == 2*_nchord-3) )
+      {
+		tanb = _panels[_nspan-1+i][j]->centroid()
+			 - _panels[_nspan-1+i][j-1]->centroid();
+		tan = tanb / tanb.norm();
+      }
+
+      // Quad panels in between
+
+      else if (j < _nchord-2)
+      {
+		tanf = _panels[_nspan-1+i][j+1]->centroid()
+			 - _panels[_nspan-1+i][j]->centroid();
+		tanb = _panels[_nspan-1+i][j]->centroid()
+			 - _panels[_nspan-1+i][j-1]->centroid();
+		tan = 0.5*(tanf + tanb);
+		tan /= tan.norm();
+      }
+
+      _panels[_nspan-1+i][j]->setTangent(tan);
+    }
+  }
+	  
 
   // Set panel neighbors (top and bottom surfaces only for now)
   // We don't add panel neighbors from top/bottom to tip caps, because there can

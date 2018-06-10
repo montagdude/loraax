@@ -161,15 +161,6 @@ int Panel::computeGridTransformation ()
           dxdchi, dydchi, dzdchi;
   _lu.compute(_jac);
 
-  // Surface tangential direction, defined as the surface vector in the
-  // passing through the centroid with no component in the spanwise direction.
-//FIXME: this doesn't always result in no spanwise component. Need to figure out
-//why.
-
-  tan_grid << 0., 1., 0.;
-  _tan = _lu.solve(tan_grid);
-  _tan /= _tan.norm();
-
   return 0;
 }
 
@@ -221,6 +212,20 @@ const Eigen::Vector3d & Panel::centroid () const { return _cen; }
 //
 /******************************************************************************/
 const Eigen::Vector3d & Panel::normal () const { return _norm; }
+
+/******************************************************************************/
+//
+// Returns surface tangent vector
+//
+/******************************************************************************/
+const Eigen::Vector3d & Panel::tan () const { return _tan; }
+
+/******************************************************************************/
+//
+// Set usrface tangent vector
+//
+/******************************************************************************/
+void Panel::setTangent ( const Eigen::Vector3d & tan ) { _tan = tan; }
 
 /******************************************************************************/
 //
