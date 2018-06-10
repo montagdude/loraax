@@ -1377,68 +1377,68 @@ void Wing::computeBL ()
 void Wing::computeForceMoment ( const double & sref, const double & lref,
                                 const Eigen::Vector3d & momcen )
 {
-  unsigned int i, j;
-  Eigen::Vector3d dfp, dfv, dmp, dmv, fp, fv, mp, mv;
-  double qinf;
-
-  fp << 0., 0., 0.;
-  fv << 0., 0., 0.;
-  mp << 0., 0., 0.;
-  mv << 0., 0., 0.;
-
-  // Compute on top and bottom surfaces
-
-  for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
-  {
-    for ( j = 0; j < 2*_nchord-2; j++ )
-    { 
-      _panels[i][j]->computeForceMoment(uinf, rhoinf, pinf, momcen, viscous,
-			                            dfp, dfv, dmp, dmv);
-      fp += dfp;
-	  fv += dfv;
-	  mp += dmp;
-	  mv += dmv;
-    }
-  }
-
-  // Account for mirror image
-
-  fp(0)  *= 2.;
-  fp(1)  =  0.;
-  fp(2)  *= 2.;
-  fv(0)  *= 2.;
-  fv(1)  =  0.;
-  fv(2)  *= 2.;
-  mp(0) =  0.;
-  mp(1) *= 2.;
-  mp(2) =  0.;
-  mv(0) =  0.;
-  mv(1) *= 2.;
-  mv(2) =  0.;
-
-  // Convert to wind frame
-
-  qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-  _liftp = -fp(0)*sin(alpha*M_PI/180.) + fp(2)*cos(alpha*M_PI/180.);
-  _liftv = -fv(0)*sin(alpha*M_PI/180.) + fv(2)*cos(alpha*M_PI/180.);
-  _dragp =  fp(0)*cos(alpha*M_PI/180.) + fp(2)*sin(alpha*M_PI/180.);
-  _dragv =  fv(0)*cos(alpha*M_PI/180.) + fv(2)*sin(alpha*M_PI/180.);
-  _momentp = mp(1);
-  _momentv = mv(1);
-  _clp = _liftp/(qinf*sref);
-  _clv = _liftv/(qinf*sref);
-  _cdp = _dragp/(qinf*sref);
-  _cdv = _dragv/(qinf*sref);
-  _cmp = _momentp/(qinf*sref*lref);
-  _cmv = _momentv/(qinf*sref*lref);
-
-  // Compute section forces and moments
-
+	unsigned int i, j;
+	Eigen::Vector3d dfp, dfv, dmp, dmv, fp, fv, mp, mv;
+	double qinf;
+	
+	fp << 0., 0., 0.;
+	fv << 0., 0., 0.;
+	mp << 0., 0., 0.;
+	mv << 0., 0., 0.;
+	
+	// Compute on top and bottom surfaces
+	
+	for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
+	{
+		for ( j = 0; j < 2*_nchord-2; j++ )
+		{ 
+		_panels[i][j]->computeForceMoment(uinf, rhoinf, pinf, momcen, viscous,
+		                                  dfp, dfv, dmp, dmv);
+		fp += dfp;
+		fv += dfv;
+		mp += dmp;
+		mv += dmv;
+		}
+	}
+	
+	// Account for mirror image
+	
+	fp(0)  *= 2.;
+	fp(1)  =  0.;
+	fp(2)  *= 2.;
+	fv(0)  *= 2.;
+	fv(1)  =  0.;
+	fv(2)  *= 2.;
+	mp(0) =  0.;
+	mp(1) *= 2.;
+	mp(2) =  0.;
+	mv(0) =  0.;
+	mv(1) *= 2.;
+	mv(2) =  0.;
+	
+	// Convert to wind frame
+	
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	_liftp = -fp(0)*sin(alpha*M_PI/180.) + fp(2)*cos(alpha*M_PI/180.);
+	_liftv = -fv(0)*sin(alpha*M_PI/180.) + fv(2)*cos(alpha*M_PI/180.);
+	_dragp =  fp(0)*cos(alpha*M_PI/180.) + fp(2)*sin(alpha*M_PI/180.);
+	_dragv =  fv(0)*cos(alpha*M_PI/180.) + fv(2)*sin(alpha*M_PI/180.);
+	_momentp = mp(1);
+	_momentv = mv(1);
+	_clp = _liftp/(qinf*sref);
+	_clv = _liftv/(qinf*sref);
+	_cdp = _dragp/(qinf*sref);
+	_cdv = _dragv/(qinf*sref);
+	_cmp = _momentp/(qinf*sref*lref);
+	_cmv = _momentv/(qinf*sref*lref);
+	
+	// Compute section forces and moments
+	
 #pragma omp parallel for private(i)
-  for ( i = 0; i < _nspan; i++ )
-  {
-    _sections[i].computeForceMoment(alpha, uinf, rhoinf, viscous);
-  }
+	for ( i = 0; i < _nspan; i++ )
+	{
+		_sections[i].computeForceMoment(alpha, uinf, rhoinf, viscous);
+	}
 }
 
 double Wing::lift () const { return _liftp + _liftv; }

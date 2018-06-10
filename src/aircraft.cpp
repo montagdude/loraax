@@ -774,21 +774,19 @@ int Aircraft::readXML ( const std::string & geom_file )
 /******************************************************************************/
 void Aircraft::setSourceStrengths ()
 {
-  unsigned int i, npanels;
-  Eigen::Vector3d norm;
+	unsigned int i, npanels;
 
-  npanels = _panels.size();
+	npanels = _panels.size();
 #ifdef DEBUG
-  if (npanels == 0)
-    conditional_stop(1, "Aircraft::setSourceStrengths", "No panels exist.");
+	if (npanels == 0)
+		conditional_stop(1, "Aircraft::setSourceStrengths", "No panels exist.");
 #endif
 
-#pragma omp parallel for private(i,norm)
-  for ( i = 0; i < npanels; i++ )
-  {
-    norm = _panels[i]->normal();
-    _panels[i]->setSourceStrength(-uinfvec.transpose() * norm);
-  }
+#pragma omp parallel for private(i)
+	for ( i = 0; i < npanels; i++ )
+	{
+		_panels[i]->computeSourceStrength(uinfvec);
+	}
 }
 
 /******************************************************************************/

@@ -21,22 +21,24 @@
 /******************************************************************************/
 Panel::Panel ()
 {
-  _sigma = 0.0;
-  _mu = 0.0;
-  _length = 0.0;
-  _area = 0.0;
-  _norm << 0., 0., 0.;
-  _tan << 0., 0., 0.;
-  _xtrans.resize(0);
-  _vel << 0., 0., 0.;
-  _cp = 0.;
-  _p = 0.;
-  _colloc << 0., 0., 0.;
-  _colloc_is_centroid = true;
-  _right = NULL;
-  _left = NULL;
-  _front = NULL;
-  _back = NULL;
+	_sigma = 0.0;
+	_mu = 0.0;
+	_length = 0.0;
+	_area = 0.0;
+	_norm << 0., 0., 0.;
+	_tan << 0., 0., 0.;
+	_xtrans.resize(0);
+	_vel << 0., 0., 0.;
+	_p = 0.;
+	_cp = 0.;
+	_cf = 0.;
+	_dmass = 0.;
+	_colloc << 0., 0., 0.;
+	_colloc_is_centroid = true;
+	_right = NULL;
+	_left = NULL;
+	_front = NULL;
+	_back = NULL;
 } 
 
 /******************************************************************************/
@@ -166,10 +168,13 @@ int Panel::computeGridTransformation ()
 
 /******************************************************************************/
 //
-// Sets source strength
+// Computes and sets source strength
 //
 /******************************************************************************/
-void Panel::setSourceStrength ( const double & sigin ) { _sigma = sigin; }
+void Panel::computeSourceStrength ( const Eigen::Vector3d & uinfvec )
+{
+	_sigma = -uinfvec.transpose()*_norm + _dmass;
+}
 
 /******************************************************************************/
 //
@@ -332,6 +337,34 @@ const double & Panel::pressureCoefficient () const { return _cp; }
 
 /******************************************************************************/
 //
+// Interpolates viscous quantities from vertices
+//
+/******************************************************************************/
+void Panel::interpFromVertices ()
+{
+	unsigned int i, nverts;
+	double dx, dy, dz, dist, weightsum;
+
+	nverts = _verts.size();
+	_cf = 0.; 
+	_dmass = 0.;
+	weightsum = 0.;
+	for ( i = 0; i < nverts; i++ )
+	{
+		dx = _verts[i]->x() - _cen(0);
+		dy = _verts[i]->y() - _cen(1);
+		dz = _verts[i]->z() - _cen(2);
+		dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
+		_cf += _verts[i]->data(7)/dist;
+		_dmass += _verts[i]->data(10)/dist;
+		weightsum += 1./dist;
+	}
+	_cf /= weightsum;
+	_dmass /= weightsum;
+}
+
+/******************************************************************************/
+//
 // Compute force and moment contributions
 //
 /******************************************************************************/
@@ -340,51 +373,38 @@ void Panel::computeForceMoment ( const double & uinf, const double & rhoinf,
                                  const Eigen::Vector3d & moment_center,
                                  bool viscous, Eigen::Vector3d & fp,
                                  Eigen::Vector3d & fv, Eigen::Vector3d & mp,
-                                 Eigen::Vector3d & mv ) const
+                                 Eigen::Vector3d & mv )
 {
-  unsigned int i, nverts;
-  double q, cf, dx, dy, dz, dist, weightsum, tau, sign;
+	double q, tau, sign;
 
-  // Pressure force and moment
+	// Pressure force and moment
 
-  q = 0.5*rhoinf*std::pow(uinf,2.);
-  fp = -(_p-pinf)*_norm*_area;
-  mp = (_cen - moment_center).cross(fp);
+	q = 0.5*rhoinf*std::pow(uinf,2.);
+	fp = -(_p-pinf)*_norm*_area;
+	mp = (_cen - moment_center).cross(fp);
 
-  if (viscous)
-  {
-    // Interpolate skin friction from vertices (inverse distance weighting)
+	if (viscous)
+	{
+		// Interpolate viscous quantities from vertices
 
-    nverts = _verts.size();
-    cf = 0.; 
-    weightsum = 0.;
-    for ( i = 0; i < nverts; i++ )
-    {
-      dx = _verts[i]->x() - _cen(0);
-      dy = _verts[i]->y() - _cen(1);
-      dz = _verts[i]->z() - _cen(2);
-      dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
-      cf += _verts[i]->data(7)/dist;
-      weightsum += 1./dist;
-    }
-    cf /= weightsum;
-    tau = cf * q;
+		interpFromVertices();
+		tau = _cf * q;
 
-	// Determine sign on _tan vector; +ve cf corresponds to the flow direction
+		// Determine sign on _tan vector corresponding with flow direction
 
-	if (_vel.transpose()*_tan < 0.)
-	  sign = -1.;
+		if (_vel.transpose()*_tan < 0.)
+			sign = -1.;
+		else
+			sign = 1.;
+
+		// Compute viscous force and moment
+		
+		fv = sign*tau*_tan*_area;
+		mv = (_cen - moment_center).cross(fv);
+	}
 	else
-	  sign = 1.;
-
-    // Compute viscous force and moment
-
-    fv = sign*tau*_tan*_area;
-    mv = (_cen - moment_center).cross(fv);
-  }
-  else
-  {
-    fv << 0., 0., 0.;
-	mv << 0., 0., 0.;
-  }
+	{
+		fv << 0., 0., 0.;
+		mv << 0., 0., 0.;
+	}
 } 
