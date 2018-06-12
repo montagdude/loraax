@@ -28,7 +28,7 @@ class Vertex {
 									//   downstream.
 
     // Vertex data: source strength, doublet strength, Vx, Vy, Vz, pressure, cp,
-    // cf, deltastar, ampl, d/ds(uedge*deltastar)
+    // cf, deltastar, ampl, uedge
 
     std::vector<double> _data;
 
@@ -86,9 +86,9 @@ class Vertex {
     void incrementWakeTime ( const double & dt );
     const double & wakeTime () const;
 
-    // Interpolates panel quantities to vertex
+    // Averages neighboring panel quantities to vertex
 
-    void interpFromPanels ();
+    void averageFromPanels ();
 
     // Distance and vector to another vertex
 

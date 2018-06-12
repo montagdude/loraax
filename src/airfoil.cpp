@@ -728,7 +728,7 @@ std::vector<double> Airfoil::blData ( const std::string & varname,
                                       int & stat ) const
 {
   std::vector<double> outvec(_n, 0.);
-  double buffer[_n], uedge[_n], dstar[_n];
+  double buffer[_n];
   double mplus, m, mminus, splus, sminus;
   int i;
 
@@ -741,31 +741,8 @@ std::vector<double> Airfoil::blData ( const std::string & varname,
     xfoil_get_deltastar(&_xdg, &_n, buffer);
   else if (varname == "ampl")
     xfoil_get_ampl(&_xdg, &_n, buffer);
-  else if (varname == "dmass")	// d/ds (uedge*deltastar)
-  {
-    xfoil_get_uedge(&_xdg, &_n, uedge);
-    xfoil_get_deltastar(&_xdg, &_n, dstar);
-
-	// Numerical derivative
-
-	mplus = uedge[1]*dstar[1];
-	m = uedge[1]*dstar[0];
-	splus = _ssmoothed[1] - _ssmoothed[0];
-	buffer[0] = (mplus - m)/splus;
-    for ( i = 1; i < _n-1; i++ )
-	{
-	  mplus = uedge[i+1]*dstar[i+1];
-	  m = uedge[i]*dstar[i];
-	  mminus = uedge[i-1]*dstar[i-1];
-	  splus = _ssmoothed[i+1] - _ssmoothed[i];
-	  sminus = _ssmoothed[i-1] - _ssmoothed[i];
-	  buffer[i] = centered_difference(mplus, m, mminus, splus, sminus);
-	}
-	m = uedge[_n-1]*dstar[_n-1];
-	mminus = uedge[_n-2]*dstar[_n-2];
-	sminus = _ssmoothed[_n-2] - _ssmoothed[_n-1];
-	buffer[_n-1]  = -(m - mminus) / sminus;
-  }
+  else if (varname == "uedge")
+    xfoil_get_uedge(&_xdg, &_n, buffer);
   else
   {
 #ifdef DEBUG

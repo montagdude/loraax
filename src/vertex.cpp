@@ -223,10 +223,10 @@ const double & Vertex::wakeTime () const { return _waketime; }
 
 /******************************************************************************/
 //
-// Interpolates panel quantities to vertex
+// Averages panel quantities to vertex
 //
 /******************************************************************************/
-void Vertex::interpFromPanels ()
+void Vertex::averageFromPanels ()
 {
   unsigned int i;
   double dx, dy, dz, dist, weightsum;

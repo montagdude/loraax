@@ -234,46 +234,62 @@ int Aircraft::writeSurfaceViz ( const std::string & fname ) const
 /******************************************************************************/
 void Aircraft::writeSurfaceData ( std::ofstream & f ) const
 {
-  unsigned int i, nverts;
+	unsigned int i, nverts;
+	
+	nverts = _verts.size();
+	
+	// Vertex data (incl. mirror panels)
+	
+	f << "POINT_DATA " << nverts*2 << std::endl;
+	writeSurfaceScalar(f, "source_strength", 0);
+	writeSurfaceScalar(f, "doublet_strength", 1);
+	
+	f << "Vectors velocity double" << std::endl;
+	f.setf(std::ios_base::scientific);
+	for ( i = 0; i < nverts; i++ )
+	{
+		f << std::setprecision(7) << std::setw(16) << std::left
+		  << _verts[i]->data(2);
+		f << std::setprecision(7) << std::setw(16) << std::left
+		  << _verts[i]->data(3);
+		f << std::setprecision(7) << std::setw(16) << std::left
+		  << _verts[i]->data(4) << std::endl;
+	}
+	for ( i = 0; i < nverts; i++ )
+	{
+		f << std::setprecision(7) << std::setw(16) << std::left
+		  << _verts[i]->data(2);
+		f << std::setprecision(7) << std::setw(16) << std::left
+		  << -_verts[i]->data(3);
+		f << std::setprecision(7) << std::setw(16) << std::left
+		  << _verts[i]->data(4) << std::endl;
+	}
+	
+	writeSurfaceScalar(f, "pressure", 5);
+	writeSurfaceScalar(f, "pressure_coefficient", 6);
+	if (viscous)
+	{
+		writeSurfaceScalar(f, "skin_friction_coefficient", 7);
+		writeSurfaceScalar(f, "displacement_thickness", 8);
+		writeSurfaceScalar(f, "log_amplification_ratio", 9);
+		writeSurfaceScalar(f, "uedge", 10);
+	}
 
-  nverts = _verts.size();
-
-  // Vertex data (incl. mirror panels)
-
-  f << "POINT_DATA " << nverts*2 << std::endl;
-  writeSurfaceScalar(f, "source_strength", 0);
-  writeSurfaceScalar(f, "doublet_strength", 1);
-
-  f << "Vectors velocity double" << std::endl;
-  f.setf(std::ios_base::scientific);
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(7) << std::setw(16) << std::left
-      << _verts[i]->data(2);
-    f << std::setprecision(7) << std::setw(16) << std::left
-      << _verts[i]->data(3);
-    f << std::setprecision(7) << std::setw(16) << std::left
-      << _verts[i]->data(4) << std::endl;
-  }
-  for ( i = 0; i < nverts; i++ )
-  {
-    f << std::setprecision(7) << std::setw(16) << std::left
-      << _verts[i]->data(2);
-    f << std::setprecision(7) << std::setw(16) << std::left
-      << -_verts[i]->data(3);
-    f << std::setprecision(7) << std::setw(16) << std::left
-      << _verts[i]->data(4) << std::endl;
-  }
-
-  writeSurfaceScalar(f, "pressure", 5);
-  writeSurfaceScalar(f, "pressure_coefficient", 6);
-  if (viscous)
-  {
-    writeSurfaceScalar(f, "skin_friction_coefficient", 7);
-    writeSurfaceScalar(f, "displacement_thickness", 8);
-    writeSurfaceScalar(f, "log_amplification_ratio", 9);
-	writeSurfaceScalar(f, "mass_defect_derivative", 10);
-  }
+	int j, npanels;
+	npanels = _panels.size();
+	f << "CELL_DATA " << npanels*2 << std::endl;
+	f << "Scalars mass_defect_derivative double 1" << std::endl;
+	f << "LOOKUP_TABLE default" << std::endl;
+	for ( j = npanels-1; j >= 0; j-- )
+	{
+		f << std::setprecision(7) << _panels[i]->massDefectDerivative()
+		  << std::endl;
+	}
+	for ( j = 0; j < npanels; j++ )
+	{
+		f << std::setprecision(7) << _panels[i]->massDefectDerivative()
+		  << std::endl;
+	}
 }
 
 /******************************************************************************/
@@ -858,7 +874,7 @@ void Aircraft::setWakeDoubletStrengths ( bool init )
 #pragma omp parallel for private(i)
   for ( i = 0; i < nwakeverts; i++ )
   {
-    _wakeverts[i]->interpFromPanels();
+    _wakeverts[i]->averageFromPanels();
   }
 }
 

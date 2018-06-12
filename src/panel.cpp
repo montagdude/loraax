@@ -31,7 +31,6 @@ Panel::Panel ()
 	_vel << 0., 0., 0.;
 	_p = 0.;
 	_cp = 0.;
-	_cf = 0.;
 	_dmass = 0.;
 	_colloc << 0., 0., 0.;
 	_colloc_is_centroid = true;
@@ -337,31 +336,12 @@ const double & Panel::pressureCoefficient () const { return _cp; }
 
 /******************************************************************************/
 //
-// Interpolates viscous quantities from vertices
+// Sets mass defect derivative, needed to set source strength in viscous
+// cases
 //
 /******************************************************************************/
-void Panel::interpFromVertices ()
-{
-	unsigned int i, nverts;
-	double dx, dy, dz, dist, weightsum;
-
-	nverts = _verts.size();
-	_cf = 0.; 
-	_dmass = 0.;
-	weightsum = 0.;
-	for ( i = 0; i < nverts; i++ )
-	{
-		dx = _verts[i]->x() - _cen(0);
-		dy = _verts[i]->y() - _cen(1);
-		dz = _verts[i]->z() - _cen(2);
-		dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
-		_cf += _verts[i]->data(7)/dist;
-		_dmass += _verts[i]->data(10)/dist;
-		weightsum += 1./dist;
-	}
-	_cf /= weightsum;
-	_dmass /= weightsum;
-}
+void Panel::setMassDefectDerivative ( const double & dmass ) { _dmass = dmass; }
+const double & Panel::massDefectDerivative () const { return _dmass; }
 
 /******************************************************************************/
 //
@@ -375,7 +355,8 @@ void Panel::computeForceMoment ( const double & uinf, const double & rhoinf,
                                  Eigen::Vector3d & fv, Eigen::Vector3d & mp,
                                  Eigen::Vector3d & mv )
 {
-	double q, tau, sign;
+	unsigned int i, nverts;
+	double dx, dy, dz, dist, weightsum, q, cf, tau, sign;
 
 	// Pressure force and moment
 
@@ -385,10 +366,22 @@ void Panel::computeForceMoment ( const double & uinf, const double & rhoinf,
 
 	if (viscous)
 	{
-		// Interpolate viscous quantities from vertices
+		// Average skin friction coefficient from vertices
 
-		interpFromVertices();
-		tau = _cf * q;
+		nverts = _verts.size();
+		cf = 0.; 
+		weightsum = 0.;
+		for ( i = 0; i < nverts; i++ )
+		{
+			dx = _verts[i]->x() - _cen(0);
+			dy = _verts[i]->y() - _cen(1);
+			dz = _verts[i]->z() - _cen(2);
+			dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) +
+			                 std::pow(dz,2.));
+			cf += _verts[i]->data(7)/dist;
+			weightsum += 1./dist;
+		}
+		cf /= weightsum;
 
 		// Determine sign on _tan vector corresponding with flow direction
 
@@ -398,7 +391,8 @@ void Panel::computeForceMoment ( const double & uinf, const double & rhoinf,
 			sign = 1.;
 
 		// Compute viscous force and moment
-		
+
+		tau = cf * q;
 		fv = sign*tau*_tan*_area;
 		mv = (_cen - moment_center).cross(fv);
 	}
@@ -407,4 +401,4 @@ void Panel::computeForceMoment ( const double & uinf, const double & rhoinf,
 		fv << 0., 0., 0.;
 		mv << 0., 0., 0.;
 	}
-} 
+}

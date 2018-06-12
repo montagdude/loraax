@@ -321,7 +321,7 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
   setVertexBLData(bldata, 8, _chord);
   bldata = _foil.blData("ampl", stat);
   setVertexBLData(bldata, 9);
-  bldata = _foil.blData("dmass", stat);
+  bldata = _foil.blData("uedge", stat);
   setVertexBLData(bldata, 10, uinf);
 }
 

@@ -159,10 +159,11 @@ class Panel: public Element {
 	const double & pressure () const;
 	const double & pressureCoefficient () const;
 	
-	// Interpolates viscous quantities from vertices
-	
-	void interpFromVertices ();
-	
+	// Sets or access dmass ( d/ds(uedge*deltastar) )
+
+	void setMassDefectDerivative ( const double & dmass );
+	const double & massDefectDerivative () const;
+
 	// Compute force and moment contributions
 	
 	void computeForceMoment ( const double & uinf, const double & rhoinf,
