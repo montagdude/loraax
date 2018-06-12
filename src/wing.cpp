@@ -1379,83 +1379,12 @@ void Wing::computeForceMoment ( const double & sref, const double & lref,
 {
 	unsigned int i, j;
 	Eigen::Vector3d dfp, dfv, dmp, dmv, fp, fv, mp, mv;
-	double dxl, dyl, dzl, dxr, dyr, dzr, dsl, dsr, dmassl, dmassr, distl, distr;
-	double ueb, uef, qinf, sign, dmass;
-	Eigen::Vector3d cenl, cenr;
+	double qinf;
 	
 	fp << 0., 0., 0.;
 	fv << 0., 0., 0.;
 	mp << 0., 0., 0.;
 	mv << 0., 0., 0.;
-
-	// For viscous cases, get d/ds(uedge*deltastar)
-
-	if (viscous)
-	{
-		for ( i = 0; i < _nspan-1; i++ )
-		{
-			for ( j = 0; j < 2*_nchord-2; j++ )
-			{
-				// Derivative from left side
-
-				dxl = _sections[i].vert(j+1).x()
-					- _sections[i].vert(j).x();
-				dyl = _sections[i].vert(j+1).y()
-					- _sections[i].vert(j).y();
-				dzl = _sections[i].vert(j+1).z()
-					- _sections[i].vert(j).z();
-				dsl = std::sqrt(std::pow(dxl,2.) + std::pow(dyl,2.)
-				    +           std::pow(dzl,2.));
-				uef = _sections[i].vert(j+1).data(10);
-				ueb = _sections[i].vert(j).data(10);
-				dmassl = (uef*_sections[i].vert(j+1).data(8) -
-				          ueb*_sections[i].vert(j).data(8)) / dsl;
-				cenl << 0.5*(_sections[i].vert(j+1).x() +
-				             _sections[i].vert(j).x()),
-				        0.5*(_sections[i].vert(j+1).y() +
-				             _sections[i].vert(j).y()),
-				        0.5*(_sections[i].vert(j+1).z() +
-				             _sections[i].vert(j).z());
-				distl = (cenl - _panels[i][j]->centroid()).norm();
-
-				// Derivative from right side
-
-				dxr = _sections[i+1].vert(j+1).x()
-					- _sections[i+1].vert(j).x();
-				dyr = _sections[i+1].vert(j+1).y()
-					- _sections[i+1].vert(j).y();
-				dzr = _sections[i+1].vert(j+1).z()
-					- _sections[i+1].vert(j).z();
-				dsr = std::sqrt(std::pow(dxr,2.) + std::pow(dyr,2.)
-				    +           std::pow(dzr,2.));
-				uef = _sections[i+1].vert(j+1).data(10);
-				ueb = _sections[i+1].vert(j).data(10);
-				dmassr = (uef*_sections[i+1].vert(j+1).data(8) -
-				          ueb*_sections[i+1].vert(j).data(8)) / dsr;
-				cenr << 0.5*(_sections[i+1].vert(j+1).x() +
-				             _sections[i+1].vert(j).x()),
-				        0.5*(_sections[i+1].vert(j+1).y() +
-				             _sections[i+1].vert(j).y()),
-				        0.5*(_sections[i+1].vert(j+1).z() +
-				             _sections[i+1].vert(j).z());
-				distr = (cenr - _panels[i][j]->centroid()).norm();
-
-				// Distance weighted average of left and right
-
-				dmass = (dmassl/distl + dmassr/distr) / (1./distl + 1./distr);;
-
-				// Sign on derivative
-
-				if (_panels[i][j]->velocity().transpose() *
-				    _panels[i][j]->tan() < 0.)
-					sign = -1.;
-				else
-					sign = 1.;
-
-				_panels[i][j]->setMassDefectDerivative(sign*dmass);
-			}
-		}
-	}
 
 	for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
 	{

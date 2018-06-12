@@ -729,7 +729,6 @@ std::vector<double> Airfoil::blData ( const std::string & varname,
 {
   std::vector<double> outvec(_n, 0.);
   double buffer[_n];
-  double mplus, m, mminus, splus, sminus;
   int i;
 
   stat = 0;

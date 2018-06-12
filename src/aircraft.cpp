@@ -282,12 +282,12 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
 	f << "LOOKUP_TABLE default" << std::endl;
 	for ( j = npanels-1; j >= 0; j-- )
 	{
-		f << std::setprecision(7) << _panels[i]->massDefectDerivative()
+		f << std::setprecision(7) << _panels[j]->massDefectDerivative()
 		  << std::endl;
 	}
 	for ( j = 0; j < npanels; j++ )
 	{
-		f << std::setprecision(7) << _panels[i]->massDefectDerivative()
+		f << std::setprecision(7) << _panels[j]->massDefectDerivative()
 		  << std::endl;
 	}
 }
@@ -801,7 +801,7 @@ void Aircraft::setSourceStrengths ()
 #pragma omp parallel for private(i)
 	for ( i = 0; i < npanels; i++ )
 	{
-		_panels[i]->computeSourceStrength(uinfvec);
+		_panels[i]->computeSourceStrength(uinfvec, viscous);
 	}
 }
 

@@ -35,8 +35,8 @@ class Panel: public Element {
 									// Panel endpoint coordinates in panel frame
 	Eigen::Vector3d _vel;			// Flow velocity at centroid
 	double _cp, _p;					// Pressure coefficient and pressure
-	double _cf, _dmass;				// Skin friction coefficient and
-									//   d/ds(uedge*deltastar)
+	double _cf, _mdefect, _dmdefect;// Skin friction coefficient, mass defect,
+									//   and d/ds(mass defect)
 
 	Panel * _right, * _left, * _front, * _back;
 									// Neighbor panels
@@ -82,7 +82,8 @@ class Panel: public Element {
 	
 	// Computing and accessing source strength
 
-	void computeSourceStrength ( const Eigen::Vector3d & uinfvec );
+	void computeSourceStrength ( const Eigen::Vector3d & uinfvec,
+	                             bool viscous );
 	const double & sourceStrength () const;
 
 	// Setting and accessing doublet strength
@@ -159,10 +160,14 @@ class Panel: public Element {
 	const double & pressure () const;
 	const double & pressureCoefficient () const;
 	
-	// Sets or access dmass ( d/ds(uedge*deltastar) )
+	// Mass defect: uedge*deltastar and derivative d/ds
 
-	void setMassDefectDerivative ( const double & dmass );
+	const double & massDefect() const;
 	const double & massDefectDerivative () const;
+
+	// Average viscous quantities from vertices
+
+	void averageFromVertices ();
 
 	// Compute force and moment contributions
 	
