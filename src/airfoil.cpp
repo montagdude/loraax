@@ -727,35 +727,38 @@ int Airfoil::runXfoil ( const double & clspec )
 std::vector<double> Airfoil::blData ( const std::string & varname,
                                       int & stat ) const
 {
-  std::vector<double> outvec(_n, 0.);
-  double buffer[_n];
-  int i;
-
-  stat = 0;
-  if (varname == "cp")
-    xfoil_get_cp(&_xdg, &_n, buffer);
-  else if (varname == "cf")
-    xfoil_get_cf(&_xdg, &_n, buffer);
-  else if (varname == "deltastar")
-    xfoil_get_deltastar(&_xdg, &_n, buffer);
-  else if (varname == "ampl")
-    xfoil_get_ampl(&_xdg, &_n, buffer);
-  else if (varname == "uedge")
-    xfoil_get_uedge(&_xdg, &_n, buffer);
-  else
-  {
+	std::vector<double> outvec(_n, 0.);
+	double buffer[_n];
+	int i;
+	
+	stat = 0;
+	if (varname == "cp")
+		xfoil_get_cp(&_xdg, &_n, buffer);
+	else if (varname == "cf")
+		xfoil_get_cf(&_xdg, &_n, buffer);
+	else if (varname == "deltastar")
+		xfoil_get_deltastar(&_xdg, &_n, buffer);
+	else if (varname == "ampl")
+		xfoil_get_ampl(&_xdg, &_n, buffer);
+	else if (varname == "uedge")
+		xfoil_get_uedge(&_xdg, &_n, buffer);
+	else if (varname == "cp2d")
+		xfoil_get_cp(&_xdg, &_n, buffer);
+	else
+	{
 #ifdef DEBUG
-    print_warning("Airfoil::blData", "Unrecognized variable " + varname + ".");
+		print_warning("Airfoil::blData",
+		              "Unrecognized variable " + varname + ".");
 #endif
-    stat = 1;
-  }
-
-  if (stat == 0)
-  {
-    for ( i = 0; i < _n; i++ )
-    {
-      outvec[i] = buffer[i];
-    }
-  }
-  return outvec;
+		stat = 1;
+	}
+	
+	if (stat == 0)
+	{
+		for ( i = 0; i < _n; i++ )
+		{
+			outvec[i] = buffer[i];
+		}
+	}
+	return outvec;
 }

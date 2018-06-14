@@ -273,6 +273,7 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
 		writeSurfaceScalar(f, "displacement_thickness", 8);
 		writeSurfaceScalar(f, "log_amplification_ratio", 9);
 		writeSurfaceScalar(f, "uedge", 10);
+		writeSurfaceScalar(f, "cp2d", 11);
 	}
 
 	int j, npanels;

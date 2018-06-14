@@ -96,13 +96,14 @@ class Section: public SectionalObject {
     // BL calculations with Xfoil
 
     void computeBL ( const Eigen::Vector3d & uinfvec, const double & rhoinf,
-		             const double & alpha );
+		             const double & pinf, const double & alpha );
     bool blConverged () const;
 
     // Computes section forces and moments
 
-    void computeForceMoment ( const double & alpha, const double & uinf,
-                              const double & rhoinf, bool viscous );
+	void computeForceMoment ( const double & alpha, const double & uinf,
+	                          const double & rhoinf, const double & pinf,
+	                          bool viscous );
 
     // Sectional force and moment coefficients
 

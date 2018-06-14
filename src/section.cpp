@@ -274,7 +274,8 @@ void Section::setMachNumber ( const double & minf )
 //
 /******************************************************************************/
 void Section::computeBL ( const Eigen::Vector3d & uinfvec,
-                          const double & rhoinf, const double & alpha )
+                          const double & rhoinf, const double & pinf,
+                          const double & alpha )
 {
   Eigen::Vector3d uinfvec_p;
   double qinf, uinf, uinfp, cl2d;
@@ -289,7 +290,7 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
   // moments will be recomputed after running Xfoil for the purpose of writing
   // data to the sectional output files.
 
-  computeForceMoment(alpha, uinf, rhoinf, true);
+  computeForceMoment(alpha, uinf, rhoinf, pinf, true);
 
   /** To get 2D Cl:
       1. Transform uinfvec to section frame -> uinfvec_p
@@ -323,6 +324,8 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
   setVertexBLData(bldata, 9);
   bldata = _foil.blData("uedge", stat);
   setVertexBLData(bldata, 10, uinf);
+  bldata = _foil.blData("cp2d", stat);
+  setVertexBLData(bldata, 11);
 }
 
 bool Section::blConverged () const { return _converged; }
@@ -333,93 +336,94 @@ bool Section::blConverged () const { return _converged; }
 //
 /******************************************************************************/
 void Section::computeForceMoment ( const double & alpha, const double & uinf,
-                                   const double & rhoinf, bool viscous )
+                                   const double & rhoinf, const double & pinf,
+                                   bool viscous )
 {
-  unsigned int i;
-  double nx, nz, tx, tz, Vx, Vz, cenx, cenz, pave, cfave, qinf;
-  double fap, fav, fnp, fnv, mp, mv, liftp, liftv, dragp, dragv;
-  double dfap, dfav, dfnp, dfnv;
-  Eigen::Vector3d forcep, forcev, momentp, momentv;
-  Eigen::Matrix3d section2inertial;
-
-  fap = 0.;
-  fav = 0.;
-  fnp = 0.;
-  fnv = 0.;
-  mp = 0.;
-  mv = 0.;
-  qinf = 0.5*rhoinf*std::pow(uinf,2.);
-  for ( i = 1; i < _nverts; i++ )
-  {
-    // Dimensional edge normal vector and edge center
-
-    nx = _uverts[i].z() - _uverts[i-1].z();
-    nz = _uverts[i-1].x() - _uverts[i].x();
-	cenx = 0.5*(_uverts[i].x() + _uverts[i-1].x());
-	cenz = 0.5*(_uverts[i].z() + _uverts[i-1].z());
-
-    // Integrate pressure
-
-    pave = 0.5*(_verts[i].data(5) + _verts[i-1].data(5));
-    dfnp = -pave*nz;
-    dfap = -pave*nx;
-	fnp += dfnp;
-	fap += dfap;
-	mp += dfnp * (0.25*_chord - cenx) + dfap*cenz;
-
-	// Viscous contribution
-
-	if (viscous)
+	unsigned int i;
+	double nx, nz, tx, tz, Vx, Vz, cenx, cenz, pave, cfave, qinf;
+	double fap, fav, fnp, fnv, mp, mv, liftp, liftv, dragp, dragv;
+	double dfap, dfav, dfnp, dfnv;
+	Eigen::Vector3d forcep, forcev, momentp, momentv;
+	Eigen::Matrix3d section2inertial;
+	
+	fap = 0.;
+	fav = 0.;
+	fnp = 0.;
+	fnv = 0.;
+	mp = 0.;
+	mv = 0.;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	for ( i = 1; i < _nverts; i++ )
 	{
-	  Vx = 0.5*(_verts[i].data(2) + _verts[i-1].data(2));
-	  Vz = 0.5*(_verts[i].data(4) + _verts[i-1].data(4));
+		// Dimensional edge normal vector and edge center
+		
+		nx = _uverts[i].z() - _uverts[i-1].z();
+		nz = _uverts[i-1].x() - _uverts[i].x();
+		cenx = 0.5*(_uverts[i].x() + _uverts[i-1].x());
+		cenz = 0.5*(_uverts[i].z() + _uverts[i-1].z());
+		
+		// Integrate pressure
+		
+		pave = 0.5*(_verts[i].data(5) + _verts[i-1].data(5)) - pinf;
+		dfnp = -pave*nz;
+		dfap = -pave*nx;
+		fnp += dfnp;
+		fap += dfap;
+		mp += dfnp * (0.25*_chord - cenx) + dfap*cenz;
 
-	  // Tangent direction is positive in local flow direction
+		// Viscous contribution
 
-	  tx = _uverts[i].x() - _uverts[i-1].x();
-	  tz = _uverts[i].z() - _uverts[i-1].z();
-	  if (tx*Vx + tz*Vz < 0.)
-	  {
-		tx *= -1.;
-		tz *= -1.;
-	  }
+		if (viscous)
+		{
+			Vx = 0.5*(_verts[i].data(2) + _verts[i-1].data(2));
+			Vz = 0.5*(_verts[i].data(4) + _verts[i-1].data(4));
 
-      cfave = 0.5*(_verts[i].data(7) + _verts[i-1].data(7));
-	  dfnv = cfave*qinf*tz;
-	  dfav = cfave*qinf*tx;
-	  fnv += dfnv;
-	  fav += dfav;
-	  mv += dfnv * (0.25*_chord - cenx) + dfav*cenz;
+			// Tangent direction is positive in local flow direction
+
+			tx = _uverts[i].x() - _uverts[i-1].x();
+			tz = _uverts[i].z() - _uverts[i-1].z();
+			if (tx*Vx + tz*Vz < 0.)
+			{
+				tx *= -1.;
+				tz *= -1.;
+			}
+
+			cfave = 0.5*(_verts[i].data(7) + _verts[i-1].data(7));
+			dfnv = cfave*qinf*tz;
+			dfav = cfave*qinf*tx;
+			fnv += dfnv;
+			fav += dfav;
+			mv += dfnv * (0.25*_chord - cenx) + dfav*cenz;
+		}
 	}
-  }
-  _fn = fnp + fnv;
-  _fa = fap + fav;
-
-  // Rotate forces and moments to inertial frame
-
-  section2inertial = inverse_euler_rotation(_roll, _twist, 0.0, "123");
-  forcep << fap, 0., fnp;
-  forcep = section2inertial*forcep;
-  forcev << fav, 0., fnv;
-  forcev = section2inertial*forcev;
-  momentp << 0., mp, 0.;
-  momentp = section2inertial*momentp;
-  momentv << 0., mv, 0.;
-  momentv = section2inertial*momentv;
-
-  // Sectional lift, drag, and moment coefficients
- 
-  liftp = -forcep(0)*sin(alpha*M_PI/180.) + forcep(2)*cos(alpha*M_PI/180.);
-  liftv = -forcev(0)*sin(alpha*M_PI/180.) + forcev(2)*cos(alpha*M_PI/180.);
-  dragp =  forcep(0)*cos(alpha*M_PI/180.) + forcep(2)*sin(alpha*M_PI/180.);
-  dragv =  forcev(0)*cos(alpha*M_PI/180.) + forcev(2)*sin(alpha*M_PI/180.);
-
-  _clp = liftp/(qinf*_chord);
-  _clv = liftv/(qinf*_chord);
-  _cdp = dragp/(qinf*_chord);
-  _cdv = dragv/(qinf*_chord);
-  _cmp = momentp(1)/(qinf*_chord*_chord);
-  _cmv = momentv(1)/(qinf*_chord*_chord);
+	_fn = fnp + fnv;
+	_fa = fap + fav;
+	
+	// Rotate forces and moments to inertial frame
+	
+	section2inertial = inverse_euler_rotation(_roll, _twist, 0.0, "123");
+	forcep << fap, 0., fnp;
+	forcep = section2inertial*forcep;
+	forcev << fav, 0., fnv;
+	forcev = section2inertial*forcev;
+	momentp << 0., mp, 0.;
+	momentp = section2inertial*momentp;
+	momentv << 0., mv, 0.;
+	momentv = section2inertial*momentv;
+	
+	// Sectional lift, drag, and moment coefficients
+	
+	liftp = -forcep(0)*sin(alpha*M_PI/180.) + forcep(2)*cos(alpha*M_PI/180.);
+	liftv = -forcev(0)*sin(alpha*M_PI/180.) + forcev(2)*cos(alpha*M_PI/180.);
+	dragp =  forcep(0)*cos(alpha*M_PI/180.) + forcep(2)*sin(alpha*M_PI/180.);
+	dragv =  forcev(0)*cos(alpha*M_PI/180.) + forcev(2)*sin(alpha*M_PI/180.);
+	
+	_clp = liftp/(qinf*_chord);
+	_clv = liftv/(qinf*_chord);
+	_cdp = dragp/(qinf*_chord);
+	_cdv = dragv/(qinf*_chord);
+	_cmp = momentp(1)/(qinf*_chord*_chord);
+	_cmv = momentv(1)/(qinf*_chord*_chord);
 }
 
 /******************************************************************************/

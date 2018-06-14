@@ -1196,7 +1196,7 @@ void Wing::computeSurfaceQuantities ()
          std::pow(s2,2.),  s2,  1.;
     lu.compute(A);
 
-    for ( j = 0; j < Vertex::dataSize; j++ )
+    for ( j = 0; j < Vertex::firstBLData; j++ )
     { 
       b << v0->data(j), v1->data(j), v2->data(j);
       x = lu.solve(b);
@@ -1219,7 +1219,7 @@ void Wing::computeSurfaceQuantities ()
          std::pow(s2,2.),  s2,  1.;
     lu.compute(A);
 
-    for ( j = 0; j < Vertex::dataSize; j++ )
+    for ( j = 0; j < Vertex::firstBLData; j++ )
     { 
       b << v0->data(j), v1->data(j), v2->data(j);
       x = lu.solve(b);
@@ -1242,7 +1242,7 @@ void Wing::computeSurfaceQuantities ()
          std::pow(s2,2.),  s2,  1.;
     lu.compute(A);
 
-    for ( j = 0; j < Vertex::dataSize; j++ )
+    for ( j = 0; j < Vertex::firstBLData; j++ )
     { 
       b << v0->data(j), v1->data(j), v2->data(j);
       x = lu.solve(b);
@@ -1265,7 +1265,7 @@ void Wing::computeSurfaceQuantities ()
          std::pow(s2,2.),  s2,  1.;
     lu.compute(A);
 
-    for ( j = 0; j < Vertex::dataSize; j++ )
+    for ( j = 0; j < Vertex::firstBLData; j++ )
     { 
       b << v0->data(j), v1->data(j), v2->data(j);
       x = lu.solve(b);
@@ -1342,7 +1342,7 @@ void Wing::computeBL ()
 #pragma omp parallel for private(i)
   for ( i = 0; i < _nspan; i++ )
   {
-    _sections[i].computeBL(uinfvec, rhoinf, alpha);
+    _sections[i].computeBL(uinfvec, rhoinf, pinf, alpha);
     if (not _sections[i].blConverged())
     {
       std::cout << "    Warning: Xfoil BL calculations did not converge "
@@ -1435,7 +1435,7 @@ void Wing::computeForceMoment ( const double & sref, const double & lref,
 #pragma omp parallel for private(i)
 	for ( i = 0; i < _nspan; i++ )
 	{
-		_sections[i].computeForceMoment(alpha, uinf, rhoinf, viscous);
+		_sections[i].computeForceMoment(alpha, uinf, rhoinf, pinf, viscous);
 	}
 }
 
