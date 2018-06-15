@@ -82,13 +82,14 @@ class Panel: public Element {
 	
 	// Computing and accessing source strength
 
+	void setSourceStrength ( const double & sigma );
 	void computeSourceStrength ( const Eigen::Vector3d & uinfvec,
 	                             bool viscous );
 	const double & sourceStrength () const;
 
 	// Setting and accessing doublet strength
 
-	void setDoubletStrength ( const double & );
+	void setDoubletStrength ( const double & mu );
 	const double & doubletStrength () const;
 
 	// Returns geometric quantities

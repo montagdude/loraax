@@ -500,288 +500,302 @@ Aircraft::Aircraft ()
 /******************************************************************************/
 int Aircraft::readXML ( const std::string & geom_file )
 {
-  XMLDocument doc;
-  unsigned int i, nwings;
-  int nchord, nspan, check;
-  double lesprat, tesprat, rootsprat, tipsprat;
-  std::vector<Section> user_sections;
-  std::vector<Airfoil> foils;
-  double xle, y, zle, chord, twist, ymax;
-  std::string source, des, path;
-  const int npointside = 100;
-  int next_global_elemidx = 0;
-  int next_global_vertidx = 0;
+	XMLDocument doc;
+	unsigned int i, nwings;
+	int nchord, nspan, check;
+	double lesprat, tesprat, rootsprat, tipsprat;
+	std::vector<Section> user_sections;
+	std::vector<Airfoil> foils;
+	double xle, y, zle, chord, twist, ymax;
+	std::string source, des, path;
+	const int npointside = 100;
+	int next_global_elemidx = 0;
+	int next_global_vertidx = 0;
+	
+	doc.LoadFile(geom_file.c_str());
+	if ( (doc.ErrorID() == XML_ERROR_FILE_NOT_FOUND) ||
+	     (doc.ErrorID() == XML_ERROR_FILE_COULD_NOT_BE_OPENED) ||
+	     (doc.ErrorID() == XML_ERROR_FILE_READ_ERROR) )
+	{
+		conditional_stop(1, "Aircraft::readXML",
+		                 "Could not read " + geom_file + ".");
+		return 1;
+	}
+	else if (doc.ErrorID() != 0)
+	{
+		conditional_stop(1, "Aircraft::readXML",
+		                 "Syntax error in " + geom_file + ".");
+		return 1;
+	}
+	
+	XMLElement *ac = doc.FirstChildElement("Aircraft");
+	if (! ac)
+	{
+		conditional_stop(1, "Aircraft::readXML",
+		                 "Expected 'Aircraft' element in input file.");
+		return 2;
+	}
+	
+	// Read reference data
+	
+	XMLElement *ref = ac->FirstChildElement("Reference");
+	if (! ac)
+	{
+		conditional_stop(1, "Aircraft::readXML",
+		                 "Expected 'Reference' element in input file.");
+		return 2;
+	}
+	if (read_setting(ref, "RefArea", _sref) != 0)
+		return 2;
+	if (read_setting(ref, "RefLength", _lref) != 0)
+		return 2;
+	if (read_setting(ref, "MomentCenX", _momcen[0]) != 0)
+		return 2;
+	if (read_setting(ref, "MomentCenY", _momcen[1]) != 0)
+		return 2;
+	if (read_setting(ref, "MomentCenZ", _momcen[2]) != 0)
+		return 2;
+	
+	// First determine number of wings and allocate _wings vector (don't use
+	// push_back, because it invalidates pointers)
+	
+	nwings = 0;
+	for ( XMLElement *wingelem = ac->FirstChildElement("Wing");
+	      wingelem != NULL; wingelem = wingelem->NextSiblingElement("Wing") )
+	{
+		nwings += 1;
+	}
+	_wings.resize(nwings);
+	
+	// Read wing data
+	
+	nwings = 0;
+	for ( XMLElement *wingelem = ac->FirstChildElement("Wing");
+	      wingelem != NULL; wingelem = wingelem->NextSiblingElement("Wing") )
+	{
+	  const char *wingname = wingelem->Attribute("name");
+		if (wingname)
+			_wings[nwings].setName(wingname);
+		else
+			_wings[nwings].setName("Wing" + int2string(nwings+1));
+		
+		// Paneling
+		
+		XMLElement *pan = wingelem->FirstChildElement("Paneling");
+		if (! pan)
+		{
+			conditional_stop(1, "Aircraft::readXML",
+			                 "Wing lacks 'Paneling' element.");
+		  return 2;
+		}
+		if (read_setting(pan, "NChord", nchord) != 0)
+			return 2;
+		if (read_setting(pan, "NSpan", nspan) != 0)
+			return 2;
+		if (read_setting(pan, "LESpaceRat", lesprat) != 0)
+			return 2;
+		if (read_setting(pan, "TESpaceRat", tesprat) != 0)
+			return 2;
+		if (read_setting(pan, "RootSpaceRat", rootsprat) != 0)
+			return 2;
+		if (read_setting(pan, "TipSpaceRat", tipsprat) != 0)
+			return 2;
+		_wings[nwings].setDiscretization(nchord, nspan, lesprat, tesprat,
+		                                 rootsprat, tipsprat);
+		
+		// Sections
+		
+		user_sections.resize(0);
+		ymax = 0.;
+		XMLElement *secs = wingelem->FirstChildElement("Sections");
+		if (! wingelem)
+		{
+			conditional_stop(1, "Aircraft::readXML",
+			                 "Wing lacks 'Sections' element.");
+			return 2;
+		}
+		for ( XMLElement *secelem = secs->FirstChildElement("Section");
+		      secelem != NULL;
+		      secelem = secelem->NextSiblingElement("Section") )
+		{
+			Section newsection;
+			const char *secname = secelem->Attribute("name");
+			if ( (secname) && (std::string(secname) == "Root") )
+				y = 0.;
+			else
+			{
+				if (read_setting(secelem, "Y", y) != 0)
+					return 2;
+			}
+			if (y < 0.)
+			{
+				conditional_stop(1, "Aircraft::readXML",
+				    "Y must be >= 0 for all sections. Mirroring is automatic.");
+				return 2;
+			}
+			else if (y > ymax)
+				ymax = y;
+			if (read_setting(secelem, "XLE", xle) != 0)
+				return 2;
+			if (read_setting(secelem, "ZLE", zle) != 0)
+				return 2;
+			if (read_setting(secelem, "Chord", chord) != 0)
+				return 2;
+			if (read_setting(secelem, "Twist", twist) != 0)
+				return 2;
+			
+			// Some geometry checks
+			
+			if (chord <= 0.)
+				conditional_stop(1, "Aircraft::readXML",
+				                 "Chord must be greater than 0.");
+			if ( (twist <= -90.) || (twist >= 90.) )
+				conditional_stop(1, "Aircraft::readXML",
+				    "Twist must be between greater than -90 and less than 90.");
+			
+			newsection.setGeometry(xle, y, zle, chord, twist, 0.0);
+			user_sections.push_back(newsection);
+		}
+			
+		if (user_sections.size() < 2)
+		{
+			conditional_stop(1, "Aircraft::readXML",
+			                 "Wings must have at least two sections.");
+			return 2;
+		}
+		
+		// Airfoils
+		
+		foils.resize(0);
+		XMLElement *foilselem = wingelem->FirstChildElement("Airfoils");
+		if (! foilselem)
+		{
+			conditional_stop(1, "Aircraft::readXML",
+			                 "Wing lacks 'Airfoils' element.");
+			return 2;
+		}
+		for ( XMLElement *foilelem = foilselem->FirstChildElement("Airfoil");
+		      foilelem != NULL;
+		      foilelem = foilelem->NextSiblingElement("Airfoil") )
+		{
+			Airfoil newfoil;
+			const char *foilname = foilelem->Attribute("name");
+			if ( (foilname) && (std::string(foilname) == "Root") )
+				y = 0.;
+			else if ( (foilname) && (std::string(foilname) == "Tip") )
+				y = ymax;
+			else
+			{
+				if (read_setting(foilelem, "Y", y) != 0)
+					return 2;
+			}
+			if (y < 0)
+			{
+				conditional_stop(1, "Aircraft::readXML",
+				    "Y must be >= 0 for all airfoils. Mirroring is automatic.");
+				return 2;
+			}
+			newfoil.setY(y);
+			if (read_setting(foilelem, "Source", source) != 0)
+				return 2;
+			if (source == "4 digit")
+			{
+				if (read_setting(foilelem, "Designation", des) != 0)
+					return 2;
+				if (newfoil.naca4Coordinates(des, npointside) != 0)
+				{
+					conditional_stop(1, "Aircraft::readXML",
+					                 "Invalid 4-digit NACA designation.");
+					return 2;
+				}
+			}
+			else if (source == "5 digit")
+			{
+				if (read_setting(foilelem, "Designation", des) != 0)
+					return 2;
+				if (newfoil.naca5Coordinates(des, npointside) != 0)
+				{
+					conditional_stop(1, "Aircraft::readXML",
+					                 "Invalid 5-digit NACA designation.");
+					return 2;
+				}
+			}
+			else if (source == "file")
+			{
+				if (read_setting(foilelem, "Path", path) != 0)
+					return 2;
+				check = newfoil.readCoordinates(path);
+				if (check == 1)
+				{
+					conditional_stop(1, "Aircraft::readXML",
+					                 "Error reading file " + path + ".");
+					return 2;
+				}
+				else if (check == 2)
+				{
+					conditional_stop(1, "Aircraft::readXML",
+					                 "Format error in " + path + ".");
+					return 2;
+				}
+			}
+			else
+			{
+				conditional_stop(1, "Aircraft::readXML",
+				           "Airfoil source must be 4 digit, 5 digit, or file.");
+				return 2;
+			}
+			
+			// Set up airfoil spline data and smooth paneling
+			
+			newfoil.ccwOrderCoordinates();
+			newfoil.splineFit();
+			newfoil.unitTransform();
+			newfoil.setXfoilOptions(xfoil_run_opts, xfoil_geom_opts);
+			newfoil.smoothPaneling();
+			foils.push_back(newfoil);
+		}
+		if (foils.size() < 1)
+		{
+			conditional_stop(1, "Aircraft::readXML",
+			                 "Wings must have at least one airfoil.");
+			return 2;
+		}
+		
+		_wings[nwings].setAirfoils(foils);
+		_wings[nwings].setupSections(user_sections);
+		_wings[nwings].createPanels(next_global_vertidx, next_global_elemidx);
+		nwings += 1;
+	}
+	
+	// Set up wake for each wing
+	
+	for ( i = 0; i < nwings; i++ )
+	{
+		_wings[i].setupWake(next_global_vertidx, next_global_elemidx);
+	}
+	
+	// Set up trailing edge panels for viscous cases
 
-  doc.LoadFile(geom_file.c_str());
-  if ( (doc.ErrorID() == XML_ERROR_FILE_NOT_FOUND) ||
-       (doc.ErrorID() == XML_ERROR_FILE_COULD_NOT_BE_OPENED) ||
-       (doc.ErrorID() == XML_ERROR_FILE_READ_ERROR) )
-  {
-    conditional_stop(1, "Aircraft::readXML",
-                     "Could not read " + geom_file + ".");
-    return 1;
-  }
-  else if (doc.ErrorID() != 0)
-  {
-    conditional_stop(1, "Aircraft::readXML",
-                     "Syntax error in " + geom_file + ".");
-    return 1;
-  }
-
-  XMLElement *ac = doc.FirstChildElement("Aircraft");
-  if (! ac)
-  {
-    conditional_stop(1, "Aircraft::readXML",
-                     "Expected 'Aircraft' element in input file.");
-    return 2;
-  }
-
-  // Read reference data
-
-  XMLElement *ref = ac->FirstChildElement("Reference");
-  if (! ac)
-  {
-    conditional_stop(1, "Aircraft::readXML",
-                     "Expected 'Reference' element in input file.");
-    return 2;
-  }
-  if (read_setting(ref, "RefArea", _sref) != 0)
-    return 2;
-  if (read_setting(ref, "RefLength", _lref) != 0)
-    return 2;
-  if (read_setting(ref, "MomentCenX", _momcen[0]) != 0)
-    return 2;
-  if (read_setting(ref, "MomentCenY", _momcen[1]) != 0)
-    return 2;
-  if (read_setting(ref, "MomentCenZ", _momcen[2]) != 0)
-    return 2;
-
-  // First determine number of wings and allocate _wings vector (don't use
-  // push_back, because it invalidates pointers)
-
-  nwings = 0;
-  for ( XMLElement *wingelem = ac->FirstChildElement("Wing"); wingelem != NULL;
-        wingelem = wingelem->NextSiblingElement("Wing") )
-  {
-    nwings += 1;
-  }
-  _wings.resize(nwings);
-
-  // Read wing data
-
-  nwings = 0;
-  for ( XMLElement *wingelem = ac->FirstChildElement("Wing"); wingelem != NULL;
-        wingelem = wingelem->NextSiblingElement("Wing") )
-  {
-    const char *wingname = wingelem->Attribute("name");
-    if (wingname)
-      _wings[nwings].setName(wingname);
-    else
-      _wings[nwings].setName("Wing" + int2string(nwings+1));
-
-    // Paneling
-
-    XMLElement *pan = wingelem->FirstChildElement("Paneling");
-    if (! pan)
-    {
-      conditional_stop(1, "Aircraft::readXML",
-                       "Wing lacks 'Paneling' element.");
-      return 2;
-    }
-    if (read_setting(pan, "NChord", nchord) != 0)
-      return 2;
-    if (read_setting(pan, "NSpan", nspan) != 0)
-      return 2;
-    if (read_setting(pan, "LESpaceRat", lesprat) != 0)
-      return 2;
-    if (read_setting(pan, "TESpaceRat", tesprat) != 0)
-      return 2;
-    if (read_setting(pan, "RootSpaceRat", rootsprat) != 0)
-      return 2;
-    if (read_setting(pan, "TipSpaceRat", tipsprat) != 0)
-      return 2;
-    _wings[nwings].setDiscretization(nchord, nspan, lesprat, tesprat,
-                                     rootsprat, tipsprat);
-
-    // Sections
-
-    user_sections.resize(0);
-    ymax = 0.;
-    XMLElement *secs = wingelem->FirstChildElement("Sections");
-    if (! wingelem)
-    {
-      conditional_stop(1, "Aircraft::readXML",
-                       "Wing lacks 'Sections' element.");
-      return 2;
-    }
-    for ( XMLElement *secelem = secs->FirstChildElement("Section");
-          secelem != NULL; secelem = secelem->NextSiblingElement("Section") )
-    {
-      Section newsection;
-      const char *secname = secelem->Attribute("name");
-      if ( (secname) && (std::string(secname) == "Root") )
-        y = 0.;
-      else
-      {
-        if (read_setting(secelem, "Y", y) != 0)
-          return 2;
-      }
-      if (y < 0.)
-      {
-        conditional_stop(1, "Aircraft::readXML",
-            "Y must be >= 0 for all sections. Mirroring occurs automatically.");
-        return 2;
-      }
-      else if (y > ymax)
-        ymax = y;
-      if (read_setting(secelem, "XLE", xle) != 0)
-        return 2;
-      if (read_setting(secelem, "ZLE", zle) != 0)
-        return 2;
-      if (read_setting(secelem, "Chord", chord) != 0)
-        return 2;
-      if (read_setting(secelem, "Twist", twist) != 0)
-        return 2;
-
-      // Some geometry checks
-
-      if (chord <= 0.)
-        conditional_stop(1, "Aircraft::readXML",
-                         "Chord must be greater than 0.");
-      if ( (twist <= -90.) || (twist >= 90.) )
-        conditional_stop(1, "Aircraft::readXML",
-                    "Twist must be between greater than -90 and less than 90.");
-
-      newsection.setGeometry(xle, y, zle, chord, twist, 0.0);
-      user_sections.push_back(newsection);
-    }
-    if (user_sections.size() < 2)
-    {
-      conditional_stop(1, "Aircraft::readXML",
-                       "Wings must have at least two sections.");
-      return 2;
-    }
-
-    // Airfoils
-
-    foils.resize(0);
-    XMLElement *foilselem = wingelem->FirstChildElement("Airfoils");
-    if (! foilselem)
-    {
-      conditional_stop(1, "Aircraft::readXML",
-                       "Wing lacks 'Airfoils' element.");
-      return 2;
-    }
-    for ( XMLElement *foilelem = foilselem->FirstChildElement("Airfoil");
-          foilelem != NULL; foilelem = foilelem->NextSiblingElement("Airfoil") )
-    {
-      Airfoil newfoil;
-      const char *foilname = foilelem->Attribute("name");
-      if ( (foilname) && (std::string(foilname) == "Root") )
-        y = 0.;
-      else if ( (foilname) && (std::string(foilname) == "Tip") )
-        y = ymax;
-      else
-      {
-        if (read_setting(foilelem, "Y", y) != 0)
-          return 2;
-      }
-      if (y < 0)
-      {
-        conditional_stop(1, "Aircraft::readXML",
-            "Y must be >= 0 for all airfoils. Mirroring occurs automatically.");
-        return 2;
-      }
-      newfoil.setY(y);
-      if (read_setting(foilelem, "Source", source) != 0)
-        return 2;
-      if (source == "4 digit")
-      {
-        if (read_setting(foilelem, "Designation", des) != 0)
-          return 2;
-        if (newfoil.naca4Coordinates(des, npointside) != 0)
-        {
-          conditional_stop(1, "Aircraft::readXML",
-                           "Invalid 4-digit NACA designation.");
-          return 2;
-        }
-      }
-      else if (source == "5 digit")
-      {
-        if (read_setting(foilelem, "Designation", des) != 0)
-          return 2;
-        if (newfoil.naca5Coordinates(des, npointside) != 0)
-        {
-          conditional_stop(1, "Aircraft::readXML",
-                           "Invalid 5-digit NACA designation.");
-          return 2;
-        }
-      }
-      else if (source == "file")
-      {
-        if (read_setting(foilelem, "Path", path) != 0)
-          return 2;
-        check = newfoil.readCoordinates(path);
-        if (check == 1)
-        {
-          conditional_stop(1, "Aircraft::readXML",
-                           "Error reading file " + path + ".");
-          return 2;
-        }
-        else if (check == 2)
-        {
-          conditional_stop(1, "Aircraft::readXML",
-                           "Format error in " + path + ".");
-          return 2;
-        }
-      }
-      else
-      {
-        conditional_stop(1, "Aircraft::readXML",
-                         "Airfoil source must be 4 digit, 5 digit, or file.");
-        return 2;
-      }
-
-      // Set up airfoil spline data and smooth paneling
-
-      newfoil.ccwOrderCoordinates();
-      newfoil.splineFit();
-      newfoil.unitTransform();
-      newfoil.setXfoilOptions(xfoil_run_opts, xfoil_geom_opts);
-      newfoil.smoothPaneling();
-      foils.push_back(newfoil);
-    }
-    if (foils.size() < 1)
-    {
-      conditional_stop(1, "Aircraft::readXML",
-                       "Wings must have at least one airfoil.");
-       return 2;
-    }
-
-    _wings[nwings].setAirfoils(foils);
-    _wings[nwings].setupSections(user_sections);
-    _wings[nwings].createPanels(next_global_vertidx, next_global_elemidx);
-    nwings += 1;
-  }
-
-  // Set up wake for each wing
-
-  for ( i = 0; i < nwings; i++ )
-  {
-    _wings[i].setupWake(next_global_vertidx, next_global_elemidx);
-  }
-
-  if (nwings < 1)
-  {
-    conditional_stop(1, "Aircraft::readXML", "At least one wing is required.");
-    return 2;
-  }
-
-  // Set pointers to vertices, panels, and wake elements
-
-  setGeometryPointers();
-
-  return 0;
+	if (viscous)
+	{
+		for ( i = 0; i < nwings; i++ )
+		{
+			_wings[i].setupTEPanels(next_global_vertidx, next_global_elemidx);
+		}
+	}
+	
+	if (nwings < 1)
+	{
+		conditional_stop(1, "Aircraft::readXML",
+		                 "At least one wing is required.");
+		return 2;
+	}
+	
+	// Set pointers to vertices, panels, and wake elements
+	
+	setGeometryPointers();
+	
+	return 0;
 }
 
 /******************************************************************************/
@@ -886,124 +900,141 @@ void Aircraft::setWakeDoubletStrengths ( bool init )
 /******************************************************************************/
 void Aircraft::constructSystem ( unsigned int iter )
 {
-  unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans;
-  int toptepan, bottepan;
-  Eigen::Vector3d col;
-  WakeStrip * strip;
-  double stripic;
-  bool onpanel;
+	unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans, ntepans;
+	int toptepan, bottepan;
+	Eigen::Vector3d col;
+	WakeStrip * strip;
+	double stripic;
+	bool onpanel;
 
-  npanels = _panels.size();
+	npanels = _panels.size();
 #ifdef DEBUG
-  if (npanels == 0)
-    conditional_stop(1, "Aircraft::constructSystem", "No panels exist.");
+	if (npanels == 0)
+		conditional_stop(1, "Aircraft::constructSystem", "No panels exist.");
 #endif
-  nwings = _wings.size();
+	nwings = _wings.size();
 
-  // Compute influence coefficient matrices the first time through
+	// Compute influence coefficient matrices the first time through
 
-  if (iter == 1)
-  {
-    _sourceic.resize(npanels,npanels);
-    _doubletic.resize(npanels,npanels);
-    _aic.resize(npanels,npanels);
-    _rhs.resize(npanels);
+	if (iter == 1)
+	{
+		_sourceic.resize(npanels,npanels);
+		_doubletic.resize(npanels,npanels);
+		_aic.resize(npanels,npanels);
+		_rhs.resize(npanels);
 
 #pragma omp parallel for private(i,col,j,onpanel)
-    for ( i = 0; i < npanels; i++ )
-    {
-      // Collocation point (point of BC application)
+		for ( i = 0; i < npanels; i++ )
+		{
+			// Collocation point (point of BC application)
+			
+			col = _panels[i]->collocationPoint();
+			
+			// Influence coefficients
+			
+			for ( j = 0; j < npanels; j++ )
+			{
+				if (i == j)
+					onpanel = true;
+				else
+					onpanel = false;
+				_sourceic(i,j) = _panels[j]->sourcePhiCoeff(col(0), col(1),
+				                               col(2), onpanel, "bottom", true);
+				_doubletic(i,j) = _panels[j]->doubletPhiCoeff(col(0), col(1),
+				                               col(2), onpanel, "bottom", true);
+			}
+		}
+	}
 
-      col = _panels[i]->collocationPoint();
-
-      // Influence coefficients
-
-      for ( j = 0; j < npanels; j++ )
-      {
-        if (i == j)
-          onpanel = true;
-        else
-          onpanel = false;
-        _sourceic(i,j) = _panels[j]->sourcePhiCoeff(col(0), col(1), col(2),
-                                                    onpanel, "bottom", true);
-        _doubletic(i,j) = _panels[j]->doubletPhiCoeff(col(0), col(1), col(2),
-                                                      onpanel, "bottom", true);
-      }
-    }
-  }
-
-  // Compute AIC and RHS
+	// Compute AIC and RHS
 
 #pragma omp parallel for private(i,col,j,k,nstrips,l,strip,nwakepans,stripic,\
-                                 m,toptepan,bottepan)
-  for ( i = 0; i < npanels; i++ )
-  {
-    // Collocation point (point of BC application)
+                                 m,toptepan,bottepan,ntepans)
+	for ( i = 0; i < npanels; i++ )
+	{
+		// Collocation point (point of BC application)
+		
+		col = _panels[i]->collocationPoint();
+		
+		// Surface panel contribution to AIC and RHS
+		
+		_rhs(i) = 0.;
+		for ( j = 0; j < npanels; j++ )
+		{
+		  _rhs(i) -= _panels[j]->sourceStrength()*_sourceic(i,j);
+		
+		  // AIC matrix is static after iteration 2
+		
+		  if (iter < 3)
+		    _aic(i,j) = _doubletic(i,j);
+		}
+		
+		// Wake contribution to AIC and RHS
+		
+		for ( k = 0; k < nwings; k++ )
+		{
+			nstrips = _wings[k].nWStrips();
+			for ( l = 0; l < nstrips; l++ )
+			{
+				strip = _wings[k].wStrip(l);
+				nwakepans = strip->nPanels();
+				
+				// During initial step, all wake panels in a strip have strength
+				// equal to mu_topte - mu_botte
+				
+				if (iter == 1)
+				{
+					stripic = 0.;
+					for ( m = 0; m < nwakepans; m++ )
+					{
+						stripic += strip->panel(m)->doubletPhiCoeff(col(0),
+						                 col(1), col(2), false, "bottom", true);
+					}
+					toptepan = strip->topTEPan()->idx();
+					bottepan = strip->botTEPan()->idx();
+					_aic(i,toptepan) += stripic;
+					_aic(i,bottepan) -= stripic;
+				}
+				
+				// For subsequent time steps, use the current doublet strength
+				// for the first two rows of wake panels. This avoids having to
+				// re-do the LU factorization. We will still set their strength
+				// to the updated mu_topte - mu_botte value for force and wake
+				// calculations.
+				
+				if (iter > 1)
+				{
+					for ( m = 0; m < nwakepans; m++ )
+					{
+						_rhs(i) -= strip->panel(m)->doubletPhiCoeff(col(0),
+						                  col(1), col(2), false, "bottom", true)
+						         * strip->panel(m)->doubletStrength();
+					}
+				}
+			}
+		}
 
-    col = _panels[i]->collocationPoint();
+		// TE panels contribution to RHS
 
-    // Surface panel contribution to AIC and RHS
+		for ( k = 0; k < nwings; k++ )
+		{
+			ntepans = _wings[k].nTEPanels();
+			for ( l = 0; l < ntepans; l++ )
+			{
+				_rhs(i) -= _wings[k].tePanel(l)->doubletPhiCoeff(col(0), col(1),
+				                                  col(2), false, "bottom", true)
+				         * _wings[k].tePanel(l)->doubletStrength();
+				_rhs(i) -= _wings[k].tePanel(l)->sourcePhiCoeff(col(0), col(1),
+				                                  col(2), false, "bottom", true)
+				         * _wings[k].tePanel(l)->sourceStrength();
+			}
+		}
 
-    _rhs(i) = 0.;
-    for ( j = 0; j < npanels; j++ )
-    {
-      _rhs(i) -= _panels[j]->sourceStrength()*_sourceic(i,j);
-
-      // AIC matrix is static after iteration 2
-
-      if (iter < 3)
-        _aic(i,j) = _doubletic(i,j);
-    }
-
-    // Wake contribution to AIC and RHS
-
-    for ( k = 0; k < nwings; k++ )
-    {
-      nstrips = _wings[k].nWStrips();
-      for ( l = 0; l < nstrips; l++ )
-      {
-        strip = _wings[k].wStrip(l);
-        nwakepans = strip->nPanels();
-
-        // During initial step, all wake panels in a strip have strength equal
-        // to mu_topte - mu_botte
-
-        if (iter == 1)
-        {
-          stripic = 0.;
-          for ( m = 0; m < nwakepans; m++ )
-          {
-            stripic += strip->panel(m)->doubletPhiCoeff(col(0), col(1), col(2),
-                                                        false, "bottom", true);
-          }
-          toptepan = strip->topTEPan()->idx();
-          bottepan = strip->botTEPan()->idx();
-          _aic(i,toptepan) += stripic;
-          _aic(i,bottepan) -= stripic;
-        }
-
-        // For subsequent time steps, use the current doublet strength for the
-        // first two rows of wake panels. This avoids having to re-do the LU
-        // factorization. We will still set their strength to the updated
-        // mu_topte - mu_botte value for force and wake calculations.
-
-        if (iter > 1)
-        {
-          for ( m = 0; m < nwakepans; m++ )
-          {
-            _rhs(i) -= strip->panel(m)->doubletPhiCoeff(col(0), col(1), col(2),
-                                                        false, "bottom", true)
-                     * strip->panel(m)->doubletStrength();
-          }
-        }
-      }
-    }
-
-    // Normalize RHS by uinf to keep magnitudes small in the linear system. The
-    // resulting doublet strengths are later scaled back up.
-
-    _rhs(i) /= uinf;
-  }
+		// Normalize RHS by uinf to keep magnitudes small in the linear system.
+		// The resulting doublet strengths are later scaled back up.
+		
+		_rhs(i) /= uinf;
+	}
 }
 
 /******************************************************************************/

@@ -171,6 +171,7 @@ void Wake::convectVertices ( const double & dt,
                              const std::vector<Panel *> & allsurf,
                              const std::vector<Panel *> & allwake )
 {
+//FIXME: this currently does not include influence of TE panels
   int i, j;
   unsigned int v, k, nsurfpan, nwakepan, nmove;
   Eigen::Vector3d k1, dvel;
