@@ -362,8 +362,6 @@ Wing::Wing ()
 	_foils.resize(0);
 	_verts.resize(0);
 	_tipverts.resize(0);
-	_teverts.resize(0);
-	_tepans.resize(0);
 	_quads.resize(0);
 	_tris.resize(0);
 	_panels.resize(0);
@@ -1146,159 +1144,6 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
 
 /******************************************************************************/
 //
-// Sets up trailing edge panels. These panels cover the space between the upper
-// and lower surface boundary layers for viscous cases.
-//
-/******************************************************************************/
-void Wing::setupTEPanels ( int & next_global_vertidx,
-                           int & next_global_elemidx )
-{
-	unsigned int i;
-	Eigen::Vector3d pos1, pos2, vec;
-
-	// Initially, place vertices above and below TE panels along the normal
-	// direction with unit vector. During viscous coupling, the distance will
-	// be controlled by the displacement thickness.
-
-	_teverts.resize(2*_nspan);
-	_tepans.resize(_nspan-1);
-	for ( i = 0; i < _nspan; i++ )
-	{
-		// Top vertex
-
-		pos1 << _sections[i].vert(0).x(), _sections[i].vert(0).y(),
-		        _sections[i].vert(0).z();
-		if (i == 0)
-		{
-			vec = _panels[i][0]->normal();
-			vec(1) = 0.;				// Ensure first edge lies on y = 0
-		}
-		else if (i == _nspan-1)
-			vec = _panels[i][0]->normal();
-		else
-		{
-			vec = 0.5*(_panels[i][0]->normal() + _panels[i+1][0]->normal());
-			vec /= vec.norm();
-		}
-		pos2 = pos1 + vec;
-		_teverts[2*i].setIdx(next_global_vertidx);
-		_teverts[2*i].setCoordinates(pos2(0), pos2(1), pos2(2));
-		next_global_vertidx += 1;
-
-		// Bottom vertex
-
-		pos1 << _sections[i].vert(2*_nchord-2).x(),
-		        _sections[i].vert(2*_nchord-2).y(),
-		        _sections[i].vert(2*_nchord-2).z();
-		if (i == 0)
-		{
-			vec = _panels[i][2*_nchord-3]->normal();
-			vec(1) = 0.;				// Ensure first edge lies on y = 0
-		}
-		else if (i == _nspan-1)
-			vec = _panels[i][2*_nchord-3]->normal();
-		else
-		{
-			vec = 0.5*(_panels[i][2*_nchord-3]->normal()
-			    +      _panels[i+1][2*_nchord-3]->normal());
-			vec /= vec.norm();
-		}
-		pos2 = pos1 + vec;
-		_teverts[2*i+1].setIdx(next_global_vertidx);
-		_teverts[2*i+1].setCoordinates(pos2(0), pos2(1), pos2(2));
-		next_global_vertidx += 1;
-	}
-
-	// Create TE panels and set initial source and doublet strength to 0
-
-	for ( i = 0; i < _nspan-1; i++ )
-	{
-		_tepans[i].addVertex(&_teverts[2*i]);
-		_tepans[i].addVertex(&_teverts[2*i+1]);
-		_tepans[i].addVertex(&_teverts[2*(i+1)+1]);
-		_tepans[i].addVertex(&_teverts[2*(i+1)]);
-		_tepans[i].setIdx(next_global_elemidx);
-		_tepans[i].setSourceStrength(0.);
-		_tepans[i].setDoubletStrength(0.);
-		next_global_elemidx += 1;
-	}
-}
-
-/******************************************************************************/
-//
-// Updates trailing edge panels based on current viscous solution
-//
-/******************************************************************************/
-void Wing::updateTEPanels ()
-{
-	unsigned int i;
-	Eigen::Vector3d pos1, pos2, vec;
-	double sigma;
-
-	// Move vertices above and below TE panels along the normal direction with
-	// distance equal to the TE BL displacement thickness
-
-#pragma omp parallel for private(i,pos1,vec,pos2)
-	for ( i = 0; i < _nspan; i++ )
-	{
-		// Top vertex
-
-		pos1 << _sections[i].vert(0).x(), _sections[i].vert(0).y(),
-		        _sections[i].vert(0).z();
-		if (i == 0)
-		{
-			vec = _panels[i][0]->normal();
-			vec(1) = 0.;				// Ensure first edge lies on y = 0
-		}
-		else if (i == _nspan-1)
-			vec = _panels[i][0]->normal();
-		else
-		{
-			vec = 0.5*(_panels[i][0]->normal() + _panels[i+1][0]->normal());
-			vec /= vec.norm();
-		}
-		vec *= _sections[i].vert(0).data(8);
-		pos2 = pos1 + vec;
-		_teverts[2*i].setCoordinates(pos2(0), pos2(1), pos2(2));
-
-		// Bottom vertex
-
-		pos1 << _sections[i].vert(2*_nchord-2).x(),
-		        _sections[i].vert(2*_nchord-2).y(),
-		        _sections[i].vert(2*_nchord-2).z();
-		if (i == 0)
-		{
-			vec = _panels[i][2*_nchord-3]->normal();
-			vec(1) = 0.;				// Ensure first edge lies on y = 0
-		}
-		else if (i == _nspan-1)
-			vec = _panels[i][2*_nchord-3]->normal();
-		else
-		{
-			vec = 0.5*(_panels[i][2*_nchord-3]->normal()
-			    +      _panels[i+1][2*_nchord-3]->normal());
-			vec /= vec.norm();
-		}
-		vec *= _sections[i].vert(2*_nchord-2).data(8);
-		pos2 = pos1 + vec;
-		_teverts[2*i+1].setCoordinates(pos2(0), pos2(1), pos2(2));
-	}
-
-	// Update panel geometry and source strength
-
-#pragma omp parallel for private(i,sigma)
-	for ( i = 0; i < _nspan-1; i++ )
-	{
-		_tepans[i].recomputeGeometry();
-		sigma = -0.5*(_panels[i][0]->doubletStrength()
-		      -      _panels[i][2*_nchord-3]->doubletStrength());
-		_tepans[i].setSourceStrength(sigma);
-		_tepans[i].setDoubletStrength(0.);
-	}
-}
-
-/******************************************************************************/
-//
 // Computes velocities and pressures on surface panels, and interpolates to
 // vertices
 //
@@ -1486,22 +1331,6 @@ WakeStrip * Wing::wStrip ( unsigned int wsidx )
 
 /******************************************************************************/
 //
-// Access to TE panels
-//
-/******************************************************************************/
-unsigned int Wing::nTEPanels () const { return _tepans.size(); }
-QuadPanel * Wing::tePanel ( unsigned int qidx )
-{
-#ifdef DEBUG
-  if (qidx >= _tepans.size())
-    conditional_stop(1, "Wing::tePanel", "Index out of range.");
-#endif
-
-  return &_tepans[qidx];
-}
-
-/******************************************************************************/
-//
 // Computes viscous forces (and skin friction, etc.) using Xfoil at sections
 //
 /******************************************************************************/
@@ -1537,10 +1366,6 @@ void Wing::computeBL ()
 			}
 		}
 	}
-
-	// Update trailing edge panels
-	
-	updateTEPanels();
 }
 
 /******************************************************************************/

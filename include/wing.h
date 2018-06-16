@@ -42,14 +42,11 @@ class Wing {
 	std::vector<Vertex *> _verts;	// Pointers to vertices on wing
 	std::vector<std::vector<Vertex> > _tipverts;
 									// Vertices on interior of wing cap
-	std::vector<Vertex> _teverts;	// Vertices used to create TE panels
 	std::vector<QuadPanel> _quads;	// Quad panels
 	std::vector<TriPanel> _tris;	// Tri panels at tip
 	std::vector<std::vector<Panel *> > _panels;
 									// Pointers to panels arranged in i-j
 									//   coordinate directions
-	std::vector<QuadPanel> _tepans;	// Panels at trailing edge between upper
-									//   and lower BL
 	Wake _wake;						// Wake
 	std::vector<WakeStrip> _wakestrips;	
 									// Wake strips behind TE panels
@@ -103,11 +100,6 @@ class Wing {
 	
 	void setupWake ( int & next_global_vertidx, int & next_global_elemidx );
 
-	// Set up or update TE vertices and panels (for viscous cases)
-
-	void setupTEPanels ( int & next_global_vertidx, int & next_global_elemidx );
-	void updateTEPanels ();
-	
 	// Computes velocities and pressures on surface panels; interpolate to
 	// vertices
 	
@@ -128,11 +120,6 @@ class Wing {
 	unsigned int nWStrips () const;
 	WakeStrip * wStrip ( unsigned int wsidx );
 
-	// Access to TE panels
-
-	unsigned int nTEPanels () const;
-	QuadPanel * tePanel ( unsigned int qidx );
-	
 	// Compute viscous forces (and skin friction, etc.) using Xfoil at sections
 	
 	void computeBL ();

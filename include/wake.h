@@ -17,47 +17,47 @@ class Panel;
 /******************************************************************************/
 class Wake {
 
-  private:
+	private:
 
-    int _nspan, _nstream;			// Spanwise and streamwise
-  						//   vertices
-    std::vector<Vertex> _verts;			// Vertices
-    std::vector<double> _newx, _newy, _newz;	// New vertex positions after
-                                                //   wake rollup
-    std::vector<Vertex *> _topteverts, _botteverts;
-          					// Pointers to top and bottom TE
-						//   vertices on wing
-    std::vector<TriPanel> _tris;		// Tri doublet panels
-    std::vector<QuadPanel> _quads;		// Quad doublet panels (trailing
-                                                //   to near-infinity)
+	int _nspan, _nstream;						// Spanwise and streamwise
+												//   vertices
+	std::vector<Vertex> _verts;					// Vertices
+	std::vector<double> _newx, _newy, _newz;	// New vertex positions after
+												//   wake rollup
+	std::vector<Vertex *> _topteverts, _botteverts;
+												// Pointers to top and bottom TE
+												//   vertices on wing
+	std::vector<TriPanel> _tris;				// Tri doublet panels
+	std::vector<QuadPanel> _quads;				// Quad doublet panels (trailing
+												//   to near-infinity)
 
-  public:
+	public:
 
-    // Constructor
-
-    Wake ();
-
-    // Initialize with upper and lower TE verts from the wing
-
-    void initialize ( const std::vector<Vertex *> & topteverts,
-                      const std::vector<Vertex *> & botteverts,
-                      int & next_global_vertidx, int & next_global_elemidx );
-
-    // Compute wake rollup and convect doublets downstream
-
-    void convectVertices ( const double & dt,
-                           const std::vector<Panel *> & allsurf,
-                           const std::vector<Panel *> & allwake );
-    void update ();
-
-    // Access vertices and panels
-
-    unsigned int nVerts () const;
-    unsigned int nTris () const;
-    unsigned int nQuads () const;
-    Vertex * vert ( unsigned int vidx );
-    TriPanel * triPanel ( unsigned int tidx );
-    QuadPanel * quadPanel ( unsigned int qidx );
+	// Constructor
+	
+	Wake ();
+	
+	// Initialize with upper and lower TE verts from the wing
+	
+	void initialize ( const std::vector<Vertex *> & topteverts,
+	                  const std::vector<Vertex *> & botteverts,
+	                  int & next_global_vertidx, int & next_global_elemidx );
+	
+	// Compute wake rollup and convect doublets downstream
+	
+	void convectVertices ( const double & dt,
+	                       const std::vector<Panel *> & allsurf,
+	                       const std::vector<Panel *> & allwake );
+	void update ();
+	
+	// Access vertices and panels
+	
+	unsigned int nVerts () const;
+	unsigned int nTris () const;
+	unsigned int nQuads () const;
+	Vertex * vert ( unsigned int vidx );
+	TriPanel * triPanel ( unsigned int tidx );
+	QuadPanel * quadPanel ( unsigned int qidx );
 };
 
 #endif

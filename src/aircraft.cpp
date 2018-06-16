@@ -441,34 +441,49 @@ int Aircraft::writeWakeViz ( const std::string & fname ) const
 /******************************************************************************/
 void Aircraft::writeWakeData ( std::ofstream & f ) const
 {
-  unsigned int i, nwakeverts;
+	unsigned int i, nwakeverts;
+	
+	nwakeverts = _wakeverts.size();
+	
+	// Point data (incl. mirror elements)
+	
+	f << "POINT_DATA " << nwakeverts*2 << std::endl;
+	if (viscous)
+	{
+		f << "SCALARS source_strength double 1" << std::endl;
+		f << "LOOKUP_TABLE default" << std::endl;
+		for ( i = 0; i < nwakeverts; i++ )
+		{
+			f << std::setprecision(7) << _wakeverts[i]->data(0) << std::endl;
+		}
+		for ( i = 0; i < nwakeverts; i++ )
+		{
+			f << std::setprecision(7) << _wakeverts[i]->data(0) << std::endl;
+		}
+	}
 
-  nwakeverts = _wakeverts.size();
+	f << "SCALARS doublet_strength double 1" << std::endl;
+	f << "LOOKUP_TABLE default" << std::endl;
+	f.setf(std::ios_base::scientific);
+	for ( i = 0; i < nwakeverts; i++ )
+	{
+		f << std::setprecision(7) << _wakeverts[i]->data(1) << std::endl;
+	}
+	for ( i = 0; i < nwakeverts; i++ )
+	{
+		f << std::setprecision(7) << _wakeverts[i]->data(1) << std::endl;
+	}
 
-  // Point data (incl. mirror elements)
-
-  f << "POINT_DATA " << nwakeverts*2 << std::endl;
-  f << "SCALARS doublet_strength double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  f.setf(std::ios_base::scientific);
-  for ( i = 0; i < nwakeverts; i++ )
-  {
-    f << std::setprecision(7) << _wakeverts[i]->data(1) << std::endl;
-  }
-  for ( i = 0; i < nwakeverts; i++ )
-  {
-    f << std::setprecision(7) << _wakeverts[i]->data(1) << std::endl;
-  }
-  f << "SCALARS wake_time double 1" << std::endl;
-  f << "LOOKUP_TABLE default" << std::endl;
-  for ( i = 0; i < nwakeverts; i++ )
-  {
-    f << std::setprecision(7) << _wakeverts[i]->wakeTime() << std::endl;
-  }
-  for ( i = 0; i < nwakeverts; i++ )
-  {
-    f << std::setprecision(7) << _wakeverts[i]->wakeTime() << std::endl;
-  }
+	f << "SCALARS wake_time double 1" << std::endl;
+	f << "LOOKUP_TABLE default" << std::endl;
+	for ( i = 0; i < nwakeverts; i++ )
+	{
+		f << std::setprecision(7) << _wakeverts[i]->wakeTime() << std::endl;
+	}
+	for ( i = 0; i < nwakeverts; i++ )
+	{
+		f << std::setprecision(7) << _wakeverts[i]->wakeTime() << std::endl;
+	}
 }
 
 /******************************************************************************/
@@ -774,16 +789,6 @@ int Aircraft::readXML ( const std::string & geom_file )
 		_wings[i].setupWake(next_global_vertidx, next_global_elemidx);
 	}
 	
-	// Set up trailing edge panels for viscous cases
-
-	if (viscous)
-	{
-		for ( i = 0; i < nwings; i++ )
-		{
-			_wings[i].setupTEPanels(next_global_vertidx, next_global_elemidx);
-		}
-	}
-	
 	if (nwings < 1)
 	{
 		conditional_stop(1, "Aircraft::readXML",
@@ -848,49 +853,64 @@ void Aircraft::setDoubletStrengths ()
 
 /******************************************************************************/
 //
-// Sets wake doublet strength
+// Sets wake source and doublet strength
 //
 /******************************************************************************/
-void Aircraft::setWakeDoubletStrengths ( bool init )
+void Aircraft::setWakeStrengths ( bool init )
 {
-  unsigned int i, j, k, nwings, nstrips, nwakepans, nwakeunk, nwakeverts;
-  double mu;
-  WakeStrip *strip;
+	unsigned int i, j, k, nwings, nstrips, nwakepans, nwakeunk, nwakeverts;
+	double mu, sigma;
+	WakeStrip *strip;
+	
+	nwings = _wings.size();
+	for ( i = 0; i < nwings; i++ )
+	{
+		nstrips = _wings[i].nWStrips();
+#pragma omp parallel for private(j,strip,mu,nwakepans,nwakeunk,k,sigma)
+		for ( j = 0; j < nstrips; j++ )
+		{
+			strip = _wings[i].wStrip(j);
+			mu = strip->topTEPan()->doubletStrength()
+			   - strip->botTEPan()->doubletStrength();
+			nwakepans = strip->nPanels();
+			
+			// During initial step, all wake panels in a strip have strength
+			// equal to mu_topte - mu_botte. Subsequently, only the most
+			// recently shed panels have this strength, and the rest have known
+			// strengths.
+			
+			if (init)
+				nwakeunk = nwakepans;
+			else
+				nwakeunk = 2;
+			
+			for ( k = 0; k < nwakeunk; k++ )
+			{
+				strip->panel(k)->setDoubletStrength(mu);
+			}
 
-  nwings = _wings.size();
-  for ( i = 0; i < nwings; i++ )
-  {
-    nstrips = _wings[i].nWStrips();
-#pragma omp parallel for private(j,strip,mu,nwakepans,nwakeunk,k)
-    for ( j = 0; j < nstrips; j++ )
-    {
-      strip = _wings[i].wStrip(j);
-      mu = strip->topTEPan()->doubletStrength()
-         - strip->botTEPan()->doubletStrength();
-      nwakepans = strip->nPanels();
+			// Source strength in first row of wake panels from TE mass defect
+			// derivative. This is used to model the BL convection into the
+			// wake.
 
-      // During initial step, all wake panels in a strip have strength equal
-      // to mu_topte - mu_botte. Subsequently, only the most recently shed
-      // panels have this strength, and the rest have known strengths.
+			if ( viscous && (! init) )
+			{
+				for ( k = 0; k < 2; k++ )
+				{
+					sigma = strip->topTEPan()->massDefectDerivative()
+					      + strip->botTEPan()->massDefectDerivative();
+					strip->panel(k)->setSourceStrength(sigma);
+				}
+			}
+		}
+	}
 
-      if (init)
-        nwakeunk = nwakepans;
-      else
-        nwakeunk = 2;
-
-      for ( k = 0; k < nwakeunk; k++ )
-      {
-        strip->panel(k)->setDoubletStrength(mu);
-      }
-    }
-  }
-
-  nwakeverts = _wakeverts.size();
+	nwakeverts = _wakeverts.size();
 #pragma omp parallel for private(i)
-  for ( i = 0; i < nwakeverts; i++ )
-  {
-    _wakeverts[i]->averageFromPanels();
-  }
+	for ( i = 0; i < nwakeverts; i++ )
+	{
+		_wakeverts[i]->averageFromPanels();
+	}
 }
 
 /******************************************************************************/
@@ -900,7 +920,7 @@ void Aircraft::setWakeDoubletStrengths ( bool init )
 /******************************************************************************/
 void Aircraft::constructSystem ( unsigned int iter )
 {
-	unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans, ntepans;
+	unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans;
 	int toptepan, bottepan;
 	Eigen::Vector3d col;
 	WakeStrip * strip;
@@ -949,7 +969,7 @@ void Aircraft::constructSystem ( unsigned int iter )
 	// Compute AIC and RHS
 
 #pragma omp parallel for private(i,col,j,k,nstrips,l,strip,nwakepans,stripic,\
-                                 m,toptepan,bottepan,ntepans)
+                                 m,toptepan,bottepan)
 	for ( i = 0; i < npanels; i++ )
 	{
 		// Collocation point (point of BC application)
@@ -1006,27 +1026,19 @@ void Aircraft::constructSystem ( unsigned int iter )
 				{
 					for ( m = 0; m < nwakepans; m++ )
 					{
-						_rhs(i) -= strip->panel(m)->doubletPhiCoeff(col(0),
-						                  col(1), col(2), false, "bottom", true)
-						         * strip->panel(m)->doubletStrength();
+						if (viscous)	// Wake panels have source strength
+						{
+							_rhs(i) -= strip->panel(m)->inducedPotential(col(0),
+							             col(1), col(2), false, "bottom", true);
+						}
+						else
+						{
+							_rhs(i) -= strip->panel(m)->doubletPhiCoeff(col(0),
+							              col(1), col(2), false, "bottom", true)
+							         * strip->panel(m)->doubletStrength();
+						}
 					}
 				}
-			}
-		}
-
-		// TE panels contribution to RHS
-
-		for ( k = 0; k < nwings; k++ )
-		{
-			ntepans = _wings[k].nTEPanels();
-			for ( l = 0; l < ntepans; l++ )
-			{
-				_rhs(i) -= _wings[k].tePanel(l)->doubletPhiCoeff(col(0), col(1),
-				                                  col(2), false, "bottom", true)
-				         * _wings[k].tePanel(l)->doubletStrength();
-				_rhs(i) -= _wings[k].tePanel(l)->sourcePhiCoeff(col(0), col(1),
-				                                  col(2), false, "bottom", true)
-				         * _wings[k].tePanel(l)->sourceStrength();
 			}
 		}
 
@@ -1488,17 +1500,17 @@ void Aircraft::writeSectionForceMoment ( int iter ) const
 /******************************************************************************/
 void Aircraft::moveWake ()
 {
-  unsigned int i, nwings;
-
-  nwings = _wings.size();
-  for ( i = 0; i < nwings; i++ )
-  {
-    _wings[i].wake().convectVertices(dt, _panels, _wakepanels);
-  }
-  for ( i = 0; i < nwings; i++ )
-  {
-    _wings[i].wake().update();
-  }
+	unsigned int i, nwings;
+	
+	nwings = _wings.size();
+	for ( i = 0; i < nwings; i++ )
+	{
+		_wings[i].wake().convectVertices(dt, _panels, _wakepanels);
+	}
+	for ( i = 0; i < nwings; i++ )
+	{
+		_wings[i].wake().update();
+	}
 }
 
 /******************************************************************************/
