@@ -111,12 +111,10 @@ int main (int argc, char* argv[])
 		          << " unknowns ..." << std::endl;
 		ac.solveSystem();
 		
-		// Set doublet strengths on surface and wake. Also set wake source
-		// strengths in viscous cases.
+		// Set doublet strengths on surface and wake
 		
 		std::cout << "  Setting doublet strengths ..." << std::endl;
-		ac.setDoubletStrengths();
-		ac.setWakeStrengths(iter==1);
+		ac.setDoubletStrengths(iter==1);
 		
 		// Compute surface velocities and pressures
 		

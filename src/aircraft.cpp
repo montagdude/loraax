@@ -810,7 +810,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 /******************************************************************************/
 void Aircraft::setSourceStrengths ()
 {
-	unsigned int i, npanels;
+	unsigned int i, npanels, nwings;
 
 	npanels = _panels.size();
 #ifdef DEBUG
@@ -823,6 +823,17 @@ void Aircraft::setSourceStrengths ()
 	{
 		_panels[i]->computeSourceStrength(uinfvec, viscous);
 	}
+
+	// Wake source strength to model BL thinning
+
+	if (viscous)
+	{
+		nwings = _wings.size();
+		for ( i = 0; i < nwings; i++ )
+		{
+			_wings[i].wake().computeSourceStrengths();
+		}
+	}
 }
 
 /******************************************************************************/
@@ -831,42 +842,36 @@ void Aircraft::setSourceStrengths ()
 // strengths to vertices.
 //
 /******************************************************************************/
-void Aircraft::setDoubletStrengths ()
+void Aircraft::setDoubletStrengths ( bool init )
 {
-  unsigned int i, npanels;
+	unsigned int i, j, k, npanels, nwings, nstrips, nwakepans, nwakeunk,
+	             nwakeverts;
+	double mu;
+	WakeStrip *strip;
 
-  npanels = _panels.size();
+	npanels = _panels.size();
 #ifdef DEBUG
-  if (npanels == 0)
-    conditional_stop(1, "Aircraft::setDoubletStrengths", "No panels exist.");
-  if (_mun.size() != npanels)
-    conditional_stop(1, "Aircraft::setDoubletStrengths",
-                     "Inconsistent number of panels and solution vector size.");
+	if (npanels == 0)
+		conditional_stop(1, "Aircraft::setDoubletStrengths",
+		                 "No panels exist.");
+	if (_mun.size() != npanels)
+		conditional_stop(1, "Aircraft::setDoubletStrengths",
+		             "Inconsistent number of panels and solution vector size.");
 #endif
 
 #pragma omp parallel for private(i)
-  for ( i = 0; i < npanels; i++ )
-  {
-    _panels[i]->setDoubletStrength(_mun(i)*uinf);
-  }
-}
+	for ( i = 0; i < npanels; i++ )
+	{
+		_panels[i]->setDoubletStrength(_mun(i)*uinf);
+	}
 
-/******************************************************************************/
-//
-// Sets wake source and doublet strength
-//
-/******************************************************************************/
-void Aircraft::setWakeStrengths ( bool init )
-{
-	unsigned int i, j, k, nwings, nstrips, nwakepans, nwakeunk, nwakeverts;
-	double mu, sigma;
-	WakeStrip *strip;
-	
+	// Set wake doublet strength
+
 	nwings = _wings.size();
 	for ( i = 0; i < nwings; i++ )
 	{
 		nstrips = _wings[i].nWStrips();
-#pragma omp parallel for private(j,strip,mu,nwakepans,nwakeunk,k,sigma)
+#pragma omp parallel for private(j,strip,mu,nwakepans,nwakeunk,k)
 		for ( j = 0; j < nstrips; j++ )
 		{
 			strip = _wings[i].wStrip(j);
@@ -887,20 +892,6 @@ void Aircraft::setWakeStrengths ( bool init )
 			for ( k = 0; k < nwakeunk; k++ )
 			{
 				strip->panel(k)->setDoubletStrength(mu);
-			}
-
-			// Source strength in first row of wake panels from TE mass defect
-			// derivative. This is used to model the BL convection into the
-			// wake.
-
-			if ( viscous && (! init) )
-			{
-				for ( k = 0; k < 2; k++ )
-				{
-					sigma = strip->topTEPan()->massDefectDerivative()
-					      + strip->botTEPan()->massDefectDerivative();
-					strip->panel(k)->setSourceStrength(sigma);
-				}
 			}
 		}
 	}

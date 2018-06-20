@@ -61,6 +61,7 @@ class Wing {
 	
 	void computeAreaMAC ( const std::vector<Section> &
 	                      sorted_user_sections ) const;
+	void setWakeMassDefect ();
 
 	public:
 

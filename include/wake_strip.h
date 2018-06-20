@@ -16,32 +16,32 @@ class Panel;
 /******************************************************************************/
 class WakeStrip {
 
-  private:
+	private:
 
-    Panel * _toptepan, * _bottepan;	// TE panels
-    std::vector<Panel *> _panels;	// Strip of trailing vortex elements
+	Panel * _toptepan, * _bottepan;	// TE panels
+	std::vector<Panel *> _panels;	// Strip of trailing vortex elements
 
-  public:
+	public:
 
-    // Constructor
-
-    WakeStrip ();
-
-    // Add panels in a strip
-
-    void setNPanels ( unsigned int npanels );
-    int setPanelPointer ( unsigned int pidx, Panel * panel );
-
-    // Set trailing edge panel pointers
-
-    void setTEPanels ( Panel * toptepan, Panel * bottepan );
-
-    // Access panels
-
-    unsigned int nPanels () const;
-    Panel * topTEPan ();
-    Panel * botTEPan ();
-    Panel * panel ( unsigned int pidx );
+	// Constructor
+	
+	WakeStrip ();
+	
+	// Add panels in a strip
+	
+	void setNPanels ( unsigned int npanels );
+	int setPanelPointer ( unsigned int pidx, Panel * panel );
+	
+	// Set trailing edge panel pointers
+	
+	void setTEPanels ( Panel * toptepan, Panel * bottepan );
+	
+	// Access panels
+	
+	unsigned int nPanels () const;
+	Panel * topTEPan ();
+	Panel * botTEPan ();
+	Panel * panel ( unsigned int pidx );
 };
 
 #endif

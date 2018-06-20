@@ -114,127 +114,128 @@ Vertex & Section::vert ( unsigned int idx )
 void Section::setVertices ( unsigned int nchord, const double & lesprat,
                             const double & tesprat )
 {
-  Airfoil foil;
-  double slen, sle, unisp, lesp, tesp;
-  double a4top, a5top, a4bot, a5bot;
-  double sscale, svs;
-  std::vector<double> sv;
-  std::vector<double> xf, zf;			// Vertices in foil coordinates
-  unsigned int i, j, nsmoothed;
-  Eigen::Matrix3d rotation;
+	Airfoil foil;
+	double slen, sle, unisp, lesp, tesp;
+	double a4top, a5top, a4bot, a5bot;
+	double sscale, svs;
+	std::vector<double> sv;
+	std::vector<double> xf, zf;			// Vertices in foil coordinates
+	unsigned int i, j, nsmoothed;
+	Eigen::Matrix3d rotation;
 
 #ifdef DEBUG
-  if (_foil.nBuffer() == 0)
-  {
-    conditional_stop(1, "Section::setVertices", "Airfoil not loaded yet.");
-  }
+	if (_foil.nBuffer() == 0)
+	{
+		conditional_stop(1, "Section::setVertices", "Airfoil not loaded yet.");
+	}
 
-  if (! _foil.splined())
-  {
-    conditional_stop(1, "Section::setVertices", "Must call splineFit first.");
-  }
+	if (! _foil.splined())
+	{
+		conditional_stop(1, "Section::setVertices",
+		                 "Must call splineFit first.");
+	}
 #endif
 
-  // Save a copy of the section's airfoil and remove TE gap if necessary. By
-  // working with a copy, the gap is only removed for 3D panel calculations, but
-  // it is preserved for Xfoil BL calculations.
+	// Save a copy of the section's airfoil and remove TE gap if necessary. By
+	// working with a copy, the gap is only removed for 3D panel calculations, but
+	// it is preserved for Xfoil BL calculations.
 
-  foil = _foil;
-  if (foil.teGap() > 1.E-14)
-  {
-    foil.modifyTEGap(0.0, 0.9);
-    foil.smoothPaneling();
-    foil.splineFit();
-  }
+	foil = _foil;
+	if (foil.teGap() > 1.E-14)
+	{
+		foil.modifyTEGap(0.0, 0.9);
+		foil.smoothPaneling();
+		foil.splineFit();
+	}
 
-  // Get spacings 
+	// Get spacings 
+	
+	slen = foil.sLen();
+	sle = foil.sLE();
+	unisp = slen / float(2*nchord-2);	// Uniform spacing
+	lesp = unisp * lesprat;				// LE spacing
+	tesp = unisp * tesprat;				// TE spacing
+	
+	// Optimize tanh spacing coefficients to minimize stretching
+	
+	opt_tanh_spacing(nchord, sle, tesp, lesp, a4top, a5top);
+	opt_tanh_spacing(nchord, slen-sle, lesp, tesp, a4bot, a5bot);
+	
+	// Set spacing vector
+	
+	_nverts = 2*nchord - 1;
+	_verts.resize(_nverts);
+	_uverts.resize(_nverts);
+	sv.resize(_nverts);
+	sv[0] = 0.;
+	for ( i = 1; i < nchord; i++ )
+	{
+		sv[i] = sv[i-1] +
+		        tanh_spacing(i-1, a4top, a5top, nchord, sle, tesp, lesp);
+	}
+	for ( i = 1; i < nchord; i++ )
+	{
+		sv[i+nchord-1] = sv[i+nchord-2] +
+		          tanh_spacing(i-1, a4bot, a5bot, nchord, slen-sle, lesp, tesp);
+	}
 
-  slen = foil.sLen();
-  sle = foil.sLE();
-  unisp = slen / float(2*nchord-2);	// Uniform spacing
-  lesp = unisp * lesprat;		// LE spacing
-  tesp = unisp * tesprat;		// TE spacing
+	// Get vertices in foil coordinate system (unit chord, 0 <= x <= 1)
+	
+	xf.resize(_nverts);
+	zf.resize(_nverts);
+	for ( i = 0; i < _nverts; i++ )
+	{
+		foil.splineInterp(sv[i], xf[i], zf[i]);
+	}
 
-  // Optimize tanh spacing coefficients to minimize stretching
+	// Transform to section coordinates. Also store non-rotated, non-translated
+	// version for calculating sectional loads.
+	
+	rotation = inverse_euler_rotation(_roll, _twist, 0.0, "123");
+	for ( i = 0; i < _nverts; i++ )
+	{
+		_verts[i].setCoordinates(xf[i], 0.0, zf[i]);
+		_verts[i].translate(-0.25, 0., 0.);
+		_verts[i].rotate(rotation);
+		_verts[i].translate(0.25, 0., 0.);
+		_verts[i].scale(_chord);
+		_verts[i].translate(_xle, _y, _zle);
 
-  opt_tanh_spacing(nchord, sle, tesp, lesp, a4top, a5top);
-  opt_tanh_spacing(nchord, slen-sle, lesp, tesp, a4bot, a5bot);
-
-  // Set spacing vector
-
-  _nverts = 2*nchord - 1;
-  _verts.resize(_nverts);
-  _uverts.resize(_nverts);
-  sv.resize(_nverts);
-  sv[0] = 0.;
-  for ( i = 1; i < nchord; i++ )
-  {
-    sv[i] = sv[i-1] +
-      tanh_spacing(i-1, a4top, a5top, nchord, sle, tesp, lesp);
-  }
-  for ( i = 1; i < nchord; i++ )
-  {
-    sv[i+nchord-1] = sv[i+nchord-2] +
-      tanh_spacing(i-1, a4bot, a5bot, nchord, slen-sle, lesp, tesp);
-  }
-
-  // Get vertices in foil coordinate system (unit chord, 0 <= x <= 1)
-
-  xf.resize(_nverts);
-  zf.resize(_nverts);
-  for ( i = 0; i < _nverts; i++ )
-  {
-    foil.splineInterp(sv[i], xf[i], zf[i]);
-  }
-
-  // Transform to section coordinates. Also store non-rotated, non-translated
-  // version for calculating sectional loads.
-
-  rotation = inverse_euler_rotation(_roll, _twist, 0.0, "123");
-  for ( i = 0; i < _nverts; i++ )
-  {
-    _verts[i].setCoordinates(xf[i], 0.0, zf[i]);
-    _verts[i].translate(-0.25, 0., 0.);
-    _verts[i].rotate(rotation);
-    _verts[i].translate(0.25, 0., 0.);
-    _verts[i].scale(_chord);
-    _verts[i].translate(_xle, _y, _zle);
-
-    _uverts[i].setCoordinates(xf[i], 0.0, zf[i]);
-    _uverts[i].scale(_chord);
-  }
+		_uverts[i].setCoordinates(xf[i], 0.0, zf[i]);
+		_uverts[i].scale(_chord);
+	}
 
   // Finds interpolation points on airfoil for section vertices
 
-  _foilinterp.resize(_nverts);
-  nsmoothed = _foil.nSmoothed();
+	_foilinterp.resize(_nverts);
+	nsmoothed = _foil.nSmoothed();
+	
+	// Scale section to airfoil length, leaving a little room for roundoff error
+	sscale = _foil.sSmoothed(nsmoothed-1) / (sv[_nverts-1] + 1.E-12);
 
-  sscale = _foil.sSmoothed(nsmoothed-1) / (sv[_nverts-1] + 1.E-12);
-    // Scale section to airfoil length, leaving a little room for roundoff error
-
-  for ( i = 0; i < _nverts; i++ )
-  {
-    _foilinterp[i].weight1 = 0.;
-    _foilinterp[i].weight2 = 0.;
-    svs = sv[i] * sscale;
-    for ( j = 0; j < nsmoothed-1; j++ )
-    {
-      if ( (svs >= _foil.sSmoothed(j)) && (svs <= _foil.sSmoothed(j+1)) )
-      {
-        _foilinterp[i].point1 = j;
-        _foilinterp[i].point2 = j+1;
-        _foilinterp[i].weight2 = (svs - _foil.sSmoothed(j))
-                               / (_foil.sSmoothed(j+1) - _foil.sSmoothed(j));
-        _foilinterp[i].weight1 = 1. - _foilinterp[i].weight2;
-        break;
-      }
-    }
+	for ( i = 0; i < _nverts; i++ )
+	{
+		_foilinterp[i].weight1 = 0.;
+		_foilinterp[i].weight2 = 0.;
+		svs = sv[i] * sscale;
+		for ( j = 0; j < nsmoothed-1; j++ )
+		{
+			if ( (svs >= _foil.sSmoothed(j)) && (svs <= _foil.sSmoothed(j+1)) )
+			{
+				_foilinterp[i].point1 = j;
+				_foilinterp[i].point2 = j+1;
+				_foilinterp[i].weight2 = (svs - _foil.sSmoothed(j))
+				                  / (_foil.sSmoothed(j+1) - _foil.sSmoothed(j));
+				_foilinterp[i].weight1 = 1. - _foilinterp[i].weight2;
+				break;
+			}
+		}
 #ifdef DEBUG
-    if ( (_foilinterp[i].weight1 == 0.) && (_foilinterp[i].weight2 == 0.) )
-      print_warning("Section::setVertices",
-                    "Could not find airfoil->section interpolants." );
+		if ( (_foilinterp[i].weight1 == 0.) && (_foilinterp[i].weight2 == 0.) )
+		  print_warning("Section::setVertices",
+		                "Could not find airfoil->section interpolants." );
 #endif
-  }
+	}
 } 
 
 /******************************************************************************/

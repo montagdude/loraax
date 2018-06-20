@@ -345,6 +345,39 @@ void Wing::computeAreaMAC ( const std::vector<Section> &
 
 /******************************************************************************/
 //
+// Sets mass defect on wake vertices using 2D BL data
+//
+/******************************************************************************/
+void Wing::setWakeMassDefect ()
+{
+	unsigned int i, j, nw;
+	std::vector<double> sw, dstarw, uedgew;
+
+#pragma omp parallel for private(i,j,nw,sw,dstarw,uedgew)
+	for ( i = 0; i < _nspan; i++ )
+	{
+		nw = _sections[i].airfoil().nWake();
+		sw = _sections[i].airfoil().wakeSVector(nw);
+		dstarw = _sections[i].airfoil().wakeDeltastar(nw);
+		uedgew = _sections[i].airfoil().wakeUedge(nw);
+
+		// Scale sw and mass defect (BL solution has unit chord and uinf)
+
+		for ( j = 0; j < nw; j++ )
+		{
+			sw[j] *= _sections[i].chord();
+			dstarw[j] *= _sections[i].chord();
+			uedgew[j] *= uinf;
+		}
+
+		// Interpolate to 3D wake vertices
+
+		_wake.interpMassDefectLine(i, sw, dstarw, uedgew);
+	}
+}
+
+/******************************************************************************/
+//
 // Default constructor
 //
 /******************************************************************************/
@@ -1366,6 +1399,10 @@ void Wing::computeBL ()
 			}
 		}
 	}
+
+	// Set mass defect on wake vertices
+
+	setWakeMassDefect();
 }
 
 /******************************************************************************/

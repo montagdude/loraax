@@ -762,3 +762,87 @@ std::vector<double> Airfoil::blData ( const std::string & varname,
 	}
 	return outvec;
 }
+
+/******************************************************************************/
+//
+// Get wake data
+//
+/******************************************************************************/
+int Airfoil::nWake () const
+{
+	int nwake;
+
+	xfoil_get_wakepoints(&_xdg, &nwake);
+	return nwake;
+}
+
+void Airfoil::wakeCoordinates ( int nw, std::vector<double> & xw,
+                                std::vector<double> & zw ) const
+{
+	int i;
+	double xwbuff[nw], zwbuff[nw];
+
+	xfoil_get_wake_geometry(&_xdg, &nw, xwbuff, zwbuff);
+	xw.resize(nw);
+	zw.resize(nw);
+	for ( i = 0; i < nw; i++ )
+	{
+		xw[i] = xwbuff[i];
+		zw[i] = zwbuff[i];
+	}
+}
+
+std::vector<double> Airfoil::wakeSVector ( int nw ) const
+{
+	int i;
+	double xwbuff[nw], zwbuff[nw];
+	double dx, dz;
+	std::vector<double> sw;
+
+	xfoil_get_wake_geometry(&_xdg, &nw, xwbuff, zwbuff);
+	sw.clear();
+	sw.resize(nw);
+	sw[0] = 0.;
+	for ( i = 1; i < nw; i++ )
+	{
+		dx = xwbuff[i] - xwbuff[i-1];
+		dz = zwbuff[i] - zwbuff[i-1];
+		sw[i] = sw[i-1] + std::sqrt(std::pow(dx,2.) + std::pow(dz,2.));
+	}
+
+	return sw;
+}
+
+std::vector<double> Airfoil::wakeDeltastar ( int nw ) const
+{
+	int i;
+	double dstar[nw];
+	std::vector<double> deltastar;
+
+	xfoil_get_wake_deltastar(&_xdg, &nw, dstar);
+	deltastar.clear();
+	deltastar.resize(nw);
+	for ( i = 0; i < nw; i++ )
+	{
+		deltastar[i] = dstar[i];
+	}
+
+	return deltastar;
+}
+
+std::vector<double> Airfoil::wakeUedge ( int nw ) const
+{
+	int i;
+	double ue[nw];
+	std::vector<double> uedge;
+
+	xfoil_get_wake_uedge(&_xdg, &nw, ue);
+	uedge.clear();
+	uedge.resize(nw);
+	for ( i = 0; i < nw; i++ )
+	{
+		uedge[i] = ue[i];
+	}
+
+	return uedge;
+}
