@@ -50,17 +50,6 @@ class Wake {
 	                       const std::vector<Panel *> & allwake );
 	void update ();
 
-	// Interpolates mass defect from 2D BL solution to line of vertices
-
-	void interpMassDefectLine ( unsigned int idx,
-	                            const std::vector<double> & sw,
-	                            const std::vector<double> & dstarw,
-	                            const std::vector<double> & uedgew );
-
-	// Compute source strengths from mass defect (viscous cases only)
-
-	void computeSourceStrengths ();
-	
 	// Access vertices and panels
 	
 	unsigned int nVerts () const;

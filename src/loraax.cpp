@@ -96,7 +96,7 @@ int main (int argc, char* argv[])
 		// Set source strengths
 		
 		std::cout << "  Setting source strengths ..." << std::endl;
-		ac.setSourceStrengths();
+		ac.setSourceStrengths(iter==1);
 		
 		// Construct, factorize, and solve the system
 		
@@ -128,6 +128,8 @@ int main (int argc, char* argv[])
 		{
 			std::cout << "  Computing viscous BL with Xfoil ..." << std::endl;
 			ac.computeBL();
+			if (iter == 1)
+				ac.setupViscousWake();
 		}
 		
 		// Compute forces and moments

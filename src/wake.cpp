@@ -311,115 +311,6 @@ void Wake::update ()
 
 /******************************************************************************/
 //
-// Interpolates mass defect from 2D BL solution to line of vertices (viscous
-// cases only)
-//
-/******************************************************************************/
-void Wake::interpMassDefectLine ( unsigned int idx,
-                                  const std::vector<double> & sw,
-                                  const std::vector<double> & dstarw,
-                                  const std::vector<double> & uedgew )
-{
-	unsigned int j, k, nw, curr;
-	double s, weight1, weight2; 
-
-	nw = sw.size();
-	curr = 0;
-	s = 0.;
-	for ( j = 0; int(j) < _nstream; j++ )
-	{
-		for ( k = curr; k < nw; k++ )
-		{
-			if ( (s >= sw[k]) && (s <= sw[k+1]) )
-			{
-				// Interpolate between BL wake vertices
-
-				weight2 = (s - sw[k]) / (sw[k+1] - sw[k]);
-				weight1 = 1. - weight2;
-				_verts[idx*(_nstream+1)+j].setData(8,
-					weight1*dstarw[k] + weight2*dstarw[k+1]);
-				_verts[idx*(_nstream+1)+j].setData(10,
-					weight1*uedgew[k] + weight2*uedgew[k+1]);
-				curr = k;
-				break;
-			}
-			else if (s > sw[nw-1])
-			{
-				// Beyond BL wake, leave deltastar and uedge constant. This will
-				// result in source strength = 0 beyond the BL wake, which is
-				// the appropriate limiting behavior.
-
-				_verts[idx*(_nstream+1)+j].setData(8,
-					_verts[idx*(_nstream+1)+j-1].data(8));
-				_verts[idx*(_nstream+1)+j].setData(10,
-					_verts[idx*(_nstream+1)+j-1].data(10));
-				curr = nw-2;
-				break;
-			}
-#ifdef DEBUG
-			// This shouldn't happen, but put it here for debugging
-			
-			else if (s < sw[k])
-				conditional_stop(1, "Wake::interpMassDefectLine",
-				                 "Interpolation failed 1.");
-#endif
-		}
-		s += _verts[idx*(_nstream+1)+j].distance(_verts[idx*(_nstream+1)+j+1]);
-	}
-	
-	// Far downstream, displacement thickness is 0
-
-	_verts[idx*(_nstream+1)+_nstream].setData(8, 0.0);
-	_verts[idx*(_nstream+1)+_nstream].setData(10, uinf);
-}
-
-/******************************************************************************/
-//
-// Computes source strengths from mass defect (viscous cases only)
-//
-/******************************************************************************/
-void Wake::computeSourceStrengths ()
-{
-	unsigned int i, j;
-	double mdefl1, mdefl2, dmdefl, dsl;
-	double mdefr1, mdefr2, dmdefr, dsr;
-
-#pragma omp parallel for private(i,j,mdefl1,mdefl2,dsl,dmdefl,mdefr1,mdefr2,\
-                                 dsr,dmdefr)
-	for ( i = 0; int(i) < _nspan-1; i++ )
-	{
-		for ( j = 0; int(j) < _nstream; j++ )
-		{
-			mdefl1 = _verts[i*(_nstream+1)+j].data(8)
-			       * _verts[i*(_nstream+1)+j].data(10);
-			mdefl2 = _verts[i*(_nstream+1)+j+1].data(8)
-			       * _verts[i*(_nstream+1)+j+1].data(10);
-			dsl = _verts[i*(_nstream+1)+j].distance(_verts[i*(_nstream+1)+j+1]);
-			dmdefl = (mdefl2 - mdefl1) / dsl;
-
-			mdefr1 = _verts[(i+1)*(_nstream+1)+j].data(8)
-			       * _verts[(i+1)*(_nstream+1)+j].data(10);
-			mdefr2 = _verts[(i+1)*(_nstream+1)+j+1].data(8)
-			       * _verts[(i+1)*(_nstream+1)+j+1].data(10);
-			dsr = _verts[(i+1)*(_nstream+1)+j].distance(
-			                    _verts[(i+1)*(_nstream+1)+j+1]);
-			dmdefr = (mdefr2 - mdefr1) / dsr;
-
-			if (int(j) < _nstream-1)
-			{
-				_tris[i*(_nstream-1)*2+j*2].setSourceStrength(
-				                            0.67*dmdefl + 0.33*dmdefr);
-				_tris[i*(_nstream-1)*2+j*2+1].setSourceStrength(
-				                            0.33*dmdefl + 0.67*dmdefr);
-			}
-			else
-				_quads[i].setSourceStrength(0.5*(dmdefl + dmdefr));
-		}
-	}
-}
-
-/******************************************************************************/
-//
 // Access to verts and panels
 //
 /******************************************************************************/
@@ -429,29 +320,29 @@ unsigned int Wake::nQuads () const { return _quads.size(); }
 Vertex * Wake::vert ( unsigned int vidx )
 {
 #ifdef DEBUG
-  if (vidx >= _verts.size())
-    conditional_stop(1, "Wake::vert", "Index out of range.");
+	if (vidx >= _verts.size())
+		conditional_stop(1, "Wake::vert", "Index out of range.");
 #endif
 
-  return &_verts[vidx];
+	return &_verts[vidx];
 }
 
 TriPanel * Wake::triPanel ( unsigned int tidx )
 {
 #ifdef DEBUG
-  if (tidx >= _tris.size())
-    conditional_stop(1, "Wake::triPanel", "Index out of range.");
+	if (tidx >= _tris.size())
+		conditional_stop(1, "Wake::triPanel", "Index out of range.");
 #endif
 
-  return &_tris[tidx];
+	return &_tris[tidx];
 }
 
 QuadPanel * Wake::quadPanel ( unsigned int qidx )
 {
 #ifdef DEBUG
-  if (qidx >= _quads.size())
-    conditional_stop(1, "Wake::quadPanel", "Index out of range.");
+	if (qidx >= _quads.size())
+		conditional_stop(1, "Wake::quadPanel", "Index out of range.");
 #endif
 
-  return &_quads[qidx];
+	return &_quads[qidx];
 }

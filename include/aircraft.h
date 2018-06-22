@@ -67,7 +67,7 @@ class Aircraft {
 	
 	// Set source and doublet strengths
 	
-	void setSourceStrengths ();
+	void setSourceStrengths ( bool init );
 	void setDoubletStrengths ( bool init );
 	
 	// Construct AIC matrix and RHS vector, factorize, and solve
@@ -87,6 +87,10 @@ class Aircraft {
 	// BL calculations with Xfoil
 	
 	void computeBL (); 
+
+	// Sets up viscous wake for each wing
+
+	void setupViscousWake ();
 	
 	// Computes or access forces and moments
 	

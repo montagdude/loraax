@@ -13,6 +13,7 @@
 #include "tripanel.h"
 #include "wake.h"
 #include "wake_strip.h"
+#include "viscous_wake.h"
 
 /******************************************************************************/
 //
@@ -50,6 +51,8 @@ class Wing {
 	Wake _wake;						// Wake
 	std::vector<WakeStrip> _wakestrips;	
 									// Wake strips behind TE panels
+	ViscousWake _vwake;				// Viscous wake
+
 	double _liftp, _liftv;			// Dimensional forces and moments
 	double _dragp, _dragv;
 	double _momentp, _momentv;
@@ -61,7 +64,6 @@ class Wing {
 	
 	void computeAreaMAC ( const std::vector<Section> &
 	                      sorted_user_sections ) const;
-	void setWakeMassDefect ();
 
 	public:
 
@@ -120,11 +122,17 @@ class Wing {
 	Wake & wake ();
 	unsigned int nWStrips () const;
 	WakeStrip * wStrip ( unsigned int wsidx );
+	ViscousWake & viscousWake ();
 
 	// Compute viscous forces (and skin friction, etc.) using Xfoil at sections
 	
 	void computeBL ();
 	
+	// Set up viscous wake (note: only possible after computing BL first time)
+	
+	void setupViscousWake ( int & next_global_vertidx,
+	                        int & next_global_elemidx );
+
 	// Compute forces and moments, including sectional
 	
 	void computeForceMoment ( const double & sref, const double & lref,

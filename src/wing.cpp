@@ -19,6 +19,7 @@
 #include "tripanel.h"
 #include "wake.h"
 #include "wake_strip.h"
+#include "viscous_wake.h"
 #include "wing.h"
 
 // Data for optimizing spanwise spacing
@@ -341,39 +342,6 @@ void Wing::computeAreaMAC ( const std::vector<Section> &
   std::cout << "  Re based on MAC: "
             << std::setprecision(5) << rhoinf * uinf * cbar / muinf
             << std::endl;
-}
-
-/******************************************************************************/
-//
-// Sets mass defect on wake vertices using 2D BL data
-//
-/******************************************************************************/
-void Wing::setWakeMassDefect ()
-{
-	unsigned int i, j, nw;
-	std::vector<double> sw, dstarw, uedgew;
-
-#pragma omp parallel for private(i,j,nw,sw,dstarw,uedgew)
-	for ( i = 0; i < _nspan; i++ )
-	{
-		nw = _sections[i].airfoil().nWake();
-		sw = _sections[i].airfoil().wakeSVector(nw);
-		dstarw = _sections[i].airfoil().wakeDeltastar(nw);
-		uedgew = _sections[i].airfoil().wakeUedge(nw);
-
-		// Scale sw and mass defect (BL solution has unit chord and uinf)
-
-		for ( j = 0; j < nw; j++ )
-		{
-			sw[j] *= _sections[i].chord();
-			dstarw[j] *= _sections[i].chord();
-			uedgew[j] *= uinf;
-		}
-
-		// Interpolate to 3D wake vertices
-
-		_wake.interpMassDefectLine(i, sw, dstarw, uedgew);
-	}
 }
 
 /******************************************************************************/
@@ -1362,6 +1330,8 @@ WakeStrip * Wing::wStrip ( unsigned int wsidx )
   return &_wakestrips[wsidx];
 }
 
+ViscousWake & Wing::viscousWake () { return _vwake; }
+
 /******************************************************************************/
 //
 // Computes viscous forces (and skin friction, etc.) using Xfoil at sections
@@ -1399,10 +1369,17 @@ void Wing::computeBL ()
 			}
 		}
 	}
+}
 
-	// Set mass defect on wake vertices
-
-	setWakeMassDefect();
+/******************************************************************************/
+//
+// Sets up viscous wake
+//
+/******************************************************************************/
+void Wing::setupViscousWake ( int & next_global_vertidx,
+                              int & next_global_elemidx )
+{
+	_vwake.initialize(_sections, next_global_vertidx, next_global_elemidx);
 }
 
 /******************************************************************************/

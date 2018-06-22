@@ -33,9 +33,12 @@ class Section: public SectionalObject {
 	double _roll;		// Roll angle, positive CCW viewed from back
 	
 	unsigned int _nverts;
+	unsigned int _nwake;
 	std::vector<Vertex>	_verts, _uverts;
 						// Vertices defining panel endpoints, and non-rotated,
 						// non-translated version of same
+	std::vector<Vertex> _wverts;
+						// Xfoil wake vertices transformed to inertial frame
 	
 	Airfoil _foil;		// Airfoil at this section
 	double _re;			// Reynolds number
@@ -118,6 +121,11 @@ class Section: public SectionalObject {
 	double pitchingMomentCoefficient () const;
 	const double & pressurePitchingMomentCoefficient () const;
 	const double & viscousPitchingMomentCoefficient () const;
+
+	// Viscous wake vertices, scaled and transformed to inertial frame
+
+	unsigned int nWake () const;
+	Vertex & wakeVert ( unsigned int idx );
 };
 
 #endif

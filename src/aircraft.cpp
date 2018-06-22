@@ -448,20 +448,6 @@ void Aircraft::writeWakeData ( std::ofstream & f ) const
 	// Point data (incl. mirror elements)
 	
 	f << "POINT_DATA " << nwakeverts*2 << std::endl;
-	if (viscous)
-	{
-		f << "SCALARS source_strength double 1" << std::endl;
-		f << "LOOKUP_TABLE default" << std::endl;
-		for ( i = 0; i < nwakeverts; i++ )
-		{
-			f << std::setprecision(7) << _wakeverts[i]->data(0) << std::endl;
-		}
-		for ( i = 0; i < nwakeverts; i++ )
-		{
-			f << std::setprecision(7) << _wakeverts[i]->data(0) << std::endl;
-		}
-	}
-
 	f << "SCALARS doublet_strength double 1" << std::endl;
 	f << "LOOKUP_TABLE default" << std::endl;
 	f.setf(std::ios_base::scientific);
@@ -808,7 +794,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 // Sets source strengths
 //
 /******************************************************************************/
-void Aircraft::setSourceStrengths ()
+void Aircraft::setSourceStrengths ( bool init )
 {
 	unsigned int i, npanels, nwings;
 
@@ -824,14 +810,14 @@ void Aircraft::setSourceStrengths ()
 		_panels[i]->computeSourceStrength(uinfvec, viscous);
 	}
 
-	// Wake source strength to model BL thinning
+	// Update source strengths in viscous wake
 
-	if (viscous)
+	if ( (viscous) && ! (init) )
 	{
 		nwings = _wings.size();
 		for ( i = 0; i < nwings; i++ )
 		{
-			_wings[i].wake().computeSourceStrengths();
+			_wings[i].viscousWake().update();
 		}
 	}
 }
@@ -911,10 +897,11 @@ void Aircraft::setDoubletStrengths ( bool init )
 /******************************************************************************/
 void Aircraft::constructSystem ( unsigned int iter )
 {
-	unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans;
+	unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans, nvwtris;
 	int toptepan, bottepan;
 	Eigen::Vector3d col;
 	WakeStrip * strip;
+	Panel * vwtri;
 	double stripic;
 	bool onpanel;
 
@@ -960,7 +947,7 @@ void Aircraft::constructSystem ( unsigned int iter )
 	// Compute AIC and RHS
 
 #pragma omp parallel for private(i,col,j,k,nstrips,l,strip,nwakepans,stripic,\
-                                 m,toptepan,bottepan)
+                                 m,toptepan,bottepan,nvwtris,vwtri)
 	for ( i = 0; i < npanels; i++ )
 	{
 		// Collocation point (point of BC application)
@@ -1017,18 +1004,24 @@ void Aircraft::constructSystem ( unsigned int iter )
 				{
 					for ( m = 0; m < nwakepans; m++ )
 					{
-						if (viscous)	// Wake panels have source strength
-						{
-							_rhs(i) -= strip->panel(m)->inducedPotential(col(0),
-							             col(1), col(2), false, "bottom", true);
-						}
-						else
-						{
-							_rhs(i) -= strip->panel(m)->doubletPhiCoeff(col(0),
-							              col(1), col(2), false, "bottom", true)
-							         * strip->panel(m)->doubletStrength();
-						}
+						_rhs(i) -= strip->panel(m)->doubletPhiCoeff(col(0),
+						              col(1), col(2), false, "bottom", true)
+						         * strip->panel(m)->doubletStrength();
 					}
+				}
+			}
+
+			// Viscous wake influence
+
+			if ( (viscous) && (iter > 1) )
+			{
+				nvwtris = _wings[k].viscousWake().nTris();
+				for ( l = 0; l < nvwtris; l++ )
+				{
+					vwtri = _wings[k].viscousWake().triPanel(l);
+					_rhs(i) -= vwtri->sourcePhiCoeff(col(0), col(1), col(2),
+					              false, "bottom", true)
+					         * vwtri->sourceStrength();
 				}
 			}
 		}
@@ -1085,6 +1078,25 @@ void Aircraft::computeBL ()
   {
     _wings[i].computeBL();
   }
+}
+
+/******************************************************************************/
+//
+// Sets up viscous wake for each wing
+//
+/******************************************************************************/
+void Aircraft::setupViscousWake ()
+{
+	unsigned int i, nwings;
+	int next_global_vertidx, next_global_elemidx;
+
+	next_global_vertidx = _verts.size() + _wakeverts.size();
+	next_global_elemidx = _panels.size() + _wakepanels.size();
+	nwings = _wings.size();
+	for ( i = 0; i < nwings; i++ )
+	{
+		_wings[i].setupViscousWake(next_global_vertidx, next_global_elemidx);
+	}
 }
 
 /******************************************************************************/

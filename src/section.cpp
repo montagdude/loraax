@@ -25,22 +25,23 @@
 void Section::setVertexBLData ( const std::vector<double> & bldata,
                                 unsigned int dataidx, double scale )
 {
-  unsigned int i, j1, j2;
-  double interpval;
+	unsigned int i, j1, j2;
+	double interpval;
 
 #ifdef DEBUG
-  if ( int(bldata.size()) != _foil.nSmoothed() )
-    conditional_stop(1, "Section::setVertexBLData", "Wrong size input vector.");
+	if ( int(bldata.size()) != _foil.nSmoothed() )
+		conditional_stop(1, "Section::setVertexBLData",
+		                 "Wrong size input vector.");
 #endif
 
-  for ( i = 0; i < _nverts; i++ )
-  {
-    j1 = _foilinterp[i].point1;
-    j2 = _foilinterp[i].point2;
-    interpval = bldata[j1]*_foilinterp[i].weight1
-              + bldata[j2]*_foilinterp[i].weight2;
-    _verts[i].setData(dataidx, interpval*scale);
-  }
+	for ( i = 0; i < _nverts; i++ )
+	{
+		j1 = _foilinterp[i].point1;
+		j2 = _foilinterp[i].point2;
+		interpval = bldata[j1]*_foilinterp[i].weight1
+		          + bldata[j2]*_foilinterp[i].weight2;
+		_verts[i].setData(dataidx, interpval*scale);
+	}
 }
 
 /******************************************************************************/
@@ -50,17 +51,19 @@ void Section::setVertexBLData ( const std::vector<double> & bldata,
 /******************************************************************************/
 Section::Section ()
 {
-  _xle = 0.;
-  _zle = 0.;
-  _chord = 0.;
-  _twist = 0.;
-  _roll = 0.;
-  _nverts = 0;
-  _verts.resize(0); 
-  _uverts.resize(0); 
-  _re = 0.;
-  _converged = false;
-  _foilinterp.resize(0);
+	_xle = 0.;
+	_zle = 0.;
+	_chord = 0.;
+	_twist = 0.;
+	_roll = 0.;
+	_nverts = 0;
+	_nwake = 0;
+	_verts.resize(0); 
+	_uverts.resize(0); 
+	_wverts.resize(0);
+	_re = 0.;
+	_converged = false;
+	_foilinterp.resize(0);
 }
 
 /******************************************************************************/
@@ -72,13 +75,13 @@ void Section::setGeometry ( const double & xle, const double & y,
                             const double & zle, const double & chord,
                             const double & twist, const double & roll )
 {
-  _xle = xle;
-  setY(y);
-  _foil.setY(y);
-  _zle = zle;
-  _chord = chord;
-  _twist = twist;
-  _roll = roll;
+	_xle = xle;
+	setY(y);
+	_foil.setY(y);
+	_zle = zle;
+	_chord = chord;
+	_twist = twist;
+	_roll = roll;
 }
 
 void Section::setRoll ( const double & roll ) { _roll = roll; }
@@ -95,12 +98,12 @@ const double & Section::roll () const { return _roll; }
 /******************************************************************************/
 Vertex & Section::vert ( unsigned int idx )
 {
-  if ( idx >= _nverts )
-  {
-    conditional_stop(1, "Section::vert", "Index out of range.");
-  }
+#ifdef DEBUG
+	if ( idx >= _nverts )
+		conditional_stop(1, "Section::vert", "Index out of range.");
+#endif
 
-  return _verts[idx];
+	return _verts[idx];
 } 
 
 /******************************************************************************/
@@ -253,8 +256,8 @@ Airfoil & Section::airfoil () { return _foil; }
 void Section::computeReynoldsNumber ( const double & rhoinf,
                                      const double & uinf, const double & muinf )
 {
-  _re = rhoinf * uinf * _chord / muinf;
-  _foil.setReynoldsNumber(_re);
+	_re = rhoinf * uinf * _chord / muinf;
+	_foil.setReynoldsNumber(_re);
 } 
 
 const double & Section::reynoldsNumber () const { return _re; }
@@ -266,7 +269,7 @@ const double & Section::reynoldsNumber () const { return _re; }
 /******************************************************************************/
 void Section::setMachNumber ( const double & minf )
 {
-  _foil.setMachNumber(minf); 
+	_foil.setMachNumber(minf); 
 }
 
 /******************************************************************************/
@@ -278,55 +281,83 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
                           const double & rhoinf, const double & pinf,
                           const double & alpha )
 {
-  Eigen::Vector3d uinfvec_p;
-  double qinf, uinf, uinfp, cl2d;
-  Eigen::Matrix3d inertial2section;
-  std::vector<double> bldata;
-  int stat;
+	Eigen::Vector3d uinfvec_p;
+	double qinf, uinf, uinfp, cl2d;
+	Eigen::Matrix3d inertial2section, section2inertial;
+	std::vector<double> bldata;
+	std::vector<double> xw, zw, dstarw, uedgew;
+	int stat;
+	unsigned int i;
 
-  qinf = 0.5*rhoinf*uinfvec.squaredNorm();
-  uinf = uinfvec.norm();
+	qinf = 0.5*rhoinf*uinfvec.squaredNorm();
+	uinf = uinfvec.norm();
 
-  // Sectional lift must be computed as an input to Xfoil. Sectional forces and
-  // moments will be recomputed after running Xfoil for the purpose of writing
-  // data to the sectional output files.
+	// Sectional lift must be computed as an input to Xfoil. Sectional forces
+	// and moments will be recomputed after running Xfoil for the purpose of
+	// writing data to the sectional output files.
 
-  computeForceMoment(alpha, uinf, rhoinf, pinf, true);
+	computeForceMoment(alpha, uinf, rhoinf, pinf, true);
 
-  /** To get 2D Cl:
-      1. Transform uinfvec to section frame -> uinfvec_p
-      2. 2D angle of attack is atan(uinfvec_p[2]/uinfvec_p[0])
-      3. 2D lift is -_fa*sin(alpha2d) + _fn*cos(alpha2d)
-  **/
-  //FIXME: this needs to be checked
+	/** To get 2D Cl:
+	    1. Transform uinfvec to section frame -> uinfvec_p
+	    2. 2D angle of attack is atan(uinfvec_p[2]/uinfvec_p[0])
+	    3. 2D lift is -_fa*sin(alpha2d) + _fn*cos(alpha2d)
+	**/
+	//FIXME: this needs to be checked
 
-  inertial2section = euler_rotation(_roll, _twist, 0.0, "123");
-  uinfvec_p = inertial2section.transpose() * uinfvec;
-  uinfp = uinfvec_p.norm();
-  cl2d = -_fa*uinfvec_p[2]/uinfp + _fn*uinfvec_p[0]/uinfp;
-  cl2d /= qinf*_chord;
+	inertial2section = euler_rotation(_roll, _twist, 0.0, "123");
+	uinfvec_p = inertial2section.transpose() * uinfvec;
+	uinfp = uinfvec_p.norm();
+	cl2d = -_fa*uinfvec_p[2]/uinfp + _fn*uinfvec_p[0]/uinfp;
+	cl2d /= qinf*_chord;
 
   // Run xfoil at 2D Cl
 
-  if (_foil.runXfoil(cl2d) != 0)
-    _converged = false;
-  else
-    _converged = true;
+	if (_foil.runXfoil(cl2d) != 0)
+		_converged = false;
+	else
+		_converged = true;
 
-  // Interpolate BL quantities to vertices. These will be overwritten for
-  // unconverged sections if interpolation/extrapolation is possible. Perform
-  // scaling as needed.
+	// Interpolate BL quantities to vertices. These will be overwritten for
+	// unconverged sections if interpolation/extrapolation is possible. Perform
+	// scaling as needed.
 
-  bldata = _foil.blData("cf", stat);
-  setVertexBLData(bldata, 7);
-  bldata = _foil.blData("deltastar", stat);
-  setVertexBLData(bldata, 8, _chord);
-  bldata = _foil.blData("ampl", stat);
-  setVertexBLData(bldata, 9);
-  bldata = _foil.blData("uedge", stat);
-  setVertexBLData(bldata, 10, uinf);
-  bldata = _foil.blData("cp2d", stat);
-  setVertexBLData(bldata, 11);
+	bldata = _foil.blData("cf", stat);
+	setVertexBLData(bldata, 7);
+	bldata = _foil.blData("deltastar", stat);
+	setVertexBLData(bldata, 8, _chord);
+	bldata = _foil.blData("ampl", stat);
+	setVertexBLData(bldata, 9);
+	bldata = _foil.blData("uedge", stat);
+	setVertexBLData(bldata, 10, uinf);
+	bldata = _foil.blData("cp2d", stat);
+	setVertexBLData(bldata, 11);
+
+	// Get BL wake data
+
+	if (_nwake == 0)
+	{
+		_nwake = _foil.nWake();
+		_wverts.resize(_nwake);
+	}
+	_foil.wakeCoordinates(_nwake, xw, zw);
+	dstarw = _foil.wakeDeltastar(_nwake);
+	uedgew = _foil.wakeUedge(_nwake);
+
+	// Set wake vertex positions and scaled data
+
+	section2inertial = inverse_euler_rotation(_roll, _twist, 0.0, "123");
+	for ( i = 0; i < _nwake; i++ )
+	{
+		_wverts[i].setCoordinates(xw[i], 0.0, zw[i]);
+		_wverts[i].translate(-0.25, 0., 0.);
+		_wverts[i].rotate(section2inertial);
+		_wverts[i].translate(0.25, 0., 0.);
+		_wverts[i].scale(_chord);
+		_wverts[i].translate(_xle, _y, _zle);
+		_wverts[i].setData(8, dstarw[i]*_chord);
+		_wverts[i].setData(10, uedgew[i]*uinf);
+	}
 }
 
 bool Section::blConverged () const { return _converged; }
@@ -441,5 +472,27 @@ const double & Section::pressureDragCoefficient () const { return _cdp; }
 const double & Section::viscousDragCoefficient () const { return _cdv; }
 
 double Section::pitchingMomentCoefficient () const { return _cmp + _cmv; }
-const double & Section::pressurePitchingMomentCoefficient () const { return _cmp; }
-const double & Section::viscousPitchingMomentCoefficient () const { return _cmv; }
+const double & Section::pressurePitchingMomentCoefficient () const
+{
+	return _cmp;
+}
+const double & Section::viscousPitchingMomentCoefficient () const
+{
+	return _cmv;
+}
+
+/******************************************************************************/
+//
+// Viscous wake vertices, scaled and transformed to inertial frame
+//
+/******************************************************************************/
+unsigned int Section::nWake () const { return _nwake; }
+Vertex & Section::wakeVert ( unsigned int idx )
+{
+#ifdef DEBUG
+	if (idx >= _nwake)
+		conditional_stop(1, "Section::WakeVert", "Index out of range.");
+#endif
+
+	return _wverts[idx];
+}

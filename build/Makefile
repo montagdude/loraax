@@ -3,14 +3,14 @@
 CXX=g++
 DEBUGFLAGS=-g -Wall
 GPPFLAGS=-O2 -fopenmp
-#CXXFLAGS=$(DEBUGFLAGS)
-CXXFLAGS=$(GPPFLAGS)
+CXXFLAGS=$(DEBUGFLAGS)
+#CXXFLAGS=$(GPPFLAGS)
 
 ################################################################################
 
 #### Main program ##############################################################
 
-OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o element.o panel.o tripanel.o quadpanel.o sectional_object.o airfoil.o section.o wake_strip.o wake.o wing.o aircraft.o loraax.o
+OBJ=util.o clo_parser.o algorithms.o settings.o transformations.o geometry.o singularities.o vertex.o element.o panel.o tripanel.o quadpanel.o sectional_object.o airfoil.o section.o wake_strip.o wake.o viscous_wake.o wing.o aircraft.o loraax.o
 EXE=loraax
 SRCDIR=../src
 INCLUDE=-I../include -I/usr/include/eigen3
@@ -91,6 +91,9 @@ wake_strip.o: $(SRCDIR)/wake_strip.cpp
 
 wake.o: $(SRCDIR)/wake.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/wake.cpp
+
+viscous_wake.o: $(SRCDIR)/viscous_wake.cpp
+	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/viscous_wake.cpp
 
 wing.o: $(SRCDIR)/wing.cpp
 	$(CXX) -c $(CXXFLAGS) $(PREPROC) $(INCLUDE) $(SRCDIR)/wing.cpp
