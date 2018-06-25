@@ -39,6 +39,7 @@ class Wing {
 	std::vector<Section> _sections;	// Spanwise sections used for
 									//   calculations, set by _nspan and
 									//   root & tip spacing rations
+	std::vector<double> _stations;	// Section positions in span coordinates
 	std::vector<Airfoil> _foils;  	// User-specified airfoils
 	std::vector<Vertex *> _verts;	// Pointers to vertices on wing
 	std::vector<std::vector<Vertex> > _tipverts;
@@ -61,7 +62,7 @@ class Wing {
 	
 	std::vector<double> adjustSpacing ( 
 	                           const std::vector<double> & nom_stations ) const;
-	
+
 	void computeAreaMAC ( const std::vector<Section> &
 	                      sorted_user_sections ) const;
 

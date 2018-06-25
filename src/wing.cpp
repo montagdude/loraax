@@ -360,6 +360,7 @@ Wing::Wing ()
 	_rootsprat = 1.;
 	_tipsprat = 1.;
 	_sections.resize(0);
+	_stations.resize(0);
 	_foils.resize(0);
 	_verts.resize(0);
 	_tipverts.resize(0);
@@ -452,7 +453,7 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
   Eigen::Vector2d secvec;
   double a4, a5, rootsp, tipsp, space, tipy, deltay, deltas, sfrac;
   double xle, zle, y, chord, twist, roll;
-  std::vector<double> final_stations, foil_positions;
+  std::vector<double> foil_positions;
 
   // Sort sections
 
@@ -519,9 +520,9 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
   // user sections
 
   if (nsecs > 2)
-    final_stations = adjustSpacing(nom_stations);
+    _stations = adjustSpacing(nom_stations);
   else
-    final_stations = nom_stations;
+    _stations = nom_stations;
 
   // Add airfoils as needed to ensure the entire span is covered
 
@@ -595,21 +596,21 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 
     for ( j = 0; j < nfoils-1; j++ )
     {
-      if (std::abs(final_stations[i]-foil_positions[j]) < 1e-12)
+      if (std::abs(_stations[i]-foil_positions[j]) < 1e-12)
       {
         _sections[i].airfoil().interpCoordinates(_foils[j], _foils[j], 0.);
         break;
       }
-      else if ( (final_stations[i] > foil_positions[j]) &&
-                (final_stations[i] < foil_positions[j+1]) )
+      else if ( (_stations[i] > foil_positions[j]) &&
+                (_stations[i] < foil_positions[j+1]) )
       {
-        sfrac = (final_stations[i] - foil_positions[j]) / 
+        sfrac = (_stations[i] - foil_positions[j]) / 
                 (foil_positions[j+1] - foil_positions[j]);
         _sections[i].airfoil().interpCoordinates(_foils[j], _foils[j+1], sfrac);  
         break;
       }
       else if ( (j == nfoils-2) &&
-                (std::abs(final_stations[i]-foil_positions[j+1]) < 1e-12) )
+                (std::abs(_stations[i]-foil_positions[j+1]) < 1e-12) )
       {
         _sections[i].airfoil().interpCoordinates(_foils[j+1], _foils[j+1], 0.);
         break;
@@ -631,7 +632,7 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 
     for ( j = 0; j < nsecs-1; j++ )
     {
-      if (std::abs(final_stations[i]-s_wing[j]) < 1e-12)
+      if (std::abs(_stations[i]-s_wing[j]) < 1e-12)
       {
         xle = sorted_user_sections[j].xle();
         zle = sorted_user_sections[j].zle();
@@ -641,10 +642,10 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
         roll = sorted_user_sections[j].roll();
         break;
       }
-      else if ( (final_stations[i] > s_wing[j]) &&
-                (final_stations[i] < s_wing[j+1]) )
+      else if ( (_stations[i] > s_wing[j]) &&
+                (_stations[i] < s_wing[j+1]) )
       {
-        sfrac = (final_stations[i] - s_wing[j]) /
+        sfrac = (_stations[i] - s_wing[j]) /
                 (s_wing[j+1] - s_wing[j]);
           xle = (1.-sfrac)*sorted_user_sections[j].xle() +
                     sfrac*sorted_user_sections[j+1].xle();
@@ -660,7 +661,7 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
         break;
       }
       else if ( (j == nsecs-2) &&
-                (std::abs(final_stations[i]-s_wing[j+1]) < 1e-12) )
+                (std::abs(_stations[i]-s_wing[j+1]) < 1e-12) )
       {
         xle = sorted_user_sections[j+1].xle();
         zle = sorted_user_sections[j+1].zle();
@@ -1340,7 +1341,11 @@ ViscousWake & Wing::viscousWake () { return _vwake; }
 void Wing::computeBL ()
 {
 	unsigned int i, j, k;
+	int l, linterp, rinterp;
 	double weighttop, weightbot, var;
+	double weightl, weightr;
+	std::string warning;
+	bool extrapolate;
 
 #pragma omp parallel for private(i)
 	for ( i = 0; i < _nspan; i++ )
@@ -1348,8 +1353,125 @@ void Wing::computeBL ()
 		_sections[i].computeBL(uinfvec, rhoinf, pinf, alpha);
 		if (not _sections[i].blConverged())
 		{
-			std::cout << "    Warning: Xfoil BL calculations did not converge "
-			          << "for section " << i+1 << "." << std::endl;
+			warning = "Xfoil BL calculations did not converge for section "
+			        + int2string(i+1) + std::string(".");
+#pragma omp critical
+			{
+				print_warning("Wing::computeBL", warning);
+			}
+		}
+	}
+
+	// Interpolate/extrapolate any unconverged sections
+#pragma omp parallel for private(i,warning,l,linterp,rinterp,extrapolate,\
+                                 weightl,weightr)
+	for ( i = 0; i < _nspan; i++ )
+	{
+		if (not _sections[i].blConverged())
+		{
+			// Warning message if interpolants/extrapolants cannot be found.
+			// It is very possible that the solution is going unstable if this
+			// warning appears.
+
+			warning = "Unable to interpolate/extrapolate unconverged section "
+			        + int2string(i+1) + ".";
+
+			// Try to get left and right interpolants
+
+			linterp = -1;
+			rinterp = -1;
+			extrapolate = false;
+			for ( l = i-1; l >= 0; l-- )
+			{
+				if (_sections[l].blConverged())
+				{
+					linterp = l;
+					break;
+				}
+			}
+			for ( l = i+1; l < int(_nspan); l++ )
+			{
+				if (_sections[l].blConverged())
+				{
+					rinterp = l;
+					break;
+				}
+			}
+
+			// Get extrapolants if interpolating is not possible
+
+			if ( (linterp == -1) && (rinterp != -1) )
+			{
+				extrapolate = true;
+				linterp = rinterp;
+				rinterp = -1;
+				for ( l = linterp+1; l < int(_nspan); l++ )
+				{
+					if (_sections[l].blConverged())
+					{
+						rinterp = l;
+						break;
+					}
+				}
+				if (rinterp == -1)
+				{
+#pragma omp critical
+					{
+						print_warning("Wing::computeBL", warning);
+					}
+					continue;
+				}
+			}
+			else if ( (linterp != -1) && (rinterp == -1) )
+			{
+				extrapolate = true;
+				rinterp = linterp;
+				linterp = -1;
+				for ( l = rinterp-1; l >= 0; l-- )
+				{
+					if (_sections[l].blConverged())
+					{
+						linterp = l;
+						break;
+					}
+				}
+				if (linterp == -1)
+				{
+#pragma omp critical
+					{
+						print_warning("Wing::computeBL", warning);
+					}
+					continue;
+				}
+			}
+			else if ( (linterp == -1) && (rinterp == -1) )
+			{
+#pragma omp critical
+				{
+					print_warning("Wing::computeBL", warning);
+				}
+				continue;
+			}
+
+			// Linear interpolation/extrapolation to unconverged sections.
+			// Weightings come from linear curve fit between left and right
+			// sections.
+
+#pragma omp critical
+			{
+				if (extrapolate)
+					std::cout << "Extrapolating ";
+				else
+					std::cout << "Interpolating ";
+				std::cout << "to section " << i+1 << " from sections "
+				          << linterp+1 << " and " << rinterp+1 << "."
+				          << std::endl;
+			}
+			weightr = (_stations[i] - _stations[linterp])
+			        / (_stations[rinterp] - _stations[linterp]);
+			weightl = 1. - weightr;
+			_sections[i].interpolateBL(_sections[linterp], _sections[rinterp],
+			                           weightl, weightr);
 		}
 	}
 

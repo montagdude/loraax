@@ -111,6 +111,7 @@ class Airfoil: public SectionalObject {
 	int runXfoil ( const double & clspec );
 	std::vector<double> blData ( const std::string & varname,
 	                             int & stat ) const;
+	void reinitializeBL ();
 
 	// Wake data
 

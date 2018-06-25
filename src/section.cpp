@@ -96,6 +96,7 @@ const double & Section::roll () const { return _roll; }
 // Access vertex
 //
 /******************************************************************************/
+unsigned int Section::nVerts () const { return _nverts; }
 Vertex & Section::vert ( unsigned int idx )
 {
 #ifdef DEBUG
@@ -495,4 +496,51 @@ Vertex & Section::wakeVert ( unsigned int idx )
 #endif
 
 	return _wverts[idx];
+}
+
+/******************************************************************************/
+//
+// Gets BL data from two other sections. This is needed when Xfoil fails to
+// converge.
+//
+/******************************************************************************/
+void Section::interpolateBL ( Section & sec1, Section & sec2,
+                              const double & weight1, const double & weight2 )
+{
+	unsigned int i;
+	double cf, dstar, ampl, uedge, cp2d;
+
+#ifdef DEBUG
+	if ( (_nverts != sec1.nVerts()) || (_nverts != sec2.nVerts()) )
+		conditional_stop(1, "Section::interpolateBL",
+		                 "Mismatched number of vertices.");
+	
+	if ( (_nwake != sec1.nWake()) || (_nwake != sec2.nWake()) )
+		conditional_stop(1, "Section::interpolateBL",
+		                 "Mismatched number of wake vertices.");
+#endif
+
+	for ( i = 0; i < _nverts; i++ )
+	{
+		cf = sec1.vert(i).data(7)*weight1 + sec2.vert(i).data(7)*weight2;
+		dstar = sec1.vert(i).data(8)*weight1 + sec2.vert(i).data(8)*weight2;
+		ampl = sec1.vert(i).data(9)*weight1 + sec2.vert(i).data(9)*weight2;
+		uedge = sec1.vert(i).data(10)*weight1 + sec2.vert(i).data(10)*weight2;
+		cp2d = sec1.vert(i).data(11)*weight1 + sec2.vert(i).data(11)*weight2;
+		_verts[i].setData(7, cf);
+		_verts[i].setData(8, dstar);
+		_verts[i].setData(9, ampl);
+		_verts[i].setData(10, uedge);
+		_verts[i].setData(11, cp2d);
+	}
+
+	for ( i = 0; i < _nwake; i++ )
+	{
+		dstar = sec1.wakeVert(i).data(8)*weight1
+		      + sec2.wakeVert(i).data(8)*weight2;
+		uedge = sec1.wakeVert(i).data(10)*weight1
+		      + sec2.wakeVert(i).data(10)*weight2;
+		_wverts[i].setData(8, dstar);
+		_wverts[i].setData(10, uedge);
+	}
 }

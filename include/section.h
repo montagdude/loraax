@@ -75,6 +75,7 @@ class Section: public SectionalObject {
 	
 	// Access vertices
 	
+	unsigned int nVerts () const;
 	Vertex & vert ( unsigned int idx );
 	
 	// Set vertices from spacing distribution
@@ -126,6 +127,11 @@ class Section: public SectionalObject {
 
 	unsigned int nWake () const;
 	Vertex & wakeVert ( unsigned int idx );
+
+	// Gets BL data from two other sections
+
+	void interpolateBL ( Section & sec1, Section & sec2,
+	                     const double & weight1, const double & weight2 );
 };
 
 #endif
