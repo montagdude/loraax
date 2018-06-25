@@ -1356,6 +1356,8 @@ void Wing::computeBL ()
 		{
 			warning = "Xfoil BL calculations did not converge for section "
 			        + int2string(i+1) + std::string(".");
+			if (reinitialize)
+				_sections[i].airfoil().reinitializeBL();
 #pragma omp critical
 			{
 				print_warning("Wing::computeBL", warning);

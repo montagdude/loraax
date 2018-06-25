@@ -29,6 +29,7 @@ extern int wakesteps;
 extern double wakeangle;
 extern bool viscous;
 extern bool compressible;
+extern bool reinitialize;
 extern double stop_tol;
 extern int maxsteps;
 extern int viz_freq;

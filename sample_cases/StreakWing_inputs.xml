@@ -22,6 +22,7 @@
     <xtripb>1.0</xtripb>
     <maxit>100</maxit>
     <vaccel>0.01</vaccel>
+    <reinitialize>true</reinitialize>
   </XfoilRunOptions>
   <XfoilPaneling>
     <npan>160</npan>
