@@ -35,6 +35,7 @@ class Wing {
 									//   uniform
 	double _rootsprat, _tipsprat;	// Root and tip spacing ratios relative
 									//   to uniform
+	double _splanform, _cbar;		// Planform area and MAC
 	
 	std::vector<Section> _sections;	// Spanwise sections used for
 									//   calculations, set by _nspan and
@@ -63,8 +64,7 @@ class Wing {
 	std::vector<double> adjustSpacing ( 
 	                           const std::vector<double> & nom_stations ) const;
 
-	void computeAreaMAC ( const std::vector<Section> &
-	                      sorted_user_sections ) const;
+	void computeAreaMAC ( const std::vector<Section> & sorted_user_sections );
 
 	public:
 
@@ -136,8 +136,7 @@ class Wing {
 
 	// Compute forces and moments, including sectional
 	
-	void computeForceMoment ( const double & sref, const double & lref,
-	                          const Eigen::Vector3d & momcen );
+	void computeForceMoment ( const Eigen::Vector3d & momcen );
 	
 	double lift () const;
 	const double & pressureLift () const;

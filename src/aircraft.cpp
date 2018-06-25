@@ -1111,7 +1111,7 @@ void Aircraft::computeForceMoment ()
 	nwings = _wings.size();
 	for ( i = 0; i < nwings; i++ )
 	{
-		_wings[i].computeForceMoment(_sref, _lref, _momcen);
+		_wings[i].computeForceMoment(_momcen);
 	}
 }
 
