@@ -1106,283 +1106,220 @@ void Aircraft::setupViscousWake ()
 /******************************************************************************/
 void Aircraft::computeForceMoment ()
 {
-  unsigned int i, nwings;
-
-  nwings = _wings.size();
-  for ( i = 0; i < nwings; i++ )
-  {
-    _wings[i].computeForceMoment(_sref, _lref, _momcen);
-  }
+	unsigned int i, nwings;
+	
+	nwings = _wings.size();
+	for ( i = 0; i < nwings; i++ )
+	{
+		_wings[i].computeForceMoment(_sref, _lref, _momcen);
+	}
 }
 
 double Aircraft::lift () const
 {
-  unsigned int i, nwings;
-  double lift;
-
-  nwings = _wings.size();
-  lift = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    lift += _wings[i].lift();
-  }
-
-  return lift;
+	unsigned int i, nwings;
+	double lift;
+	
+	nwings = _wings.size();
+	lift = 0.;
+	for ( i = 0; i < nwings; i++ )
+	{
+		lift += _wings[i].lift();
+	}
+	
+	return lift;
 }
 
 double Aircraft::pressureLift () const
 {
-  unsigned int i, nwings;
-  double liftp;
-
-  nwings = _wings.size();
-  liftp = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    liftp += _wings[i].pressureLift();
-  }
-
-  return liftp;
+	unsigned int i, nwings;
+	double liftp;
+	
+	nwings = _wings.size();
+	liftp = 0.;
+	for ( i = 0; i < nwings; i++ )
+	{
+		liftp += _wings[i].pressureLift();
+	}
+	
+	return liftp;
 }
 
 double Aircraft::viscousLift () const
 {
-  unsigned int i, nwings;
-  double liftv;
-
-  nwings = _wings.size();
-  liftv = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    liftv += _wings[i].viscousLift();
-  }
-
-  return liftv;
+	unsigned int i, nwings;
+	double liftv;
+	
+	nwings = _wings.size();
+	liftv = 0.;
+	for ( i = 0; i < nwings; i++ )
+	{
+		liftv += _wings[i].viscousLift();
+	}
+	
+	return liftv;
 }
 
 double Aircraft::drag () const
 {
-  unsigned int i, nwings;
-  double drag;
-
-  nwings = _wings.size();
-  drag = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    drag += _wings[i].drag();
-  }
-
-  return drag;
+	unsigned int i, nwings;
+	double drag;
+	
+	nwings = _wings.size();
+	drag = 0.;
+	for ( i = 0; i < nwings; i++ )
+	{
+		drag += _wings[i].drag();
+	}
+	
+	return drag;
 }
 
 double Aircraft::pressureDrag () const
 {
-  unsigned int i, nwings;
-  double dragp;
-
-  nwings = _wings.size();
-  dragp = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    dragp += _wings[i].pressureDrag();
-  }
-
-  return dragp;
+	unsigned int i, nwings;
+	double dragp;
+	
+	nwings = _wings.size();
+	dragp = 0.;
+	for ( i = 0; i < nwings; i++ )
+	{
+		dragp += _wings[i].pressureDrag();
+	}
+	
+	return dragp;
 }
 
 double Aircraft::viscousDrag () const
 {
-  unsigned int i, nwings;
-  double dragv;
-
-  nwings = _wings.size();
-  dragv = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    dragv += _wings[i].viscousDrag();
-  }
-
-  return dragv;
+	unsigned int i, nwings;
+	double dragv;
+	
+	nwings = _wings.size();
+	dragv = 0.;
+	for ( i = 0; i < nwings; i++ )
+	{
+		dragv += _wings[i].viscousDrag();
+	}
+	
+	return dragv;
 }
 
 double Aircraft::pitchingMoment () const
 {
-  unsigned int i, nwings;
-  double moment;
-
-  nwings = _wings.size();
-  moment = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    moment += _wings[i].pitchingMoment();
-  }
-
-  return moment;
+	unsigned int i, nwings;
+	double moment;
+	
+	nwings = _wings.size();
+	moment = 0.;
+	for ( i = 0; i < nwings; i++ )
+	{
+		moment += _wings[i].pitchingMoment();
+	}
+	
+	return moment;
 }
 
 double Aircraft::pressurePitchingMoment () const
 {
-  unsigned int i, nwings;
-  double momentp;
-
-  nwings = _wings.size();
-  momentp = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    momentp += _wings[i].pressurePitchingMoment();
-  }
-
-  return momentp;
+	unsigned int i, nwings;
+	double momentp;
+	
+	nwings = _wings.size();
+	momentp = 0.;
+	for ( i = 0; i < nwings; i++ )
+	{
+		momentp += _wings[i].pressurePitchingMoment();
+	}
+	
+	return momentp;
 }
 
 double Aircraft::viscousPitchingMoment () const
 {
-  unsigned int i, nwings;
-  double momentv;
-
-  nwings = _wings.size();
-  momentv = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    momentv += _wings[i].viscousPitchingMoment();
-  }
-
-  return momentv;
+	unsigned int i, nwings;
+	double momentv;
+	
+	nwings = _wings.size();
+	momentv = 0.;
+	for ( i = 0; i < nwings; i++ )
+	{
+		momentv += _wings[i].viscousPitchingMoment();
+	}
+	
+	return momentv;
 }
 
 double Aircraft::liftCoefficient () const
 {
-  unsigned int i, nwings;
-  double cl;
+	double qinf;
 
-  nwings = _wings.size();
-  cl = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    cl += _wings[i].liftCoefficient();
-  }
-
-  return cl;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	return lift() / (qinf*_sref);
 }
 
 double Aircraft::pressureLiftCoefficient () const
 {
-  unsigned int i, nwings;
-  double clp;
+	double qinf;
 
-  nwings = _wings.size();
-  clp = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    clp += _wings[i].pressureLiftCoefficient();
-  }
-
-  return clp;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	return pressureLift() / (qinf*_sref);
 }
 
 double Aircraft::viscousLiftCoefficient () const
 {
-  unsigned int i, nwings;
-  double clv;
+	double qinf;
 
-  nwings = _wings.size();
-  clv = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    clv += _wings[i].viscousLiftCoefficient();
-  }
-
-  return clv;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	return viscousLift() / (qinf*_sref);
 }
 
 double Aircraft::dragCoefficient () const
 {
-  unsigned int i, nwings;
-  double cd;
+	double qinf;
 
-  nwings = _wings.size();
-  cd = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    cd += _wings[i].dragCoefficient();
-  }
-
-  return cd;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	return drag() / (qinf*_sref);
 }
 
 double Aircraft::pressureDragCoefficient () const
 {
-  unsigned int i, nwings;
-  double cdp;
+	double qinf;
 
-  nwings = _wings.size();
-  cdp = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    cdp += _wings[i].pressureDragCoefficient();
-  }
-
-  return cdp;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	return pressureDrag() / (qinf*_sref);
 }
 
 double Aircraft::viscousDragCoefficient () const
 {
-  unsigned int i, nwings;
-  double cdv;
+	double qinf;
 
-  nwings = _wings.size();
-  cdv = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    cdv += _wings[i].viscousDragCoefficient();
-  }
-
-  return cdv;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	return viscousDrag() / (qinf*_sref);
 }
 
 double Aircraft::pitchingMomentCoefficient () const
 {
-  unsigned int i, nwings;
-  double cm;
+	double qinf;
 
-  nwings = _wings.size();
-  cm = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    cm += _wings[i].pitchingMomentCoefficient();
-  }
-
-  return cm;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	return pitchingMoment() / (qinf*_sref);
 }
 
 double Aircraft::pressurePitchingMomentCoefficient () const
 {
-  unsigned int i, nwings;
-  double cmp;
+	double qinf;
 
-  nwings = _wings.size();
-  cmp = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    cmp += _wings[i].pressurePitchingMomentCoefficient();
-  }
-
-  return cmp;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	return pressurePitchingMoment() / (qinf*_sref);
 }
 
 double Aircraft::viscousPitchingMomentCoefficient () const
 {
-  unsigned int i, nwings;
-  double cmv;
+	double qinf;
 
-  nwings = _wings.size();
-  cmv = 0.;
-  for ( i = 0; i < nwings; i++ )
-  {
-    cmv += _wings[i].viscousPitchingMomentCoefficient();
-  }
-
-  return cmv;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	return viscousPitchingMoment() / (qinf*_sref);
 }
 
 /******************************************************************************/
