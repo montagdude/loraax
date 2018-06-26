@@ -58,6 +58,16 @@ class Wake {
 	Vertex * vert ( unsigned int vidx );
 	TriPanel * triPanel ( unsigned int tidx );
 	QuadPanel * quadPanel ( unsigned int qidx );
+
+	// Induced velocity at a point due to planar wake aligned with freestream
+
+	Eigen::Vector3d planarInducedVelocity ( const double & x, const double & y,
+	                                        const double & z,
+	                                        bool include_bound_leg=true ) const;
+
+	// Trefftz plane force calculation
+
+	void farfieldForces ( const double & sref, const double & span ) const;
 };
 
 #endif

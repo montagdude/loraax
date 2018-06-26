@@ -8,7 +8,15 @@
 #include "panel.h"
 #include "tripanel.h"
 #include "quadpanel.h"
+#include "singularities.h"
+#include "transformations.h"
 #include "wake.h"
+
+#include <iostream>
+#include <iomanip>
+
+// FIXME: make this a function of smallest panel size
+const double rcore = 1.E-8;
 
 /******************************************************************************/
 //
@@ -184,8 +192,6 @@ void Wake::convectVertices ( const double & dt,
 	unsigned int v, k, nsurfpan, nwakepan, nmove;
 	Eigen::Vector3d k1, dvel;
 	double x, y, z;
-// FIXME: make this a function of smallest panel size
-	const double rcore = 1.E-8;
 
 	nsurfpan = allsurf.size();
 	nwakepan = allwake.size();
@@ -329,4 +335,151 @@ QuadPanel * Wake::quadPanel ( unsigned int qidx )
 #endif
 
 	return &_quads[qidx];
+}
+
+/******************************************************************************/
+//
+// Induced velocity at a point due to wake modeled as planar and aligned with
+// the freestream direction. Influence of bound leg (at wing TE) is optional.
+// This is used for Trefftz plane induced drag calculation, where a planar
+// wake is preferred (see Kroo paper).
+//
+/******************************************************************************/
+Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
+                                             const double & y, const double & z,
+                                             bool include_bound_leg ) const
+{
+	unsigned int i;
+	double gamma, x1, y1, z1, x2, y2, z2;
+	Eigen::Vector3d w;
+
+	w << 0., 0., 0.;
+
+	// Influence of trailing legs (do not include centerline, because net
+	// circulation of trailing leg is 0 due to symmetry)
+
+	for ( i = 1; int(i) < _nspan; i++ )
+	{
+		if (int(i) < _nspan)
+			gamma = _quads[i-1].doubletStrength()
+			      - _quads[i].doubletStrength();
+		else
+			gamma = _quads[i-1].doubletStrength();
+
+		x1 = _verts[i*(_nstream+1)+0].x();
+		y1 = _verts[i*(_nstream+1)+0].y();
+		z1 = _verts[i*(_nstream+1)+0].z();
+		x2 = x1 + 1000*rollupdist*uinfvec(0)/uinf;
+		y2 = y1 + 1000*rollupdist*uinfvec(1)/uinf;
+		z2 = z1 + 1000*rollupdist*uinfvec(2)/uinf;
+
+		// Induced velocity due to leg + mirror contribution
+
+		w += vortex_velocity(x, y, z, x1, y1, z1, x2, y2, z2, rcore,
+		                     true)*gamma;
+		w -= vortex_velocity(x, y, z, x1, -y1, z1, x2, -y2, z2, rcore,
+		                     true)*gamma;
+	}
+
+	// Influence of bound legs at TE
+
+	if (include_bound_leg)
+	{
+		for ( int(i) = 0; i < _nspan-1; i++ )
+		{
+			gamma = _quads[i].doubletStrength();
+
+			x1 = _verts[i*(_nstream+1)+0].x();
+			y1 = _verts[i*(_nstream+1)+0].y();
+			z1 = _verts[i*(_nstream+1)+0].z();
+			x2 = _verts[(i+1)*(_nstream+1)+0].x();
+			y2 = _verts[(i+1)*(_nstream+1)+0].y();
+			z2 = _verts[(i+1)*(_nstream+1)+0].z();
+
+			// Induced velocity + mirror contribution
+
+			w += vortex_velocity(x, y, z, x1, y1, z1, x2, y2, z2, rcore,
+			                     false)*gamma;
+			w += vortex_velocity(x, y, z, x2, -y2, z2, x1, -y1, z1, rcore,
+			                     false)*gamma;
+		}
+	}
+
+	return w;
+}
+
+/******************************************************************************/
+//
+// Computes lift and induced drag in Trefftz plane. Note that this models the
+// wake as planar and aligned with the freestream. See Kroo paper for rationale.
+//
+/******************************************************************************/
+void Wake::farfieldForces ( const double & sref, const double & span ) const
+{
+	int i;
+	double x, y, z;
+	double dx, dy, dz, wy, wz, qinf, lift, drag, cl, cd;
+	std::vector<Eigen::Vector3d> w;
+	Eigen::Vector3d edge;
+	Eigen::Matrix3d transform;
+
+	// Transformation from inertial to Trefftz frame
+
+	transform = euler_rotation(0., -alpha, 0.);
+
+	// Wake induced velocity
+
+	w.resize(_nspan);
+	for ( i = 0; i < _nspan; i++ )
+	{
+		// Farfield point on Trefftz plane, 500 span lengths downstream
+
+		x = _verts[i*(_nstream+1)+0].x() + 500.*span*uinfvec(0)/uinf;
+		y = _verts[i*(_nstream+1)+0].y() + 500.*span*uinfvec(1)/uinf;
+		z = _verts[i*(_nstream+1)+0].z() + 500.*span*uinfvec(2)/uinf;
+
+		// Compute induced velocity and transform to Trefftz frame.
+		// FIXME: this needs influence of other wings' wakes
+
+		w[i] = planarInducedVelocity(x, y, z, false);
+		w[i] = transform*w[i];
+	}
+
+	// Forces
+
+	lift = 0.;
+	drag = 0.;
+	for ( i = 0; i < _nspan-1; i++ )
+	{
+		dx = _verts[(i+1)*(_nstream+1)+0].x()
+		   - _verts[i*(_nstream+1)+0].x();
+		dy = _verts[(i+1)*(_nstream+1)+0].y()
+		   - _verts[i*(_nstream+1)+0].y();
+		dz = _verts[(i+1)*(_nstream+1)+0].z()
+		   - _verts[i*(_nstream+1)+0].z();
+		edge << dx, dy, dz;
+		edge = transform*edge;
+
+		lift += _quads[i].doubletStrength()*dy;
+
+		wy = 0.5*(w[i](1) + w[i+1](1));
+		wz = 0.5*(w[i](2) + w[i+1](2));
+		drag += (edge(2)*wy - edge(1)*wz) * _quads[i].doubletStrength();
+	}
+	lift *= rhoinf*uinf;
+	drag *= rhoinf/2.;
+
+	// Mirror image contribution and coefficients
+
+	lift *= 2.;
+	drag *= 2.;
+
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	cl = lift / (qinf*sref);
+	cd = drag / (qinf*sref);
+
+	std::cout << "  CLff: " << std::setprecision(5) << std::setw(8)
+	          << std::left << cl;
+	std::cout << "  CDff: " << std::setprecision(5) << std::setw(8)
+	          << std::left << cd << std::endl;
 }

@@ -1577,6 +1577,10 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen )
 	}
 
 	// Integrate pressure drag over the span
+
+	// Trefftz plane forces
+
+	_wake.farfieldForces(_splanform, 2*_sections[_nspan-1].y());
 }
 
 double Wing::lift () const { return _liftp + _liftv; }
