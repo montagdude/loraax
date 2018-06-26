@@ -291,22 +291,6 @@ void Wake::update ()
 	{
 		_quads[i].recomputeGeometry();
 	}
-
-	// Move doublets downstream
-
-#pragma omp parallel for private(i,j)
-	for ( i = 0; int(i) < _nspan-1; i++ )
-	{
-		_quads[i].setDoubletStrength(
-		              _tris[i*(_nstream-1)*2+(_nstream-2)*2].doubletStrength());
-		for ( j = _nstream-2; j >= 1; j-- )
-		{
-			_tris[i*(_nstream-1)*2+j*2].setDoubletStrength(
-			                 _tris[i*(_nstream-1)*2+(j-1)*2].doubletStrength());
-			_tris[i*(_nstream-1)*2+j*2+1].setDoubletStrength(
-			               _tris[i*(_nstream-1)*2+(j-1)*2+1].doubletStrength());
-		}
-	}
 }
 
 /******************************************************************************/

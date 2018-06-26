@@ -830,8 +830,7 @@ void Aircraft::setSourceStrengths ( bool init )
 /******************************************************************************/
 void Aircraft::setDoubletStrengths ( bool init )
 {
-	unsigned int i, j, k, npanels, nwings, nstrips, nwakepans, nwakeunk,
-	             nwakeverts;
+	unsigned int i, j, k, npanels, nwings, nstrips, nwakepans, nwakeverts;
 	double mu;
 	WakeStrip *strip;
 
@@ -857,25 +856,15 @@ void Aircraft::setDoubletStrengths ( bool init )
 	for ( i = 0; i < nwings; i++ )
 	{
 		nstrips = _wings[i].nWStrips();
-#pragma omp parallel for private(j,strip,mu,nwakepans,nwakeunk,k)
+#pragma omp parallel for private(j,strip,mu,nwakepans,k)
 		for ( j = 0; j < nstrips; j++ )
 		{
 			strip = _wings[i].wStrip(j);
 			mu = strip->topTEPan()->doubletStrength()
 			   - strip->botTEPan()->doubletStrength();
+
 			nwakepans = strip->nPanels();
-			
-			// During initial step, all wake panels in a strip have strength
-			// equal to mu_topte - mu_botte. Subsequently, only the most
-			// recently shed panels have this strength, and the rest have known
-			// strengths.
-			
-			if (init)
-				nwakeunk = nwakepans;
-			else
-				nwakeunk = 2;
-			
-			for ( k = 0; k < nwakeunk; k++ )
+			for ( k = 0; k < nwakepans; k++ )
 			{
 				strip->panel(k)->setDoubletStrength(mu);
 			}
@@ -994,11 +983,8 @@ void Aircraft::constructSystem ( unsigned int iter )
 					_aic(i,bottepan) -= stripic;
 				}
 				
-				// For subsequent time steps, use the current doublet strength
-				// for the first two rows of wake panels. This avoids having to
-				// re-do the LU factorization. We will still set their strength
-				// to the updated mu_topte - mu_botte value for force and wake
-				// calculations.
+				// For subsequent time steps, lag the wake strength in time so
+				// that we don't need to constantly recompute AIC
 				
 				if (iter > 1)
 				{
