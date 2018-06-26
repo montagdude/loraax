@@ -190,7 +190,7 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		return 2;
 	if (read_setting(xfrun, "vaccel", xfoil_run_opts.vaccel) != 0)
 		return 2;
-	if (read_setting(xfrun, "reinitialize", reinitialize) != 0)
+	if (read_setting(xfrun, "reinitialize", reinitialize, false) != 0)
 		reinitialize = true;
 	xfoil_run_opts.viscous_mode = viscous;
 	xfoil_run_opts.silent_mode = true;
