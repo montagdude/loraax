@@ -444,12 +444,14 @@ void Section::computeForceMoment ( const double & alpha, const double & uinf,
 	momentv << 0., mv, 0.;
 	momentv = section2inertial*momentv;
 	
-	// Sectional lift, drag, and moment coefficients
+	// Sectional lift, drag, and moment coefficients. Note pressure drag
+	// comes from Xfoil solution, because integrated pressure drag is not
+	// accurate (Xfoil uses BL solution in far wake to compute drag).
 	
 	liftp = -forcep(0)*sin(alpha*M_PI/180.) + forcep(2)*cos(alpha*M_PI/180.);
 	liftv = -forcev(0)*sin(alpha*M_PI/180.) + forcev(2)*cos(alpha*M_PI/180.);
-	dragp =  forcep(0)*cos(alpha*M_PI/180.) + forcep(2)*sin(alpha*M_PI/180.);
 	dragv =  forcev(0)*cos(alpha*M_PI/180.) + forcev(2)*sin(alpha*M_PI/180.);
+	dragp = _foil.dragCoefficient()*qinf*_chord - dragv;
 	
 	_clp = liftp/(qinf*_chord);
 	_clv = liftv/(qinf*_chord);

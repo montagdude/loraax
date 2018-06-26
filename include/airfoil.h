@@ -109,6 +109,9 @@ class Airfoil: public SectionalObject {
 	void setReynoldsNumber ( const double & re );
 	void setMachNumber ( const double & mach );
 	int runXfoil ( const double & clspec );
+	const double & liftCoefficient () const;
+	const double & dragCoefficient () const;
+	const double & pitchingMomentCoefficient () const;
 	std::vector<double> blData ( const std::string & varname,
 	                             int & stat ) const;
 	void reinitializeBL ();

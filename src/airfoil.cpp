@@ -718,6 +718,18 @@ int Airfoil::runXfoil ( const double & clspec )
 
 /******************************************************************************/
 //
+// Aerodynamic coefficients from Xfoil
+//
+/******************************************************************************/
+const double & Airfoil::liftCoefficient () const { return _xdg.xfd.CL; }
+const double & Airfoil::dragCoefficient () const { return _xdg.xfd.CD; }
+const double & Airfoil::pitchingMomentCoefficient () const
+{
+	return _xdg.xfd.CM;
+}
+
+/******************************************************************************/
+//
 // Returns BL data from Xfoil at current airfoil coordinates. Possible values
 // of varname include: cp, cf, uedge, deltastar, ampl. Output vector has
 // dimension nSmoothed.
