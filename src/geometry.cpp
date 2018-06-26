@@ -369,3 +369,53 @@ Eigen::Matrix3d transform_from_normal ( const double & nx, const double & ny,
 
   return euler_rotation(a2*180./M_PI, -a1*180./M_PI, 0.0);
 }
+
+/******************************************************************************/
+//
+// Computes equation of a plane from a point and normal.
+// The plane has the equation:
+//   ax + by + cz = d
+// a, b, c, and d are computed using the relation:
+//   normal dot plane_vector = 0, where plane_vector is (x - px, y - py, z - pz)
+//
+/******************************************************************************/
+void compute_plane ( const Eigen::Vector3d & point,
+                     const Eigen::Vector3d & norm, double & a, double & b,
+                     double & c, double & d )
+{
+	a = norm(0);
+	b = norm(1);
+	c = norm(2);
+	d = norm(0)*point(0) + norm(1)*point(1) + norm(2)*point(2);
+}
+
+/******************************************************************************/
+//
+// Intersection between a line and a plane. The line is given by a point and
+// a vector along the line. The plane is given by a, b, c, d where:
+//   ax + by + cz = d is the equation of the plane.
+//
+// The line is given by:
+//   p = p0 + t*l, where p0 is the initial point, l is the vector along the
+//   line, and t is the parametric coordinate.
+
+// Note: no checking is done for lines lying on the plane or parallel to the
+// plane (i.e., infinite solutions or no solutions). If you try to use it for
+// such a case, the result will probably be a divide by 0.
+//
+/******************************************************************************/
+Eigen::Vector3d line_plane_intersection ( const Eigen::Vector3d & p0,
+                                    const Eigen::Vector3d & l, const double & a,
+                                    const double & b, const double & c,
+                                    const double & d )
+{
+	double den, num, t;
+	Eigen::Vector3d p;
+
+	num = d - a*p0(0) - b*p0(1) - c*p0(2);
+	den = a*l(0) + b*l(1) + c*l(2);
+	t = num/den;
+	p = p0 + t*l;
+
+	return p;
+}

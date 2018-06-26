@@ -63,7 +63,8 @@ class Wake {
 
 	Eigen::Vector3d planarInducedVelocity ( const double & x, const double & y,
 	                                        const double & z,
-	                                        bool include_bound_leg=true ) const;
+	                                        bool include_bound_leg=true,
+	                                        unsigned int on_trailing=1E+08) const;
 
 	// Trefftz plane force calculation
 

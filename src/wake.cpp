@@ -10,6 +10,7 @@
 #include "quadpanel.h"
 #include "singularities.h"
 #include "transformations.h"
+#include "geometry.h"
 #include "wake.h"
 
 #include <iostream>
@@ -340,16 +341,20 @@ QuadPanel * Wake::quadPanel ( unsigned int qidx )
 /******************************************************************************/
 //
 // Induced velocity at a point due to wake modeled as planar and aligned with
-// the freestream direction. Influence of bound leg (at wing TE) is optional.
+// the freestream direction. Influence of bound leg (at wing TE) is optional,
+// and it is also possible to specify a spanwise index where the point x, y, z
+// is assumed to lie on the trailing leg (to ignore self-induced velocity).
+//
 // This is used for Trefftz plane induced drag calculation, where a planar
-// wake is preferred (see Kroo paper).
+// wake is preferred (see Kroo paper and comments for farfieldForces method).
 //
 /******************************************************************************/
 Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
                                              const double & y, const double & z,
-                                             bool include_bound_leg ) const
+                                             bool include_bound_leg,
+                                             unsigned int on_trailing ) const
 {
-	unsigned int i;
+	int i;
 	double gamma, x1, y1, z1, x2, y2, z2;
 	Eigen::Vector3d w;
 
@@ -358,9 +363,9 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 	// Influence of trailing legs (do not include centerline, because net
 	// circulation of trailing leg is 0 due to symmetry)
 
-	for ( i = 1; int(i) < _nspan; i++ )
+	for ( i = 1; i < _nspan; i++ )
 	{
-		if (int(i) < _nspan)
+		if (i < _nspan)
 			gamma = _quads[i-1].doubletStrength()
 			      - _quads[i].doubletStrength();
 		else
@@ -369,14 +374,16 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 		x1 = _verts[i*(_nstream+1)+0].x();
 		y1 = _verts[i*(_nstream+1)+0].y();
 		z1 = _verts[i*(_nstream+1)+0].z();
-		x2 = x1 + 1000*rollupdist*uinfvec(0)/uinf;
-		y2 = y1 + 1000*rollupdist*uinfvec(1)/uinf;
-		z2 = z1 + 1000*rollupdist*uinfvec(2)/uinf;
+		x2 = x1 + 1000.*rollupdist*uinfvec(0)/uinf;
+		y2 = y1;
+		z2 = z1 + 1000.*rollupdist*uinfvec(2)/uinf;
 
-		// Induced velocity due to leg + mirror contribution
+		// Induced velocity due to leg + mirror contribution. Do not count
+		// self-induced velocity of a trailing leg.
 
-		w += vortex_velocity(x, y, z, x1, y1, z1, x2, y2, z2, rcore,
-		                     true)*gamma;
+		if (i != on_trailing)
+			w += vortex_velocity(x, y, z, x1, y1, z1, x2, y2, z2, rcore,
+			                     true)*gamma;
 		w -= vortex_velocity(x, y, z, x1, -y1, z1, x2, -y2, z2, rcore,
 		                     true)*gamma;
 	}
@@ -411,37 +418,48 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 /******************************************************************************/
 //
 // Computes lift and induced drag in Trefftz plane. Note that this models the
-// wake as planar and aligned with the freestream. See Kroo paper for rationale.
+// wake as planar and aligned with the freestream. Using the rolled-up wake
+// results in high sensitivity to the rolled up shape, and it was found to
+// underpredict induced drag and be very sensitive to the rollup distance.
+// See Kroo paper for more information.
 //
 /******************************************************************************/
 void Wake::farfieldForces ( const double & sref, const double & span ) const
 {
 	int i;
-	double x, y, z;
+	double a, b, c, d;
 	double dx, dy, dz, wy, wz, qinf, lift, drag, cl, cd;
 	std::vector<Eigen::Vector3d> w;
-	Eigen::Vector3d edge;
+	Eigen::Vector3d p0, p, p1, p2, edge;
 	Eigen::Matrix3d transform;
 
 	// Transformation from inertial to Trefftz frame
 
 	transform = euler_rotation(0., -alpha, 0.);
 
+	// Get equation for Trefftz plane, 500 span lengths downstream of root TE
+
+	p0(0) = _verts[0*(_nstream+1)+0].x() + 500*span*uinfvec(0)/uinf;
+	p0(1) = 0.;
+	p0(2) = _verts[0*(_nstream+1)+0].z() + 500*span*uinfvec(2)/uinf;
+	compute_plane(p0, uinfvec/uinf, a, b, c, d);
+
 	// Wake induced velocity
 
 	w.resize(_nspan);
 	for ( i = 0; i < _nspan; i++ )
 	{
-		// Farfield point on Trefftz plane, 500 span lengths downstream
+		// Aft TE point projected on Trefftz plane
 
-		x = _verts[i*(_nstream+1)+0].x() + 500.*span*uinfvec(0)/uinf;
-		y = _verts[i*(_nstream+1)+0].y() + 500.*span*uinfvec(1)/uinf;
-		z = _verts[i*(_nstream+1)+0].z() + 500.*span*uinfvec(2)/uinf;
+		p0(0) = _verts[i*(_nstream+1)+0].x();
+		p0(1) = _verts[i*(_nstream+1)+0].y();
+		p0(2) = _verts[i*(_nstream+1)+0].z();
+		p = line_plane_intersection(p0, uinfvec/uinf, a, b, c, d);
 
 		// Compute induced velocity and transform to Trefftz frame.
 		// FIXME: this needs influence of other wings' wakes
 
-		w[i] = planarInducedVelocity(x, y, z, false);
+		w[i] = planarInducedVelocity(p(0), p(1), p(2), false, i);
 		w[i] = transform*w[i];
 	}
 
@@ -451,28 +469,40 @@ void Wake::farfieldForces ( const double & sref, const double & span ) const
 	drag = 0.;
 	for ( i = 0; i < _nspan-1; i++ )
 	{
-		dx = _verts[(i+1)*(_nstream+1)+0].x()
-		   - _verts[i*(_nstream+1)+0].x();
-		dy = _verts[(i+1)*(_nstream+1)+0].y()
-		   - _verts[i*(_nstream+1)+0].y();
-		dz = _verts[(i+1)*(_nstream+1)+0].z()
-		   - _verts[i*(_nstream+1)+0].z();
+		// TE points projected on Trefftz plane
+
+		p1(0) = _verts[i*(_nstream+1)+0].x();
+		p1(1) = _verts[i*(_nstream+1)+0].y();
+		p1(2) = _verts[i*(_nstream+1)+0].z();
+		p1 = line_plane_intersection(p1, uinfvec/uinf, a, b, c ,d);
+
+		p2(0) = _verts[(i+1)*(_nstream+1)+0].x();
+		p2(1) = _verts[(i+1)*(_nstream+1)+0].y();
+		p2(2) = _verts[(i+1)*(_nstream+1)+0].z();
+		p2 = line_plane_intersection(p2, uinfvec/uinf, a, b, c ,d);
+
+		dx = p2(0) - p1(0);
+		dy = p2(1) - p1(1);
+		dz = p2(2) - p1(2);
 		edge << dx, dy, dz;
 		edge = transform*edge;
 
-		lift += _quads[i].doubletStrength()*dy;
+		// In-plane velocity components
 
 		wy = 0.5*(w[i](1) + w[i+1](1));
 		wz = 0.5*(w[i](2) + w[i+1](2));
+
+		// Lift and induced drag
+
+		lift += _quads[i].doubletStrength()*edge(1);
 		drag += (edge(2)*wy - edge(1)*wz) * _quads[i].doubletStrength();
 	}
 	lift *= rhoinf*uinf;
-	drag *= rhoinf/2.;
+	drag *= rhoinf;
 
 	// Mirror image contribution and coefficients
 
-	lift *= 2.;
-	drag *= 2.;
+	lift *= 2.;		// Drag already has mirror factor built in
 
 	qinf = 0.5*rhoinf*std::pow(uinf,2.);
 	cl = lift / (qinf*sref);
