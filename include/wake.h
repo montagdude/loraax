@@ -19,6 +19,7 @@ class Wake {
 
 	private:
 
+	int _idx;
 	int _nspan, _nstream;						// Spanwise and streamwise
 												//   vertices
 	std::vector<Vertex> _verts;					// Vertices
@@ -41,7 +42,12 @@ class Wake {
 	
 	void initialize ( const std::vector<Vertex *> & topteverts,
 	                  const std::vector<Vertex *> & botteverts,
-	                  int & next_global_vertidx, int & next_global_elemidx );
+	                  int & next_global_vertidx, int & next_global_elemidx,
+	                  int wakeidx );
+
+	// Get wake idx
+
+	int idx () const;
 	
 	// Compute wake rollup and convect doublets downstream
 	
@@ -64,11 +70,13 @@ class Wake {
 	Eigen::Vector3d planarInducedVelocity ( const double & x, const double & y,
 	                                        const double & z,
 	                                        bool include_bound_leg=true,
-	                                        unsigned int on_trailing=1E+08) const;
+	                                        int on_trailing_leg=-1) const;
 
 	// Trefftz plane force calculation
 
-	void farfieldForces ( const double & sref, const double & span ) const;
+	void farfieldForces ( const double & sref, const double & xtrefftz,
+	                      const double & ztrefftz,
+	                      const std::vector<Wake *> & allwake ) const;
 };
 
 #endif

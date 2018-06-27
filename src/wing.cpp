@@ -254,13 +254,13 @@ std::vector<double> Wing::adjustSpacing (
 void Wing::computeAreaMAC ( const std::vector<Section> & sorted_user_sections )
 {
 	unsigned int i, nsecs;
-	double span, cenx, dceny, ceny, cenz, cbarx;
+	double cenx, dceny, ceny, cenz, cbarx;
 	double xT1, xL1, y1, z1, xT2, xL2, y2, z2;
 	double mT, mL, bT, bL, mp, mm, bp, bm;
 	double ar, tr;
 	
 	nsecs = sorted_user_sections.size();
-	span = 2.*sorted_user_sections[nsecs-1].y();
+	_span = 2.*sorted_user_sections[nsecs-1].y();
 	tr = sorted_user_sections[nsecs-1].chord()
 	   / sorted_user_sections[0].chord();
 	_splanform = 0.;
@@ -321,14 +321,14 @@ void Wing::computeAreaMAC ( const std::vector<Section> & sorted_user_sections )
 		cenz /= _splanform;
 		_cbar /= _splanform;
 		cbarx = cenx - 0.25*_cbar;
-		ar = std::pow(0.5*span,2.) / (0.5*_splanform);
+		ar = std::pow(0.5*_span,2.) / (0.5*_splanform);
 	}
 	_splanform *= 2.;	// Mirror image
 	
 	std::cout.setf(std::ios_base::scientific);
 	std::cout << "Geometric information for wing " << _name << ":" << std::endl;
 	std::cout << "  Span: "
-	          << std::setprecision(5) << span << std::endl;
+	          << std::setprecision(5) << _span << std::endl;
 	std::cout << "  Planform area: "
 	          << std::setprecision(5) << _splanform << std::endl;
 	std::cout << "  Mean aerodynamic chord: "
@@ -448,257 +448,281 @@ void Wing::setAirfoils ( std::vector<Airfoil> & foils )
 /******************************************************************************/
 int Wing::setupSections ( std::vector<Section> & user_sections )
 {
-  SectionalObject *sorted_sections[user_sections.size()];
-  std::vector<Section> sorted_user_sections;
-  unsigned int i, j, nsecs, nfoils;
-  Eigen::Vector2d secvec;
-  double a4, a5, rootsp, tipsp, space, tipy, deltay, deltas, sfrac;
-  double xle, zle, y, chord, twist, roll;
-  std::vector<double> foil_positions;
-
-  // Sort sections
-
-  nsecs = user_sections.size();
-  for ( i = 0; i < nsecs; i++ )
-  {
-    sorted_sections[i] = &user_sections[i];
-  }
-  sort_sections(sorted_sections, nsecs);
-  for ( i = 0; i < nsecs; i++ )
-  {
-    for ( j = 0; j < nsecs; j++ )
-    {
-      if (user_sections[j].y() == sorted_sections[i]->y())
-      {
-        sorted_user_sections.push_back(user_sections[j]);
-        continue;
-      }
-    }
-  }
-
+	SectionalObject *sorted_sections[user_sections.size()];
+	std::vector<Section> sorted_user_sections;
+	unsigned int i, j, nsecs, nfoils;
+	Eigen::Vector2d secvec;
+	double a4, a5, rootsp, tipsp, space, tipy, deltay, deltas, sfrac;
+	double xle, zle, y, chord, twist, roll;
+	std::vector<double> foil_positions;
+	
+	// Sort sections
+	
+	nsecs = user_sections.size();
+	for ( i = 0; i < nsecs; i++ )
+	{
+		sorted_sections[i] = &user_sections[i];
+	}
+	sort_sections(sorted_sections, nsecs);
+	for ( i = 0; i < nsecs; i++ )
+	{
+		for ( j = 0; j < nsecs; j++ )
+		{
+			if (user_sections[j].y() == sorted_sections[i]->y())
+			{
+				sorted_user_sections.push_back(user_sections[j]);
+				continue;
+			}
+		}
+	}
+	
 #ifdef DEBUG
-  if (sorted_user_sections.size() < nsecs)
-  {
-    conditional_stop(1, "Wing::setupSections", "Error sorting sections.");
-    return 1;
-  }
+	if (sorted_user_sections.size() < nsecs)
+	{
+		conditional_stop(1, "Wing::setupSections", "Error sorting sections.");
+		return 1;
+	}
 #endif
+	
+	s_wing.resize(nsecs);
+	s_wing[0] = 0.;
+	for ( i = 1; i < nsecs; i++ )
+	{
+		secvec[0] = sorted_user_sections[i].y()
+		          - sorted_user_sections[i-1].y();
+		secvec[1] = sorted_user_sections[i].zle()
+		          - sorted_user_sections[i-1].zle();
+		s_wing[i] = s_wing[i-1] + secvec.norm();
+		if (s_wing[i] == s_wing[i-1])
+		{
+			conditional_stop(1, "Wing::setupSections",
+			                 "Wing has duplicate Y sections.");
+			return 1;
+		}
+		sorted_user_sections[i].setRoll(atan(secvec[1]/secvec[0])*180./M_PI);
+	}
+	
+	// Compute and print wing geometric info
+	
+	computeAreaMAC(sorted_user_sections);
+	
+	// Compute nominal discretized section locations (stations) from spacing
+	
+	rootsp = _rootsprat * s_wing[nsecs-1] / double(_nspan-1);
+	tipsp = _tipsprat * s_wing[nsecs-1] / double(_nspan-1);
+	opt_tanh_spacing(_nspan, s_wing[nsecs-1], rootsp, tipsp, a4, a5);
+	nom_stations.resize(_nspan);
+	nom_stations[0] = 0.; 
+	for ( i = 1; i < _nspan; i++ )
+	{
+		space = tanh_spacing(i-1, a4, a5, _nspan, s_wing[nsecs-1], rootsp,
+		                     tipsp);
+		nom_stations[i] = nom_stations[i-1] + space;
+	}
+	
+	// Optimize stations to be as close as possible to nominal but lining up with
+	// user sections
+	
+	if (nsecs > 2)
+		_stations = adjustSpacing(nom_stations);
+	else
+		_stations = nom_stations;
+	
+	// Add airfoils as needed to ensure the entire span is covered
+	
+	nfoils = _foils.size();
+	tipy = sorted_user_sections[nsecs-1].y();
+	if (nfoils < 1)
+	{
+		conditional_stop(1, "Wing::setupSections",
+		                 "At least one airfoil is required.");
+		return 1;
+	}
+	else if (nfoils == 1)
+	{
+		// If a single airfoil is provided, modify _foils vector so it has
+		// identical airfoils at the root and tip
+	
+		_foils.push_back(_foils[0]);
+		_foils[0].setY(0.);
+		_foils[1].setY(tipy);
+		nfoils += 1;
+	} 
+	else
+	{
+		// Add foils at the root and tip if none were specified there
+		
+		if (_foils[0].y() > 0)
+		{
+			_foils.insert(_foils.begin(), _foils[0]);
+			nfoils += 1;
+			_foils[0].setY(0.);
+		}
+		if (_foils[nfoils-1].y() < tipy)
+		{
+			_foils.push_back(_foils[nfoils-1]);
+			nfoils += 1;
+			_foils[nfoils-1].setY(tipy);
+		}
+		else if (_foils[nfoils-1].y() > tipy)
+		{
+			conditional_stop(1, "Wing::setupSections",
+			                 "Airfoil is placed beyond the wingtip.");
+			return 1;
+		}
+	} 
+	
+	// Determine s_wing spanwise positions for airfoils
+	
+	foil_positions.resize(nfoils);
+	for ( i = 0; i < nfoils; i++ )
+	{
+		for ( j = 0; j < nsecs-1; j++ )
+		{
+			if ( (_foils[i].y() >= sorted_user_sections[j].y()) &&
+			     (_foils[i].y() <= sorted_user_sections[j+1].y()) )
+			{
+				deltay = sorted_user_sections[j+1].y()
+				       - sorted_user_sections[j].y(); 
+				sfrac = (_foils[i].y() - sorted_user_sections[j].y()) / deltay;
+				deltas = s_wing[j+1] - s_wing[j];
+				foil_positions[i] = s_wing[j] + sfrac*deltas;
+				break;
+			}
+		}
+	}
+	
+	// Create sections
+	
+	_sections.resize(_nspan);
+	for ( i = 0; i < _nspan; i++ )
+	{
+		// Set airfoil coordinates
+		
+		for ( j = 0; j < nfoils-1; j++ )
+		{
+			if (std::abs(_stations[i]-foil_positions[j]) < 1e-12)
+			{
+				_sections[i].airfoil().interpCoordinates(_foils[j], _foils[j],
+				                                         0.);
+				break;
+			}
+			else if ( (_stations[i] > foil_positions[j]) &&
+			          (_stations[i] < foil_positions[j+1]) )
+			{
+				sfrac = (_stations[i] - foil_positions[j]) / 
+				        (foil_positions[j+1] - foil_positions[j]);
+				_sections[i].airfoil().interpCoordinates(_foils[j], _foils[j+1],
+				                                         sfrac);  
+				break;
+			}
+			else if ( (j == nfoils-2) &&
+			          (std::abs(_stations[i]-foil_positions[j+1]) < 1e-12) )
+			{
+				_sections[i].airfoil().interpCoordinates(_foils[j+1],
+				                                         _foils[j+1], 0.);
+				break;
+			}
+			else if (j == nfoils-2)
+			{
+				conditional_stop(1, "Wing::setupSections",
+				                 "Could not find interpolant airfoils.");
+				return 1;
+			}
+		}
+		_sections[i].airfoil().ccwOrderCoordinates();
+		_sections[i].airfoil().splineFit();
+		_sections[i].airfoil().unitTransform();
+		_sections[i].airfoil().setXfoilOptions(xfoil_run_opts, xfoil_geom_opts);
+		_sections[i].airfoil().smoothPaneling();
+		
+		// Set section position, orientation, and scale
+		
+		for ( j = 0; j < nsecs-1; j++ )
+		{
+			if (std::abs(_stations[i]-s_wing[j]) < 1e-12)
+			{
+				xle = sorted_user_sections[j].xle();
+				zle = sorted_user_sections[j].zle();
+				y = sorted_user_sections[j].y();
+				chord = sorted_user_sections[j].chord();
+				twist = sorted_user_sections[j].twist();
+				roll = sorted_user_sections[j].roll();
+				break;
+			}
+			else if ( (_stations[i] > s_wing[j]) &&
+			          (_stations[i] < s_wing[j+1]) )
+			{
+				sfrac = (_stations[i] - s_wing[j]) /
+				        (s_wing[j+1] - s_wing[j]);
+				  xle = (1.-sfrac)*sorted_user_sections[j].xle() +
+				            sfrac*sorted_user_sections[j+1].xle();
+				    y = (1.-sfrac)*sorted_user_sections[j].y() +
+				            sfrac*sorted_user_sections[j+1].y();
+				  zle = (1.-sfrac)*sorted_user_sections[j].zle() +
+				            sfrac*sorted_user_sections[j+1].zle();
+				chord = (1.-sfrac)*sorted_user_sections[j].chord() +
+				            sfrac*sorted_user_sections[j+1].chord();
+				twist = (1.-sfrac)*sorted_user_sections[j].twist() +
+				            sfrac*sorted_user_sections[j+1].twist();
+				 roll = sorted_user_sections[j+1].roll();
+				break;
+			}
+			else if ( (j == nsecs-2) &&
+			          (std::abs(_stations[i]-s_wing[j+1]) < 1e-12) )
+			{
+				xle = sorted_user_sections[j+1].xle();
+				zle = sorted_user_sections[j+1].zle();
+				y = sorted_user_sections[j+1].y();
+				chord = sorted_user_sections[j+1].chord();
+				twist = sorted_user_sections[j+1].twist();
+				roll = sorted_user_sections[j+1].roll();
+				break;
+			}
+			else if (j == nsecs-2)
+			{
+				conditional_stop(1, "Wing::setupSections",
+				                 "Could not find interpolant sections.");
+				return 1;
+			}
+		}
+		_sections[i].setGeometry(xle, y, zle, chord, twist, roll);
+		
+		// Set vertices from spacing distribution
+		
+		_sections[i].setVertices(_nchord, _lesprat, _tesprat);
+		
+		// Set Reynolds number and Mach number if viscous
+		
+		if (viscous) 
+		{
+			_sections[i].computeReynoldsNumber(rhoinf, uinf, muinf);
+			if (compressible)
+				_sections[i].setMachNumber(minf);
+			else
+				_sections[i].setMachNumber(0.0);
+		}
+	}
 
-  s_wing.resize(nsecs);
-  s_wing[0] = 0.;
-  for ( i = 1; i < nsecs; i++ )
-  {
-    secvec[0] = sorted_user_sections[i].y() - sorted_user_sections[i-1].y();
-    secvec[1] = sorted_user_sections[i].zle() - sorted_user_sections[i-1].zle();
-    s_wing[i] = s_wing[i-1] + secvec.norm();
-    if (s_wing[i] == s_wing[i-1])
-    {
-      conditional_stop(1, "Wing::setupSections",
-                       "Wing has duplicate Y sections.");
-      return 1;
-    }
-    sorted_user_sections[i].setRoll(atan(secvec[1]/secvec[0])*180./M_PI);
-  }
-
-  // Compute and print wing geometric info
-
-  computeAreaMAC(sorted_user_sections);
-
-  // Compute nominal discretized section locations (stations) from spacing
-
-  rootsp = _rootsprat * s_wing[nsecs-1] / double(_nspan-1);
-  tipsp = _tipsprat * s_wing[nsecs-1] / double(_nspan-1);
-  opt_tanh_spacing(_nspan, s_wing[nsecs-1], rootsp, tipsp, a4, a5);
-  nom_stations.resize(_nspan);
-  nom_stations[0] = 0.; 
-  for ( i = 1; i < _nspan; i++ )
-  {
-    space = tanh_spacing(i-1, a4, a5, _nspan, s_wing[nsecs-1], rootsp, tipsp);
-    nom_stations[i] = nom_stations[i-1] + space;
-  }
-
-  // Optimize stations to be as close as possible to nominal but lining up with
-  // user sections
-
-  if (nsecs > 2)
-    _stations = adjustSpacing(nom_stations);
-  else
-    _stations = nom_stations;
-
-  // Add airfoils as needed to ensure the entire span is covered
-
-  nfoils = _foils.size();
-  tipy = sorted_user_sections[nsecs-1].y();
-  if (nfoils < 1)
-  {
-    conditional_stop(1, "Wing::setupSections",
-                     "At least one airfoil is required.");
-    return 1;
-  }
-  else if (nfoils == 1)
-  {
-    // If a single airfoil is provided, modify _foils vector so it has
-    // identical airfoils at the root and tip
-
-    _foils.push_back(_foils[0]);
-    _foils[0].setY(0.);
-    _foils[1].setY(tipy);
-    nfoils += 1;
-  } 
-  else
-  {
-    // Add foils at the root and tip if none were specified there
-
-    if (_foils[0].y() > 0)
-    {
-      _foils.insert(_foils.begin(), _foils[0]);
-      nfoils += 1;
-      _foils[0].setY(0.);
-    }
-    if (_foils[nfoils-1].y() < tipy)
-    {
-      _foils.push_back(_foils[nfoils-1]);
-      nfoils += 1;
-      _foils[nfoils-1].setY(tipy);
-    }
-    else if (_foils[nfoils-1].y() > tipy)
-    {
-      conditional_stop(1, "Wing::setupSections",
-                       "Airfoil is placed beyond the wingtip.");
-      return 1;
-    }
-  } 
-
-  // Determine s_wing spanwise positions for airfoils
-
-  foil_positions.resize(nfoils);
-  for ( i = 0; i < nfoils; i++ )
-  {
-    for ( j = 0; j < nsecs-1; j++ )
-    {
-      if ( (_foils[i].y() >= sorted_user_sections[j].y()) &&
-           (_foils[i].y() <= sorted_user_sections[j+1].y()) )
-      {
-        deltay = sorted_user_sections[j+1].y() - sorted_user_sections[j].y(); 
-        sfrac = (_foils[i].y() - sorted_user_sections[j].y()) / deltay;
-        deltas = s_wing[j+1] - s_wing[j];
-        foil_positions[i] = s_wing[j] + sfrac*deltas;
-        break;
-      }
-    }
-  }
-
-  // Create sections
-
-  _sections.resize(_nspan);
-  for ( i = 0; i < _nspan; i++ )
-  {
-    // Set airfoil coordinates
-
-    for ( j = 0; j < nfoils-1; j++ )
-    {
-      if (std::abs(_stations[i]-foil_positions[j]) < 1e-12)
-      {
-        _sections[i].airfoil().interpCoordinates(_foils[j], _foils[j], 0.);
-        break;
-      }
-      else if ( (_stations[i] > foil_positions[j]) &&
-                (_stations[i] < foil_positions[j+1]) )
-      {
-        sfrac = (_stations[i] - foil_positions[j]) / 
-                (foil_positions[j+1] - foil_positions[j]);
-        _sections[i].airfoil().interpCoordinates(_foils[j], _foils[j+1], sfrac);  
-        break;
-      }
-      else if ( (j == nfoils-2) &&
-                (std::abs(_stations[i]-foil_positions[j+1]) < 1e-12) )
-      {
-        _sections[i].airfoil().interpCoordinates(_foils[j+1], _foils[j+1], 0.);
-        break;
-      }
-      else if (j == nfoils-2)
-      {
-        conditional_stop(1, "Wing::setupSections",
-                         "Could not find interpolant airfoils.");
-        return 1;
-      }
-    }
-    _sections[i].airfoil().ccwOrderCoordinates();
-    _sections[i].airfoil().splineFit();
-    _sections[i].airfoil().unitTransform();
-    _sections[i].airfoil().setXfoilOptions(xfoil_run_opts, xfoil_geom_opts);
-    _sections[i].airfoil().smoothPaneling();
-
-    // Set section position, orientation, and scale
-
-    for ( j = 0; j < nsecs-1; j++ )
-    {
-      if (std::abs(_stations[i]-s_wing[j]) < 1e-12)
-      {
-        xle = sorted_user_sections[j].xle();
-        zle = sorted_user_sections[j].zle();
-        y = sorted_user_sections[j].y();
-        chord = sorted_user_sections[j].chord();
-        twist = sorted_user_sections[j].twist();
-        roll = sorted_user_sections[j].roll();
-        break;
-      }
-      else if ( (_stations[i] > s_wing[j]) &&
-                (_stations[i] < s_wing[j+1]) )
-      {
-        sfrac = (_stations[i] - s_wing[j]) /
-                (s_wing[j+1] - s_wing[j]);
-          xle = (1.-sfrac)*sorted_user_sections[j].xle() +
-                    sfrac*sorted_user_sections[j+1].xle();
-            y = (1.-sfrac)*sorted_user_sections[j].y() +
-                    sfrac*sorted_user_sections[j+1].y();
-          zle = (1.-sfrac)*sorted_user_sections[j].zle() +
-                    sfrac*sorted_user_sections[j+1].zle();
-        chord = (1.-sfrac)*sorted_user_sections[j].chord() +
-                    sfrac*sorted_user_sections[j+1].chord();
-        twist = (1.-sfrac)*sorted_user_sections[j].twist() +
-                    sfrac*sorted_user_sections[j+1].twist();
-         roll = sorted_user_sections[j+1].roll();
-        break;
-      }
-      else if ( (j == nsecs-2) &&
-                (std::abs(_stations[i]-s_wing[j+1]) < 1e-12) )
-      {
-        xle = sorted_user_sections[j+1].xle();
-        zle = sorted_user_sections[j+1].zle();
-        y = sorted_user_sections[j+1].y();
-        chord = sorted_user_sections[j+1].chord();
-        twist = sorted_user_sections[j+1].twist();
-        roll = sorted_user_sections[j+1].roll();
-        break;
-      }
-      else if (j == nsecs-2)
-      {
-        conditional_stop(1, "Wing::setupSections",
-                         "Could not find interpolant sections.");
-        return 1;
-      }
-    }
-    _sections[i].setGeometry(xle, y, zle, chord, twist, roll);
-
-    // Set vertices from spacing distribution
-
-    _sections[i].setVertices(_nchord, _lesprat, _tesprat);
-    
-    // Set Reynolds number and Mach number if viscous
-    
-    if (viscous) 
-    {
-      _sections[i].computeReynoldsNumber(rhoinf, uinf, muinf);
-      if (compressible)
-        _sections[i].setMachNumber(minf);
-      else
-        _sections[i].setMachNumber(0.0);
-    }
-  }
-
-  return 0; 
+	return 0; 
 }
+
+/******************************************************************************/
+//
+// Root x and z trailing edge locations, used for setting Trefftz plane location
+//
+/******************************************************************************/
+const double & Wing::xTE () { return _sections[0].vert(0).x(); }
+const double & Wing::zTE () { return _sections[0].vert(0).z(); }
+
+/******************************************************************************/
+//
+// Wing geometric quantities
+//
+/******************************************************************************/
+const double & Wing::span () const { return _span; }
+const double & Wing::meanAerodynamicChord () const { return _cbar; }
+const double & Wing::planformArea () const { return _splanform; }
 
 /******************************************************************************/
 //
@@ -1106,43 +1130,45 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 // Sets up wake
 //
 /******************************************************************************/
-void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx )
+void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
+                       int wakeidx )
 {
-  unsigned int i, j, nstream;
-  std::vector<Vertex *> topteverts, botteverts;
-
-  // Create vertices along trailing edge
-
-  topteverts.resize(_nspan);
-  botteverts.resize(_nspan);
-  for ( i = 0; i < _nspan; i++ )
-  {
-    topteverts[i] = &_sections[i].vert(0); 
-    botteverts[i] = &_sections[i].vert(2*_nchord-2); 
-  }
-
-  // Initialize wake
-
-  _wake.initialize(topteverts, botteverts, next_global_vertidx,
-                   next_global_elemidx);
-
-  // Create wake strips
-
-  nstream = wakesteps+1;
-  _wakestrips.resize(_nspan-1);
-  for ( i = 0; i < _nspan-1; i++ )
-  {
-    _wakestrips[i].setNPanels((nstream-1)*2+1);
-    _wakestrips[i].setTEPanels(&_quads[i*(2*_nchord-2)],
-                               &_quads[(i+1)*(2*_nchord-2)-1]);
-    for ( j = 0; j < nstream-1; j++ )
-    {
-      _wakestrips[i].setPanelPointer(j*2, _wake.triPanel(i*(nstream-1)*2+j*2));
-      _wakestrips[i].setPanelPointer(j*2+1,
-                                         _wake.triPanel(i*(nstream-1)*2+j*2+1));
-    }
-    _wakestrips[i].setPanelPointer((nstream-1)*2, _wake.quadPanel(i));
-  }
+	unsigned int i, j, nstream;
+	std::vector<Vertex *> topteverts, botteverts;
+	
+	// Create vertices along trailing edge
+	
+	topteverts.resize(_nspan);
+	botteverts.resize(_nspan);
+	for ( i = 0; i < _nspan; i++ )
+	{
+		topteverts[i] = &_sections[i].vert(0); 
+		botteverts[i] = &_sections[i].vert(2*_nchord-2); 
+	}
+	
+	// Initialize wake
+	
+	_wake.initialize(topteverts, botteverts, next_global_vertidx,
+	                 next_global_elemidx, wakeidx);
+	
+	// Create wake strips
+	
+	nstream = wakesteps+1;
+	_wakestrips.resize(_nspan-1);
+	for ( i = 0; i < _nspan-1; i++ )
+	{
+		_wakestrips[i].setNPanels((nstream-1)*2+1);
+		_wakestrips[i].setTEPanels(&_quads[i*(2*_nchord-2)],
+		                           &_quads[(i+1)*(2*_nchord-2)-1]);
+		for ( j = 0; j < nstream-1; j++ )
+		{
+			_wakestrips[i].setPanelPointer(j*2,
+			                               _wake.triPanel(i*(nstream-1)*2+j*2));
+			_wakestrips[i].setPanelPointer(j*2+1,
+			                             _wake.triPanel(i*(nstream-1)*2+j*2+1));
+		}
+		_wakestrips[i].setPanelPointer((nstream-1)*2, _wake.quadPanel(i));
+	}
 }
 
 /******************************************************************************/
@@ -1513,7 +1539,9 @@ void Wing::setupViscousWake ( int & next_global_vertidx,
 // and moments.
 //
 /******************************************************************************/
-void Wing::computeForceMoment ( const Eigen::Vector3d & momcen )
+void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
+                               const double & xtrefftz, const double & ztrefftz,
+                               const std::vector<Wake *> & allwake )
 {
 	unsigned int i, j;
 	Eigen::Vector3d dfp, dfv, dmp, dmv, fp, fv, mp, mv;
@@ -1580,7 +1608,7 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen )
 
 	// Trefftz plane forces
 
-	_wake.farfieldForces(_splanform, 2*_sections[_nspan-1].y());
+	_wake.farfieldForces(_splanform, xtrefftz, ztrefftz, allwake);
 }
 
 double Wing::lift () const { return _liftp + _liftv; }

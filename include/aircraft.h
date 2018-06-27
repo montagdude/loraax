@@ -11,6 +11,7 @@
 
 class Vertex;
 class Panel;
+class Wake;
 
 /******************************************************************************/
 //
@@ -26,11 +27,16 @@ class Aircraft {
 	double _sref;						// Reference area
 	double _lref;						// Pitching moment reference length
 	Eigen::Vector3d _momcen;			// Pitching moment reference point
+
+	double _xte, _zte, _maxspan;		// Furthest aft root TE points and
+										//   largest wingspan, used for Trefftz
+										//   plane calculation
 	
 	std::vector<Vertex *> _verts;		// Pointers to vertices
 	std::vector<Panel *> _panels;		// Pointers to panels 
 	std::vector<Vertex *> _wakeverts;	// Pointers to wake vertices
 	std::vector<Panel *> _wakepanels;	// Pointers to wake doublet panels
+	std::vector<Wake *> _allwake;		// Pointers to wakes
 	
 	Eigen::MatrixXd _sourceic, _doubletic;
 										// Aero influence coefficients due to

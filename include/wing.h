@@ -35,7 +35,7 @@ class Wing {
 									//   uniform
 	double _rootsprat, _tipsprat;	// Root and tip spacing ratios relative
 									//   to uniform
-	double _splanform, _cbar;		// Planform area and MAC
+	double _splanform, _cbar, _span;// Planform area, MAC, and span
 	
 	std::vector<Section> _sections;	// Spanwise sections used for
 									//   calculations, set by _nspan and
@@ -95,6 +95,17 @@ class Wing {
 	// Also computes planform area and MAC and writes to stdout.
 	
 	int setupSections ( std::vector<Section> & user_sections );
+
+	// Root trailing edge positions
+
+	const double & xTE ();
+	const double & zTE ();
+
+	// Geometric quantities
+
+	const double & span () const;
+	const double & meanAerodynamicChord () const;
+	const double & planformArea () const;
 	
 	// Creates panels and surface vertex pointers
 	
@@ -102,7 +113,8 @@ class Wing {
 	
 	// Set up wake
 	
-	void setupWake ( int & next_global_vertidx, int & next_global_elemidx );
+	void setupWake ( int & next_global_vertidx, int & next_global_elemidx,
+	                 int wakeidx );
 
 	// Computes velocities and pressures on surface panels; interpolate to
 	// vertices
@@ -136,7 +148,9 @@ class Wing {
 
 	// Compute forces and moments, including sectional
 	
-	void computeForceMoment ( const Eigen::Vector3d & momcen );
+	void computeForceMoment ( const Eigen::Vector3d & momcen,
+	                          const double & xtrefftz, const double & ztrefftz,
+	                          const std::vector<Wake *> & allwake );
 	
 	double lift () const;
 	const double & pressureLift () const;

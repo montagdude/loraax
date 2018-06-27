@@ -32,6 +32,7 @@ const double rcore = 1.E-8;
 /******************************************************************************/
 Wake::Wake ()
 {
+	_idx = -1;
 	_nspan = 0;
 	_nstream = 0;
 	_verts.resize(0);
@@ -51,11 +52,14 @@ Wake::Wake ()
 /******************************************************************************/
 void Wake::initialize ( const std::vector<Vertex *> & topteverts,
                         const std::vector<Vertex *> & botteverts,
-                        int & next_global_vertidx, int & next_global_elemidx )
+                        int & next_global_vertidx, int & next_global_elemidx,
+                        int wakeidx )
 {
 	int ntris, nquads;
 	unsigned int i, j, blvert, brvert, trvert, tlvert;
 	double x, y, z, xviz, yviz, zviz;
+
+	_idx = wakeidx;
 	
 	_topteverts = topteverts;
 	_botteverts = botteverts;
@@ -163,6 +167,13 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
 		next_global_elemidx += 1;
 	}
 }
+
+/******************************************************************************/
+//
+// Get wake idx
+//
+/******************************************************************************/
+int Wake::idx () const { return _idx; }
 
 /******************************************************************************/
 //
@@ -352,7 +363,7 @@ QuadPanel * Wake::quadPanel ( unsigned int qidx )
 Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
                                              const double & y, const double & z,
                                              bool include_bound_leg,
-                                             unsigned int on_trailing ) const
+                                             int on_trailing_leg ) const
 {
 	int i;
 	double gamma, x1, y1, z1, x2, y2, z2;
@@ -381,7 +392,7 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 		// Induced velocity due to leg + mirror contribution. Do not count
 		// self-induced velocity of a trailing leg.
 
-		if (i != on_trailing)
+		if (i != on_trailing_leg)
 			w += vortex_velocity(x, y, z, x1, y1, z1, x2, y2, z2, rcore,
 			                     true)*gamma;
 		w -= vortex_velocity(x, y, z, x1, -y1, z1, x2, -y2, z2, rcore,
@@ -424,9 +435,12 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 // See Kroo paper for more information.
 //
 /******************************************************************************/
-void Wake::farfieldForces ( const double & sref, const double & span ) const
+void Wake::farfieldForces ( const double & sref, const double & xtrefftz,
+                            const double & ztrefftz,
+                            const std::vector<Wake *> & allwake ) const
 {
 	int i;
+	unsigned int j, nwake;;
 	double a, b, c, d;
 	double dx, dy, dz, wy, wz, qinf, lift, drag, cl, cd;
 	std::vector<Eigen::Vector3d> w;
@@ -437,16 +451,16 @@ void Wake::farfieldForces ( const double & sref, const double & span ) const
 
 	transform = euler_rotation(0., -alpha, 0.);
 
-	// Get equation for Trefftz plane, 500 span lengths downstream of root TE
+	// Get equation for Trefftz plane
 
-	p0(0) = _verts[0*(_nstream+1)+0].x() + 500*span*uinfvec(0)/uinf;
-	p0(1) = 0.;
-	p0(2) = _verts[0*(_nstream+1)+0].z() + 500*span*uinfvec(2)/uinf;
+	p0 << xtrefftz, 0., ztrefftz;
 	compute_plane(p0, uinfvec/uinf, a, b, c, d);
 
 	// Wake induced velocity
 
 	w.resize(_nspan);
+	nwake = allwake.size();
+#pragma omp parallel for private(i,p0,p,j)
 	for ( i = 0; i < _nspan; i++ )
 	{
 		// Aft TE point projected on Trefftz plane
@@ -456,10 +470,18 @@ void Wake::farfieldForces ( const double & sref, const double & span ) const
 		p0(2) = _verts[i*(_nstream+1)+0].z();
 		p = line_plane_intersection(p0, uinfvec/uinf, a, b, c, d);
 
-		// Compute induced velocity and transform to Trefftz frame.
-		// FIXME: this needs influence of other wings' wakes
+		// Induced velocity from all wakes and transform to Trefftz plane
 
-		w[i] = planarInducedVelocity(p(0), p(1), p(2), false, i);
+		w[i] << 0., 0., 0.;
+		for ( j = 0; j < nwake; j++ )
+		{
+			if (allwake[j]->idx() == _idx)
+				w[i] += allwake[j]->planarInducedVelocity(p(0), p(1), p(2),
+				                                          false, i);
+			else
+				w[i] += allwake[j]->planarInducedVelocity(p(0), p(1), p(2),
+				                                          false);
+		}
 		w[i] = transform*w[i];
 	}
 

@@ -31,85 +31,88 @@ using namespace tinyxml2;
 /******************************************************************************/
 void Aircraft::setGeometryPointers ()
 {
-  unsigned int nwings, nverts_total, nquads_total, ntris_total;
-  unsigned int i, j, nverts, nquads, ntris, vcounter, pcounter;
-  unsigned int nverts_wake_total, nverts_wake, vwcounter;
-  unsigned int nwaketris_total, nwakequads_total, nwaketris, nwakequads;
-  unsigned int wakecounter;
-
-  // Get sizes first (don't use push_back, because it invalidates pointers)
-
-  nwings = _wings.size();
-  nverts_total = 0;
-  nquads_total = 0;
-  ntris_total = 0;
-  nverts_wake_total = 0;
-  nwaketris_total = 0;
-  nwakequads_total = 0;
-  for ( i = 0; i < nwings; i++ )
-  {
-    nverts_total += _wings[i].nVerts();
-    nquads_total += _wings[i].nQuads();
-    ntris_total += _wings[i].nTris();
-    nverts_wake_total += _wings[i].wake().nVerts();
-    nwaketris_total += _wings[i].wake().nTris();
-    nwakequads_total += _wings[i].wake().nQuads();
-  }
-  _verts.resize(nverts_total);
-  _panels.resize(nquads_total + ntris_total);
-  _wakeverts.resize(nverts_wake_total);
-  _wakepanels.resize(nwaketris_total + nwakequads_total);
-
-  // Store geometry pointers
-
-  vcounter = 0;
-  pcounter = 0;
-  vwcounter = 0;
-  wakecounter = 0;
-  for ( i = 0; i < nwings; i++ )
-  {
-    nverts = _wings[i].nVerts();
-    for ( j = 0; j < nverts; j++ )
-    {
-      _verts[vcounter] = _wings[i].vert(j);
-      vcounter += 1;
-    }
-
-    nquads = _wings[i].nQuads();
-    for ( j = 0; j < nquads; j++ )
-    {
-      _panels[pcounter] = _wings[i].quadPanel(j);
-      pcounter += 1;
-    }
-
-    ntris = _wings[i].nTris();
-    for ( j = 0; j < ntris; j++ )
-    {
-      _panels[pcounter] = _wings[i].triPanel(j);
-      pcounter += 1;
-    }
-
-    nverts_wake = _wings[i].wake().nVerts();
-    for ( j = 0; j < nverts_wake; j++ )
-    {
-      _wakeverts[vwcounter] = _wings[i].wake().vert(j);
-      vwcounter += 1;
-    }
-
-    nwaketris = _wings[i].wake().nTris();
-    for ( j = 0; j < nwaketris; j++ )
-    {
-      _wakepanels[wakecounter] = _wings[i].wake().triPanel(j);
-      wakecounter += 1;
-    }
-
-    nwakequads = _wings[i].wake().nQuads();
-    for ( j = 0; j < nwakequads; j++ )
-    {
-      _wakepanels[wakecounter] = _wings[i].wake().quadPanel(j);
-      wakecounter += 1;
-    }
-  }
+	unsigned int nwings, nverts_total, nquads_total, ntris_total;
+	unsigned int i, j, nverts, nquads, ntris, vcounter, pcounter;
+	unsigned int nverts_wake_total, nverts_wake, vwcounter;
+	unsigned int nwaketris_total, nwakequads_total, nwaketris, nwakequads;
+	unsigned int wakecounter;
+	
+	// Get sizes first (don't use push_back, because it invalidates pointers)
+	
+	nwings = _wings.size();
+	nverts_total = 0;
+	nquads_total = 0;
+	ntris_total = 0;
+	nverts_wake_total = 0;
+	nwaketris_total = 0;
+	nwakequads_total = 0;
+	for ( i = 0; i < nwings; i++ )
+	{
+		nverts_total += _wings[i].nVerts();
+		nquads_total += _wings[i].nQuads();
+		ntris_total += _wings[i].nTris();
+		nverts_wake_total += _wings[i].wake().nVerts();
+		nwaketris_total += _wings[i].wake().nTris();
+		nwakequads_total += _wings[i].wake().nQuads();
+	}
+	_verts.resize(nverts_total);
+	_panels.resize(nquads_total + ntris_total);
+	_wakeverts.resize(nverts_wake_total);
+	_wakepanels.resize(nwaketris_total + nwakequads_total);
+	_allwake.resize(nwings);
+	
+	// Store geometry pointers
+	
+	vcounter = 0;
+	pcounter = 0;
+	vwcounter = 0;
+	wakecounter = 0;
+	for ( i = 0; i < nwings; i++ )
+	{
+		nverts = _wings[i].nVerts();
+		for ( j = 0; j < nverts; j++ )
+		{
+			_verts[vcounter] = _wings[i].vert(j);
+			vcounter += 1;
+		}
+		
+		nquads = _wings[i].nQuads();
+		for ( j = 0; j < nquads; j++ )
+		{
+			_panels[pcounter] = _wings[i].quadPanel(j);
+			pcounter += 1;
+		}
+		
+		ntris = _wings[i].nTris();
+		for ( j = 0; j < ntris; j++ )
+		{
+			_panels[pcounter] = _wings[i].triPanel(j);
+			pcounter += 1;
+		}
+		
+		nverts_wake = _wings[i].wake().nVerts();
+		for ( j = 0; j < nverts_wake; j++ )
+		{
+			_wakeverts[vwcounter] = _wings[i].wake().vert(j);
+			vwcounter += 1;
+		}
+		
+		nwaketris = _wings[i].wake().nTris();
+		for ( j = 0; j < nwaketris; j++ )
+		{
+			_wakepanels[wakecounter] = _wings[i].wake().triPanel(j);
+			wakecounter += 1;
+		}
+		
+		nwakequads = _wings[i].wake().nQuads();
+		for ( j = 0; j < nwakequads; j++ )
+		{
+			_wakepanels[wakecounter] = _wings[i].wake().quadPanel(j);
+			wakecounter += 1;
+		}
+		
+		_allwake[i] = &_wings[i].wake();
+	}
 }
 
 /******************************************************************************/
@@ -479,19 +482,23 @@ void Aircraft::writeWakeData ( std::ofstream & f ) const
 /******************************************************************************/
 Aircraft::Aircraft ()
 {
-  _wings.resize(0);
-  _sref = 0;
-  _lref = 0;
-  _momcen << 0., 0., 0.;
-  _verts.resize(0);
-  _panels.resize(0);
-  _wakeverts.resize(0);
-  _wakepanels.resize(0);
-  _sourceic.resize(0,0);
-  _doubletic.resize(0,0);
-  _aic.resize(0,0);
-  _mun.resize(0);
-  _rhs.resize(0);
+	_wings.resize(0);
+	_sref = 0;
+	_lref = 0;
+	_momcen << 0., 0., 0.;
+	_xte = 0.;
+	_zte = 0.;
+	_maxspan = 0.;
+	_verts.resize(0);
+	_panels.resize(0);
+	_wakeverts.resize(0);
+	_wakepanels.resize(0);
+	_allwake.resize(0);
+	_sourceic.resize(0,0);
+	_doubletic.resize(0,0);
+	_aic.resize(0,0);
+	_mun.resize(0);
+	_rhs.resize(0);
 }
 
 /******************************************************************************/
@@ -772,7 +779,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 	
 	for ( i = 0; i < nwings; i++ )
 	{
-		_wings[i].setupWake(next_global_vertidx, next_global_elemidx);
+		_wings[i].setupWake(next_global_vertidx, next_global_elemidx, i);
 	}
 	
 	if (nwings < 1)
@@ -781,6 +788,21 @@ int Aircraft::readXML ( const std::string & geom_file )
 		                 "At least one wing is required.");
 		return 2;
 	}
+
+	// Determine furthest aft root TE points for Trefftz plane calculation
+
+	_xte = -1.E+06;
+	_zte = 0.;
+	_maxspan = 0.;
+	for ( i = 0; i < nwings; i++ )
+	{
+		if (_wings[i].xTE() >= _xte)
+			_xte = _wings[i].xTE();
+		_zte += _wings[i].zTE();
+		if (_wings[i].span() >= _maxspan)
+			_maxspan = _wings[i].span();
+	}
+	_zte /= double(nwings);
 	
 	// Set pointers to vertices, panels, and wake elements
 	
@@ -1093,11 +1115,17 @@ void Aircraft::setupViscousWake ()
 void Aircraft::computeForceMoment ()
 {
 	unsigned int i, nwings;
+	double xtrefftz, ztrefftz;
+
+	// Trefftz plane 500 span lengths downstream from aftmost TE
+
+	xtrefftz = _xte + 500.*_maxspan*uinfvec(0)/uinf;
+	ztrefftz = _zte + 500.*_maxspan*uinfvec(2)/uinf;
 	
 	nwings = _wings.size();
 	for ( i = 0; i < nwings; i++ )
 	{
-		_wings[i].computeForceMoment(_momcen);
+		_wings[i].computeForceMoment(_momcen, xtrefftz, ztrefftz, _allwake);
 	}
 }
 
