@@ -1545,7 +1545,6 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
 {
 	unsigned int i, j;
 	Eigen::Vector3d dfp, dfv, dmp, dmv, fp, fv, mp, mv;
-	double qinf;
 	
 	fp << 0., 0., 0.;
 	fv << 0., 0., 0.;
@@ -1582,20 +1581,13 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
 	
 	// Convert to wind frame
 	
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
 	_liftp = -fp(0)*sin(alpha*M_PI/180.) + fp(2)*cos(alpha*M_PI/180.);
 	_liftv = -fv(0)*sin(alpha*M_PI/180.) + fv(2)*cos(alpha*M_PI/180.);
 	_dragp =  fp(0)*cos(alpha*M_PI/180.) + fp(2)*sin(alpha*M_PI/180.);
 	_dragv =  fv(0)*cos(alpha*M_PI/180.) + fv(2)*sin(alpha*M_PI/180.);
 	_momentp = mp(1);
 	_momentv = mv(1);
-	_clp = _liftp/(qinf*_splanform);
-	_clv = _liftv/(qinf*_splanform);
-	_cdp = _dragp/(qinf*_splanform);
-	_cdv = _dragv/(qinf*_splanform);
-	_cmp = _momentp/(qinf*_splanform*_cbar);
-	_cmv = _momentv/(qinf*_splanform*_cbar);
-	
+
 	// Compute section forces and moments
 	
 #pragma omp parallel for private(i)
@@ -1623,17 +1615,71 @@ double Wing::pitchingMoment () const { return _momentp + _momentv; }
 const double & Wing::pressurePitchingMoment () const { return _momentp; }
 const double & Wing::viscousPitchingMoment () const { return _momentv; }
 
-double Wing::liftCoefficient () const { return _clp + _clv; }
-const double & Wing::pressureLiftCoefficient () const { return _clp; }
-const double & Wing::viscousLiftCoefficient () const { return _clv; }
+double Wing::liftCoefficient () const
+{
+	double qinf;
 
-double Wing::dragCoefficient () const { return _cdp + _cdv; }
-const double & Wing::pressureDragCoefficient () const { return _cdp; }
-const double & Wing::viscousDragCoefficient () const { return _cdv; }
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return (_liftp + _liftv) / (qinf*_splanform);
+}
+const double Wing::pressureLiftCoefficient () const
+{
+	double qinf;
 
-double Wing::pitchingMomentCoefficient () const { return _cmp + _cmv; }
-const double & Wing::pressurePitchingMomentCoefficient () const { return _cmp; }
-const double & Wing::viscousPitchingMomentCoefficient () const { return _cmv; }
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return _liftp / (qinf*_splanform);
+}
+const double Wing::viscousLiftCoefficient () const
+{
+	double qinf;
+
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return _liftv / (qinf*_splanform);
+}
+
+double Wing::dragCoefficient () const
+{
+	double qinf;
+
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return (_dragp + _dragv) / (qinf*_splanform);
+}
+const double Wing::pressureDragCoefficient () const
+{
+	double qinf;
+
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return _dragp / (qinf*_splanform);
+}
+const double Wing::viscousDragCoefficient () const
+{
+	double qinf;
+
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return _dragv / (qinf*_splanform);
+}
+
+double Wing::pitchingMomentCoefficient () const
+{
+	double qinf;
+
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return (_momentp + _momentv) / (qinf*_splanform*_cbar);
+}
+const double Wing::pressurePitchingMomentCoefficient () const
+{
+	double qinf;
+
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return _momentp / (qinf*_splanform*_cbar);
+}
+const double Wing::viscousPitchingMomentCoefficient () const
+{
+	double qinf;
+
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return _momentv / (qinf*_splanform*_cbar);
+}
 
 /******************************************************************************/
 //
@@ -1642,84 +1688,84 @@ const double & Wing::viscousPitchingMomentCoefficient () const { return _cmv; }
 /******************************************************************************/
 int Wing::writeForceMoment ( int iter ) const
 {
-  std::ofstream f;
-  std::string fname;
-
-  fname = "forcemoment/" + _name + "_forcemoment.csv";
-
-  // Write header during first iteration
-
-  if (iter == 1)
-  {
-    f.open(fname.c_str(), std::fstream::out);
-    if (! f.is_open())
-    {
-      print_warning("Wing::writeForceMoment",
-                    "Unable to open " + fname + " for writing.");
-      return 1;
-    }
-	if (viscous)
+	std::ofstream f;
+	std::string fname;
+	
+	fname = "forcemoment/" + _name + "_forcemoment.csv";
+	
+	// Write header during first iteration
+	
+	if (iter == 1)
 	{
-      f << "\"Iter\",\"Lift\",\"Liftp\",\"Liftv\","
-		<<          "\"Drag\",\"Dragp\",\"Dragv\","
-		<<"\"Pitching_moment\",\"Pitching_momentp\",\"Pitching_momentv\","
-		<<"\"CL\",\"CLp\",\"CLv\","
-		<<"\"CD\",\"CDp\",\"CDv\","
-		<<"\"Cm\",\"Cmp\",\"Cmv\"" << std::endl;
+		f.open(fname.c_str(), std::fstream::out);
+		if (! f.is_open())
+		{
+			print_warning("Wing::writeForceMoment",
+			              "Unable to open " + fname + " for writing.");
+			return 1;
+		}
+		if (viscous)
+		{
+			f << "\"Iter\",\"Lift\",\"Liftp\",\"Liftv\","
+			<<          "\"Drag\",\"Dragp\",\"Dragv\","
+			<<"\"Pitching_moment\",\"Pitching_momentp\",\"Pitching_momentv\","
+			<<"\"CL\",\"CLp\",\"CLv\","
+			<<"\"CD\",\"CDp\",\"CDv\","
+			<<"\"Cm\",\"Cmp\",\"Cmv\"" << std::endl;
+		}
+		else
+		{
+			f << "\"Iter\",\"Lift\",\"Drag\",\"Pitching moment\","
+			  << "\"CL\",\"CD\",\"Cm\"" << std::endl;
+		}
 	}
 	else
 	{
-      f << "\"Iter\",\"Lift\",\"Drag\",\"Pitching moment\","
-        << "\"CL\",\"CD\",\"Cm\"" << std::endl;
+		f.open(fname.c_str(), std::fstream::app);
+		if (! f.is_open())
+		{
+			print_warning("Wing::writeForceMoment",
+			              "Unable to open " + fname + " for writing.");
+			return 1;
+		}
 	}
-  }
-  else
-  {
-    f.open(fname.c_str(), std::fstream::app);
-    if (! f.is_open())
-    {
-      print_warning("Wing::writeForceMoment",
-                    "Unable to open " + fname + " for writing.");
-      return 1;
-    }
-  }
-  f << iter << ",";
-  f.setf(std::ios_base::scientific);
-  f << std::setprecision(7);
-  if (viscous)
-  {
-    f << _liftp + _liftv << ",";
-    f << _liftp << ",";
-    f << _liftv << ",";
-    f << _dragp + _dragv << ",";
-    f << _dragp << ",";
-    f << _dragv << ",";
-    f << _momentp + _momentv << ",";
-    f << _momentp << ",";
-    f << _momentv << ",";
-    f << _clp + _clv << ",";
-    f << _clp << ",";
-    f << _clv << ",";
-    f << _cdp + _cdv << ",";
-    f << _cdp << ",";
-    f << _cdv << ",";
-    f << _cmp + _cmv << ",";
-    f << _cmp << ",";
-    f << _cmv << std::endl;
-  }
-  else
-  {
-    f << _liftp << ",";
-    f << _dragp << ",";
-    f << _momentp << ",";
-    f << _clp << ",";
-    f << _cdp << ",";
-    f << _cmp << std::endl;
-  }
-
-  f.close();
-
-  return 0;
+	f << iter << ",";
+	f.setf(std::ios_base::scientific);
+	f << std::setprecision(7);
+	if (viscous)
+	{
+		f << _liftp + _liftv << ",";
+		f << _liftp << ",";
+		f << _liftv << ",";
+		f << _dragp + _dragv << ",";
+		f << _dragp << ",";
+		f << _dragv << ",";
+		f << _momentp + _momentv << ",";
+		f << _momentp << ",";
+		f << _momentv << ",";
+		f << liftCoefficient() << ",";
+		f << pressureLiftCoefficient() << ",";
+		f << viscousLiftCoefficient() << ",";
+		f << dragCoefficient() << ",";
+		f << pressureDragCoefficient() << ",";
+		f << viscousDragCoefficient() << ",";
+		f << pitchingMomentCoefficient() << ",";
+		f << pressurePitchingMomentCoefficient() << ",";
+		f << viscousPitchingMomentCoefficient() << std::endl;
+	}
+	else
+	{
+		f << _liftp << ",";
+		f << _dragp << ",";
+		f << _momentp << ",";
+		f << liftCoefficient() << ",";
+		f << dragCoefficient() << ",";
+		f << pitchingMomentCoefficient() << std::endl;
+	}
+	
+	f.close();
+	
+	return 0;
 }
 
 /******************************************************************************/

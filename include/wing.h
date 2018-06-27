@@ -58,8 +58,6 @@ class Wing {
 	double _liftp, _liftv;			// Dimensional forces and moments
 	double _dragp, _dragv;
 	double _momentp, _momentv;
-	double _clp, _clv, _cdp, _cdv;	// Force coefficients
-	double _cmp, _cmv;				// Moment coefficients
 	
 	std::vector<double> adjustSpacing ( 
 	                           const std::vector<double> & nom_stations ) const;
@@ -165,16 +163,16 @@ class Wing {
 	const double & viscousPitchingMoment () const;
 	
 	double liftCoefficient () const;
-	const double & pressureLiftCoefficient () const;
-	const double & viscousLiftCoefficient () const;
+	const double pressureLiftCoefficient () const;
+	const double viscousLiftCoefficient () const;
 	
 	double dragCoefficient () const;
-	const double & pressureDragCoefficient () const;
-	const double & viscousDragCoefficient () const;
+	const double pressureDragCoefficient () const;
+	const double viscousDragCoefficient () const;
 	
 	double pitchingMomentCoefficient () const;
-	const double & pressurePitchingMomentCoefficient () const;
-	const double & viscousPitchingMomentCoefficient () const;
+	const double pressurePitchingMomentCoefficient () const;
+	const double viscousPitchingMomentCoefficient () const;
 	
 	// Write forces and moments to file
 	
