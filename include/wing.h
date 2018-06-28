@@ -55,9 +55,12 @@ class Wing {
 									// Wake strips behind TE panels
 	ViscousWake _vwake;				// Viscous wake
 
-	double _liftp, _liftv;			// Dimensional forces and moments
-	double _dragp, _dragv;
-	double _momentp, _momentv;
+	double _liftp, _liftf;			// Pressure and skin friction, integrated
+	double _lifttr;					// Trefftz plane
+	double _dragp, _dragf;			// Pressure and skin friction, integrated
+	double _dragv;					// Parasitic drag (from BL solution)
+	double _dragtr;					// Trefftz plane
+	double _momentp, _momentf;		// Pressure and skin friction, integrated
 	
 	std::vector<double> adjustSpacing ( 
 	                           const std::vector<double> & nom_stations ) const;
@@ -150,29 +153,36 @@ class Wing {
 	                          const double & xtrefftz, const double & ztrefftz,
 	                          const std::vector<Wake *> & allwake );
 	
-	double lift () const;
-	const double & pressureLift () const;
-	const double & viscousLift () const;
-	
-	double drag () const;
-	const double & pressureDrag () const;
-	const double & viscousDrag () const;
-	
-	double pitchingMoment () const;
+	double lift () const;						// Trefftz + skin friction
+	const double & trefftzLift () const;		// Calculated in Trefftz plane
+	const double & skinFrictionLift () const;	// Via skin friction integration
+	const double & integratedLift () const;		// Via pressure integration
+
+	double drag () const;						// Induced + viscous
+	const double & inducedDrag () const;		// Calculated in Trefftz plane
+	const double & parasiticDrag () const;		// Via BL drag span integration
+	const double & skinFrictionDrag () const;	// Skin fric. part of viscous
+	const double & integratedDrag () const;		// Via pressure integration;
+												//   inaccurate in viscous cases
+
+	double pitchingMoment () const;				// Pressure + skin friction
 	const double & pressurePitchingMoment () const;
-	const double & viscousPitchingMoment () const;
-	
+	const double & skinFrictionPitchingMoment () const;
+
 	double liftCoefficient () const;
-	const double pressureLiftCoefficient () const;
-	const double viscousLiftCoefficient () const;
-	
+	double trefftzLiftCoefficient () const;
+	double skinFrictionLiftCoefficient () const;
+	double integratedLiftCoefficient () const;
+
 	double dragCoefficient () const;
-	const double pressureDragCoefficient () const;
-	const double viscousDragCoefficient () const;
-	
+	double inducedDragCoefficient () const;
+	double parasiticDragCoefficient () const;
+	double skinFrictionDragCoefficient () const;
+	double integratedDragCoefficient () const;
+
 	double pitchingMomentCoefficient () const;
-	const double pressurePitchingMomentCoefficient () const;
-	const double viscousPitchingMomentCoefficient () const;
+	double pressurePitchingMomentCoefficient () const;
+	double skinFrictionPitchingMomentCoefficient () const;
 	
 	// Write forces and moments to file
 	

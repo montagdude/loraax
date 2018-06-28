@@ -137,12 +137,38 @@ int main (int argc, char* argv[])
 		std::cout << "  Computing forces and moments ..." << std::endl;
 		ac.computeForceMoment();
 		ac.writeForceMoment(iter);
-		std::cout << "  CL: " << std::setprecision(5) << std::setw(8)
-		          << std::left << ac.liftCoefficient();
-		std::cout << "  CD: " << std::setprecision(5) << std::setw(8)
-		          << std::left << ac.dragCoefficient();
-		std::cout << "  Cm: " << std::setprecision(5) << std::setw(8)
-		          << std::left << ac.pitchingMomentCoefficient() << std::endl;
+		if (viscous)
+		{
+			std::cout << "  CL: " << std::setprecision(5) << std::setw(8)
+			          << std::left << ac.liftCoefficient();
+			std::cout << "  CD: " << std::setprecision(5) << std::setw(8)
+			          << std::left << ac.dragCoefficient() << std::endl;
+			std::cout << "  CDinduced: " << std::setprecision(5)
+			          << std::setw(8) << std::left
+			          << ac.inducedDragCoefficient();
+			std::cout << "  CDparasitic: " << std::setprecision(5)
+			          << std::setw(8) << std::left
+			          << ac.parasiticDragCoefficient() << std::endl;
+			std::cout << "  Cm: " << std::setprecision(5) << std::setw(8)
+			          << std::left << ac.pitchingMomentCoefficient()
+			          << std::endl;
+		}
+		else
+		{
+			std::cout << "  CL: " << std::setprecision(5) << std::setw(8)
+			          << std::left << ac.trefftzLiftCoefficient();
+			std::cout << "  CD: " << std::setprecision(5) << std::setw(8)
+			          << std::left << ac.inducedDragCoefficient();
+			std::cout << "  (Trefftz plane)" << std::endl;
+			std::cout << "  CL: " << std::setprecision(5) << std::setw(8)
+			          << std::left << ac.integratedLiftCoefficient();
+			std::cout << "  CD: " << std::setprecision(5) << std::setw(8)
+			          << std::left << ac.integratedDragCoefficient();
+			std::cout << "  (Pressure integration)" << std::endl;
+			std::cout << "  Cm: " << std::setprecision(5) << std::setw(8)
+			          << std::left << ac.pitchingMomentCoefficient()
+			          << std::endl;
+		}
 		
 		// Write visualization
 		

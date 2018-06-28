@@ -74,9 +74,9 @@ class Wake {
 
 	// Trefftz plane force calculation
 
-	void farfieldForces ( const double & sref, const double & xtrefftz,
-	                      const double & ztrefftz,
-	                      const std::vector<Wake *> & allwake ) const;
+	void farfieldForces ( const double & xtrefftz, const double & ztrefftz,
+	                      const std::vector<Wake *> & allwake, double & lift,
+	                      double & drag ) const;
 };
 
 #endif

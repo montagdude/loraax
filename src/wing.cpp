@@ -369,6 +369,15 @@ Wing::Wing ()
 	_tris.resize(0);
 	_panels.resize(0);
 	_wakestrips.resize(0);
+	_liftp = 0.;
+	_liftf = 0.;
+	_lifttr = 0.;
+	_dragp = 0.;
+	_dragf = 0.;
+	_dragv = 0.;
+	_dragtr = 0.;
+	_momentp = 0.;
+	_momentf = 0.;
 }
 
 /******************************************************************************/
@@ -1544,23 +1553,25 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
                                const std::vector<Wake *> & allwake )
 {
 	unsigned int i, j;
-	Eigen::Vector3d dfp, dfv, dmp, dmv, fp, fv, mp, mv;
+	Eigen::Vector3d dfp, dff, dmp, dmf, fp, ff, mp, mf;
 	
 	fp << 0., 0., 0.;
-	fv << 0., 0., 0.;
+	ff << 0., 0., 0.;
 	mp << 0., 0., 0.;
-	mv << 0., 0., 0.;
+	mf << 0., 0., 0.;
+
+	// Forces and moments via surface integration
 
 	for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
 	{
 		for ( j = 0; j < 2*_nchord-2; j++ )
 		{ 
 			_panels[i][j]->computeForceMoment(uinf, rhoinf, pinf, momcen,
-			                                  viscous, dfp, dfv, dmp, dmv);
+			                                  viscous, dfp, dff, dmp, dmf);
 			fp += dfp;
-			fv += dfv;
+			ff += dff;
 			mp += dmp;
-			mv += dmv;
+			mf += dmf;
 		}
 	}
 	
@@ -1569,24 +1580,26 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
 	fp(0)  *= 2.;
 	fp(1)  =  0.;
 	fp(2)  *= 2.;
-	fv(0)  *= 2.;
-	fv(1)  =  0.;
-	fv(2)  *= 2.;
+	ff(0)  *= 2.;
+	ff(1)  =  0.;
+	ff(2)  *= 2.;
 	mp(0) =  0.;
 	mp(1) *= 2.;
 	mp(2) =  0.;
-	mv(0) =  0.;
-	mv(1) *= 2.;
-	mv(2) =  0.;
+	mf(0) =  0.;
+	mf(1) *= 2.;
+	mf(2) =  0.;
 	
 	// Convert to wind frame
+	//FIXME: get skin friction drag from integration of 2D solution across span?
+	//       Also get parasitic drag from 2D solution
 	
 	_liftp = -fp(0)*sin(alpha*M_PI/180.) + fp(2)*cos(alpha*M_PI/180.);
-	_liftv = -fv(0)*sin(alpha*M_PI/180.) + fv(2)*cos(alpha*M_PI/180.);
+	_liftf = -ff(0)*sin(alpha*M_PI/180.) + ff(2)*cos(alpha*M_PI/180.);
 	_dragp =  fp(0)*cos(alpha*M_PI/180.) + fp(2)*sin(alpha*M_PI/180.);
-	_dragv =  fv(0)*cos(alpha*M_PI/180.) + fv(2)*sin(alpha*M_PI/180.);
+	_dragf =  ff(0)*cos(alpha*M_PI/180.) + ff(2)*sin(alpha*M_PI/180.);
 	_momentp = mp(1);
-	_momentv = mv(1);
+	_momentf = mf(1);
 
 	// Compute section forces and moments
 	
@@ -1600,41 +1613,51 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
 
 	// Trefftz plane forces
 
-	_wake.farfieldForces(_splanform, xtrefftz, ztrefftz, allwake);
+	_wake.farfieldForces(xtrefftz, ztrefftz, allwake, _lifttr, _dragtr);
 }
 
-double Wing::lift () const { return _liftp + _liftv; }
-const double & Wing::pressureLift () const { return _liftp; }
-const double & Wing::viscousLift () const { return _liftv; }
+double Wing::lift () const { return _lifttr + _liftf; }
+const double & Wing::trefftzLift () const { return _lifttr; }
+const double & Wing::skinFrictionLift () const { return _liftf; }
+const double & Wing::integratedLift () const { return _liftp; }
 
-double Wing::drag () const { return _dragp + _dragv; }
-const double & Wing::pressureDrag () const { return _dragp; }
-const double & Wing::viscousDrag () const { return _dragv; }
+double Wing::drag () const { return _dragtr + _dragv; }
+const double & Wing::inducedDrag () const { return _dragtr; }
+const double & Wing::parasiticDrag () const { return _dragv; }
+const double & Wing::skinFrictionDrag () const { return _dragf; }
+const double & Wing::integratedDrag () const { return _dragp; }
 
-double Wing::pitchingMoment () const { return _momentp + _momentv; }
+double Wing::pitchingMoment () const { return _momentp + _momentf; }
 const double & Wing::pressurePitchingMoment () const { return _momentp; }
-const double & Wing::viscousPitchingMoment () const { return _momentv; }
+const double & Wing::skinFrictionPitchingMoment () const { return _momentf; }
 
 double Wing::liftCoefficient () const
 {
 	double qinf;
 
 	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return (_liftp + _liftv) / (qinf*_splanform);
+	return lift() / (qinf*_splanform);
 }
-const double Wing::pressureLiftCoefficient () const
+double Wing::trefftzLiftCoefficient () const
 {
 	double qinf;
 
 	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return _liftp / (qinf*_splanform);
+	return trefftzLift() / (qinf*_splanform);
 }
-const double Wing::viscousLiftCoefficient () const
+double Wing::skinFrictionLiftCoefficient () const
 {
 	double qinf;
 
 	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return _liftv / (qinf*_splanform);
+	return skinFrictionLift() / (qinf*_splanform);
+}
+double Wing::integratedLiftCoefficient () const
+{
+	double qinf;
+
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return integratedLift() / (qinf*_splanform);
 }
 
 double Wing::dragCoefficient () const
@@ -1642,21 +1665,35 @@ double Wing::dragCoefficient () const
 	double qinf;
 
 	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return (_dragp + _dragv) / (qinf*_splanform);
+	return drag() / (qinf*_splanform);
 }
-const double Wing::pressureDragCoefficient () const
+double Wing::inducedDragCoefficient () const
 {
 	double qinf;
 
 	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return _dragp / (qinf*_splanform);
+	return inducedDrag() / (qinf*_splanform);
 }
-const double Wing::viscousDragCoefficient () const
+double Wing::parasiticDragCoefficient () const
 {
 	double qinf;
 
 	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return _dragv / (qinf*_splanform);
+	return parasiticDrag() / (qinf*_splanform);
+}
+double Wing::skinFrictionDragCoefficient () const
+{
+	double qinf;
+
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return skinFrictionDrag() / (qinf*_splanform);
+}
+double Wing::integratedDragCoefficient () const
+{
+	double qinf;
+
+	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+	return integratedDrag() / (qinf*_splanform);
 }
 
 double Wing::pitchingMomentCoefficient () const
@@ -1664,21 +1701,21 @@ double Wing::pitchingMomentCoefficient () const
 	double qinf;
 
 	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return (_momentp + _momentv) / (qinf*_splanform*_cbar);
+	return pitchingMoment() / (qinf*_splanform*_cbar);
 }
-const double Wing::pressurePitchingMomentCoefficient () const
+double Wing::pressurePitchingMomentCoefficient () const
 {
 	double qinf;
 
 	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return _momentp / (qinf*_splanform*_cbar);
+	return pressurePitchingMoment() / (qinf*_splanform*_cbar);
 }
-const double Wing::viscousPitchingMomentCoefficient () const
+double Wing::skinFrictionPitchingMomentCoefficient () const
 {
 	double qinf;
 
 	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return _momentv / (qinf*_splanform*_cbar);
+	return skinFrictionPitchingMoment() / (qinf*_splanform*_cbar);
 }
 
 /******************************************************************************/
@@ -1706,17 +1743,21 @@ int Wing::writeForceMoment ( int iter ) const
 		}
 		if (viscous)
 		{
-			f << "\"Iter\",\"Lift\",\"Liftp\",\"Liftv\","
-			<<          "\"Drag\",\"Dragp\",\"Dragv\","
-			<<"\"Pitching_moment\",\"Pitching_momentp\",\"Pitching_momentv\","
-			<<"\"CL\",\"CLp\",\"CLv\","
-			<<"\"CD\",\"CDp\",\"CDv\","
-			<<"\"Cm\",\"Cmp\",\"Cmv\"" << std::endl;
+			f << "\"Iter\",\"Lift\",\"Lift_trefftz\",\"Lift_skinfric\","
+			  <<            "\"Drag\",\"Drag_induced\",\"Drag_parasitic\","
+			  <<"\"Moment\",\"Moment_pressure\",\"Moment_skinfric\","
+			  <<"\"CL\",\"CL_trefftz\",\"CL_skinfric\","
+			  <<"\"CD\",\"CD_induced\",\"CD_parasitic\","
+			  <<"\"Cm\",\"Cm_pressure\",\"Cm_skinfric\"" << std::endl;
 		}
 		else
 		{
-			f << "\"Iter\",\"Lift\",\"Drag\",\"Pitching moment\","
-			  << "\"CL\",\"CD\",\"Cm\"" << std::endl;
+			f << "\"Iter\",\"Lift\",\"Lift_integrated\","
+			  <<          "\"Drag\",\"Drag_integrated\","
+			  << "\"Moment\","
+			  << "\"CL\",\"CL_integrated\","
+			  << "\"CD\",\"CD_integrated\","
+			  << "\"Cm\"" << std::endl;
 		}
 	}
 	else
@@ -1734,35 +1775,38 @@ int Wing::writeForceMoment ( int iter ) const
 	f << std::setprecision(7);
 	if (viscous)
 	{
-		f << _liftp + _liftv << ",";
-		f << _liftp << ",";
-		f << _liftv << ",";
-		f << _dragp + _dragv << ",";
-		f << _dragp << ",";
-		f << _dragv << ",";
-		f << _momentp + _momentv << ",";
-		f << _momentp << ",";
-		f << _momentv << ",";
+		f << lift() << ",";
+		f << trefftzLift() << ",";
+		f << skinFrictionLift() << ",";
+		f << drag() << ",";
+		f << inducedDrag() << ",";
+		f << parasiticDrag() << ",";
+		f << pitchingMoment() << ",";
+		f << pressurePitchingMoment() << ",";
+		f << skinFrictionPitchingMoment() << ",";
 		f << liftCoefficient() << ",";
-		f << pressureLiftCoefficient() << ",";
-		f << viscousLiftCoefficient() << ",";
+		f << trefftzLiftCoefficient() << ",";
+		f << skinFrictionLiftCoefficient() << ",";
 		f << dragCoefficient() << ",";
-		f << pressureDragCoefficient() << ",";
-		f << viscousDragCoefficient() << ",";
+		f << inducedDragCoefficient() << ",";
+		f << parasiticDragCoefficient() << ",";
 		f << pitchingMomentCoefficient() << ",";
 		f << pressurePitchingMomentCoefficient() << ",";
-		f << viscousPitchingMomentCoefficient() << std::endl;
+		f << skinFrictionPitchingMomentCoefficient() << std::endl;
 	}
 	else
 	{
-		f << _liftp << ",";
-		f << _dragp << ",";
-		f << _momentp << ",";
+		f << lift() << ",";
+		f << integratedLift() << ",";
+		f << drag() << ",";
+		f << integratedDrag() << ",";
+		f << pitchingMoment() << ",";
 		f << liftCoefficient() << ",";
+		f << integratedLiftCoefficient() << ",";
 		f << dragCoefficient() << ",";
+		f << integratedDragCoefficient() << ",";
 		f << pitchingMomentCoefficient() << std::endl;
 	}
-	
 	f.close();
 	
 	return 0;

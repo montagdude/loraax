@@ -13,9 +13,6 @@
 #include "geometry.h"
 #include "wake.h"
 
-#include <iostream>
-#include <iomanip>
-
 // FIXME: make this a function of smallest panel size
 const double rcore = 1.E-8;
 
@@ -435,14 +432,13 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 // See Kroo paper for more information.
 //
 /******************************************************************************/
-void Wake::farfieldForces ( const double & sref, const double & xtrefftz,
-                            const double & ztrefftz,
-                            const std::vector<Wake *> & allwake ) const
+void Wake::farfieldForces ( const double & xtrefftz, const double & ztrefftz,
+                            const std::vector<Wake *> & allwake,
+                            double & lift, double & drag ) const
 {
 	int i;
 	unsigned int j, nwake;;
-	double a, b, c, d;
-	double dx, dy, dz, wy, wz, qinf, lift, drag, cl, cd;
+	double a, b, c, d, dx, dy, dz, wy, wz;
 	std::vector<Eigen::Vector3d> w;
 	Eigen::Vector3d p0, p, p1, p2, edge;
 	Eigen::Matrix3d transform;
@@ -519,19 +515,9 @@ void Wake::farfieldForces ( const double & sref, const double & xtrefftz,
 		lift += _quads[i].doubletStrength()*edge(1);
 		drag += (edge(2)*wy - edge(1)*wz) * _quads[i].doubletStrength();
 	}
-	lift *= rhoinf*uinf;
+
+	// Final factors including mirror image factors
+
+	lift *= 2.*rhoinf*uinf;
 	drag *= rhoinf;
-
-	// Mirror image contribution and coefficients
-
-	lift *= 2.;		// Drag already has mirror factor built in
-
-	qinf = 0.5*rhoinf*std::pow(uinf,2.);
-	cl = lift / (qinf*sref);
-	cd = drag / (qinf*sref);
-
-	std::cout << "  CLff: " << std::setprecision(5) << std::setw(8)
-	          << std::left << cl;
-	std::cout << "  CDff: " << std::setprecision(5) << std::setw(8)
-	          << std::left << cd << std::endl;
 }

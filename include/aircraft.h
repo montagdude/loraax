@@ -98,33 +98,40 @@ class Aircraft {
 
 	void setupViscousWake ();
 	
-	// Computes or access forces and moments
+	// Compute or access forces and moments
 	
 	void computeForceMoment ();
-	
-	double lift () const;
-	double pressureLift () const;
-	double viscousLift () const;
-	
-	double drag () const;
-	double pressureDrag () const;
-	double viscousDrag () const;
-	
-	double pitchingMoment () const;
+
+	double lift () const;						// Trefftz + skin friction
+	double trefftzLift () const;				// Calculated in Trefftz plane
+	double skinFrictionLift () const;			// Via skin friction integration
+	double integratedLift () const;				// Via pressure integration
+
+	double drag () const;						// Induced + viscous
+	double inducedDrag () const;				// Calculated in Trefftz plane
+	double parasiticDrag () const;				// Via BL drag span integration
+	double skinFrictionDrag () const;			// Skin fric. part of viscous
+	double integratedDrag () const;				// Via pressure integration;
+												//   inaccurate in viscous cases
+
+	double pitchingMoment () const;				// Pressure + skin friction
 	double pressurePitchingMoment () const;
-	double viscousPitchingMoment () const;
-	
+	double skinFrictionPitchingMoment () const;
+
 	double liftCoefficient () const;
-	double pressureLiftCoefficient () const;
-	double viscousLiftCoefficient () const;
-	
+	double trefftzLiftCoefficient () const;
+	double skinFrictionLiftCoefficient () const;
+	double integratedLiftCoefficient () const;
+
 	double dragCoefficient () const;
-	double pressureDragCoefficient () const;
-	double viscousDragCoefficient () const;
-	
+	double inducedDragCoefficient () const;
+	double parasiticDragCoefficient () const;
+	double skinFrictionDragCoefficient () const;
+	double integratedDragCoefficient () const;
+
 	double pitchingMomentCoefficient () const;
 	double pressurePitchingMomentCoefficient () const;
-	double viscousPitchingMomentCoefficient () const;
+	double skinFrictionPitchingMomentCoefficient () const;
 	
 	// Write forces and moments to file
 	
