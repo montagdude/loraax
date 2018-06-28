@@ -1,7 +1,7 @@
 #### Basic compiler flags ######################################################
 
 CXX=g++
-DEBUGFLAGS=-g -Wall
+DEBUGFLAGS=-g -Wall -Wno-unknown-pragmas
 GPPFLAGS=-O2 -fopenmp
 CXXFLAGS=$(DEBUGFLAGS)
 #CXXFLAGS=$(GPPFLAGS)
