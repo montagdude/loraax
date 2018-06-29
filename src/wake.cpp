@@ -454,19 +454,16 @@ void Wake::farfieldForces ( const double & xtrefftz, const double & ztrefftz,
 
 	// Wake induced velocity
 
-	w.resize(_nspan-1);
+	w.resize(_nspan);
 	nwake = allwake.size();
 #pragma omp parallel for private(i,p0,p,j)
-	for ( i = 0; i < _nspan-1; i++ )
+	for ( i = 0; i < _nspan; i++ )
 	{
-		// Aft TE midpoint projected on Trefftz plane
+		// Aft TE point projected on Trefftz plane
 
-		p0(0) = 0.5*(_verts[    i*(_nstream+1)+0].x()
-		      +      _verts[(i+1)*(_nstream+1)+0].x());
-		p0(1) = 0.5*(_verts[    i*(_nstream+1)+0].y()
-		      +      _verts[(i+1)*(_nstream+1)+0].y());
-		p0(2) = 0.5*(_verts[    i*(_nstream+1)+0].z()
-		      +      _verts[(i+1)*(_nstream+1)+0].z());
+		p0(0) = _verts[i*(_nstream+1)+0].x();
+		p0(1) = _verts[i*(_nstream+1)+0].y();
+		p0(2) = _verts[i*(_nstream+1)+0].z();
 		p = line_plane_intersection(p0, uinfvec/uinf, a, b, c, d);
 
 		// Induced velocity from all wakes and transform to Trefftz plane
@@ -474,8 +471,12 @@ void Wake::farfieldForces ( const double & xtrefftz, const double & ztrefftz,
 		w[i] << 0., 0., 0.;
 		for ( j = 0; j < nwake; j++ )
 		{
-			w[i] += allwake[j]->planarInducedVelocity(p(0), p(1), p(2),
-			                                          false);
+			if (allwake[j]->idx() == _idx)
+				w[i] += allwake[j]->planarInducedVelocity(p(0), p(1), p(2),
+				                                          false, i);
+			else
+				w[i] += allwake[j]->planarInducedVelocity(p(0), p(1), p(2),
+				                                          false);
 		}
 		w[i] = transform*w[i];
 	}
@@ -506,8 +507,8 @@ void Wake::farfieldForces ( const double & xtrefftz, const double & ztrefftz,
 
 		// In-plane velocity components
 
-		wy = w[i](1);
-		wz = w[i](2);
+		wy = 0.5*(w[i](1) + w[i+1](1));
+		wz = 0.5*(w[i](2) + w[i+1](2));
 
 		// Lift and induced drag
 
