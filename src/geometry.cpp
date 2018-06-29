@@ -266,7 +266,7 @@ Eigen::Vector3d tri_centroid (
   if (r0 == r1) { eqswitch = true; }
   if (std::abs(r0 - r1) < 1.E-08)
   {
-    if ( (std::abs(la(mincomp)) > 1.E-08) && std::abs(lb(mincomp) > 1.E-08) )
+    if ( (std::abs(la(mincomp)) > 1.E-08) && (std::abs(lb(mincomp)) > 1.E-08) )
     {
       eqswitch = true;
     }

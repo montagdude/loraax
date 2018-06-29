@@ -268,6 +268,8 @@ void Wing::computeAreaMAC ( const std::vector<Section> & sorted_user_sections )
 	ceny = 0.;
 	cenz = 0.;
 	_cbar = 0.;
+	cbarx = 0.;
+	ar = 0.;
 	for ( i = 0; i < nsecs-1; i++ )
 	{
 		xL1 = sorted_user_sections[i].xle();
