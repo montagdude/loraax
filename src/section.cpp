@@ -283,14 +283,13 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
                           const double & alpha )
 {
 	Eigen::Vector3d uinfvec_p;
-	double qinf, uinf, uinfp, cl2d;
+	double qinfp, uinf, uinfp, cl2d;
 	Eigen::Matrix3d inertial2section, section2inertial;
 	std::vector<double> bldata;
 	std::vector<double> xw, zw, dstarw, uedgew;
 	int stat;
 	unsigned int i;
 
-	qinf = 0.5*rhoinf*uinfvec.squaredNorm();
 	uinf = uinfvec.norm();
 
 	// Sectional lift must be computed as an input to Xfoil. Sectional forces
@@ -309,8 +308,9 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
 	inertial2section = euler_rotation(_roll, _twist, 0.0, "123");
 	uinfvec_p = inertial2section.transpose() * uinfvec;
 	uinfp = uinfvec_p.norm();
+	qinfp = 0.5*rhoinf*std::pow(uinfp, 2.);
 	cl2d = -_fa*uinfvec_p[2]/uinfp + _fn*uinfvec_p[0]/uinfp;
-	cl2d /= qinf*_chord;
+	cl2d /= qinfp*_chord;
 
   // Run xfoil at 2D Cl
 
@@ -376,7 +376,8 @@ void Section::computeForceMoment ( const double & alpha, const double & uinf,
 	double nx, nz, tx, tz, Vx, Vz, cenx, cenz, pave, cfave, qinf;
 	double fap, fav, fnp, fnv, mp, mv, liftp, liftv, dragp, dragv;
 	double dfap, dfav, dfnp, dfnv;
-	Eigen::Vector3d forcep, forcev, momentp, momentv;
+	double uinfp, qinfp;
+	Eigen::Vector3d forcep, forcev, momentp, momentv, uinfvec, uinfvec_p, fdrag;
 	Eigen::Matrix3d section2inertial;
 	
 	fap = 0.;
@@ -451,8 +452,19 @@ void Section::computeForceMoment ( const double & alpha, const double & uinf,
 	liftp = -forcep(0)*sin(alpha*M_PI/180.) + forcep(2)*cos(alpha*M_PI/180.);
 	liftv = -forcev(0)*sin(alpha*M_PI/180.) + forcev(2)*cos(alpha*M_PI/180.);
 	dragv =  forcev(0)*cos(alpha*M_PI/180.) + forcev(2)*sin(alpha*M_PI/180.);
-	dragp = _foil.dragCoefficient()*qinf*_chord - dragv;
-	
+
+	// Pressure drag from Xfoil solution, because integrated pressure drag is
+	// not accurate (Xfoil uses BL solution in far wake to compute drag).
+
+	uinfvec << uinf*cos(alpha*M_PI/180.), 0., uinf*sin(alpha*M_PI/180.);
+	uinfvec_p = section2inertial * uinfvec;
+	uinfp = uinfvec_p.norm();
+	qinfp = 0.5*rhoinf*std::pow(uinfp, 2.);
+	fdrag << _foil.dragCoefficient()*qinfp*_chord, 0., 0.;	// Section frame
+	fdrag = section2inertial * fdrag;						// Inertial frame
+	dragp = fdrag(0)*cos(alpha*M_PI/180.) + fdrag(2)*sin(alpha*M_PI/180.)
+	      - dragv;
+
 	_clp = liftp/(qinf*_chord);
 	_clv = liftv/(qinf*_chord);
 	_cdp = dragp/(qinf*_chord);

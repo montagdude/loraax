@@ -1574,6 +1574,7 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
                                const std::vector<Wake *> & allwake )
 {
 	unsigned int i, j;
+	double ds, chord1, chord2, qinf;
 	Eigen::Vector3d dfp, dff, dmp, dmf, fp, ff, mp, mf;
 	
 	fp << 0., 0., 0.;
@@ -1612,8 +1613,6 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
 	mf(2) =  0.;
 	
 	// Convert to wind frame
-	//FIXME: get skin friction drag from integration of 2D solution across span?
-	//       Also get parasitic drag from 2D solution
 	
 	_liftp = -fp(0)*sin(alpha*M_PI/180.) + fp(2)*cos(alpha*M_PI/180.);
 	_liftf = -ff(0)*sin(alpha*M_PI/180.) + ff(2)*cos(alpha*M_PI/180.);
@@ -1631,6 +1630,18 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
 	}
 
 	// Integrate pressure drag over the span
+
+	_dragv = 0.;
+	qinf = 0.5*rhoinf*std::pow(uinf,2.);
+	for ( i = 0; i < _nspan-1; i++ )
+	{
+		ds = _stations[i+1] - _stations[i];
+		chord1 = _sections[i].chord();
+		chord2 = _sections[i+1].chord();
+		_dragv += 0.5*(_sections[i].dragCoefficient() * chord1
+		        +      _sections[i+1].dragCoefficient() * chord2) * ds;
+	}
+	_dragv *= 2.*qinf;		// Includes symmetry factor
 
 	// Trefftz plane forces
 
