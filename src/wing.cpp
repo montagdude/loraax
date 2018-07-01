@@ -743,397 +743,416 @@ const double & Wing::planformArea () const { return _splanform; }
 /******************************************************************************/
 void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 {
-  unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, right;
-  double phin, phi, r;
-  Eigen::Matrix3d trans, T1;
-  Eigen::Vector3d cen, r0, rb, ri, point, norm, tang, tangb;
-  Eigen::Vector3d tanl, tanr, tanf, tanb, tan;
-  double x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4;
-
-  // Set vertex pointers on top and bottom surfaces
-
-  _verts.resize(_nspan*(2*_nchord-1) + (_ntipcap-2)*(_nchord-2));
-  vcounter = 0;
-  for ( i = 0; i < _nspan; i++ )
-  {
-    for ( j = 0; j < 2*_nchord-1; j++ )
-    {
-      _sections[i].vert(j).setIdx(next_global_vertidx);
-      _verts[vcounter] = &_sections[i].vert(j);
-      vcounter += 1;
-      next_global_vertidx += 1;
-    }
-  }
-
-  // Determine number of tris and quads
-
-  ntri = 2*(_ntipcap-1);
-  nquad = (_nspan-1)*(2*_nchord-2) + (_ntipcap-1)*(_nchord-3);
- 
-  // Create quad panels on top/bottom surfaces
-
-  _quads.resize(nquad);
-  qcounter = 0;
-  _panels.resize(_nspan-1 + (_ntipcap-1)/2);
-  for ( i = 0; i < _nspan-1; i++ )
-  {
-    _panels[i].resize(2*_nchord-2);
-    for ( j = 0; j < 2*_nchord-2; j++ )
-    {
-      _quads[qcounter].setIdx(next_global_elemidx);
-      _quads[qcounter].addVertex(&_sections[i].vert(j));
-      _quads[qcounter].addVertex(&_sections[i+1].vert(j));
-      _quads[qcounter].addVertex(&_sections[i+1].vert(j+1));
-      _quads[qcounter].addVertex(&_sections[i].vert(j+1));
-
-	  // Compute surface tangent vector at centroid
-
-	  tanl << _sections[i].vert(j+1).x() - _sections[i].vert(j).x(),
-	          _sections[i].vert(j+1).y() - _sections[i].vert(j).y(),
-	          _sections[i].vert(j+1).z() - _sections[i].vert(j).z();
-	  tanr << _sections[i+1].vert(j+1).x() - _sections[i+1].vert(j).x(),
-	          _sections[i+1].vert(j+1).y() - _sections[i+1].vert(j).y(),
-	          _sections[i+1].vert(j+1).z() - _sections[i+1].vert(j).z();
-	  tan = 0.5*(tanl + tanr);
-	  tan /= tan.norm();
-	  _quads[qcounter].setTangent(tan);
-
-      _panels[i][j] = &_quads[qcounter];
-      qcounter += 1;
-      next_global_elemidx += 1;
-    }
-  }
-
-  // Create tip cap vertices. Currently, there's a lot of stuff in here that
-  // does nothing useful, because I switched back to flat tips. The code is
-  // kept here in case I want to go back to revolved tip caps again.
-
-  _tipverts.resize(_ntipcap-2);
-  for ( i = 1; i < _ntipcap-1; i++ )
-  {
-    _tipverts[i-1].resize(_nchord-2);
-    for ( j = 1; j < _nchord-1; j++ )
-    {
-      // Arc angle
-
-      phi = double(i)/double(_ntipcap-1)*180.;
-
-      // Get normal vector from last spanwise section
-
-      x1 = _sections[_nspan-2].vert(j).x();
-      y1 = _sections[_nspan-2].vert(j).y();
-      z1 = _sections[_nspan-2].vert(j).z();
-      x2 = _sections[_nspan-1].vert(j).x();
-      y2 = _sections[_nspan-1].vert(j).y();
-      z2 = _sections[_nspan-1].vert(j).z();
-      x3 = _sections[_nspan-1].vert(2*_nchord-2-j).x();
-      y3 = _sections[_nspan-1].vert(2*_nchord-2-j).y();
-      z3 = _sections[_nspan-1].vert(2*_nchord-2-j).z();
-      x4 = _sections[_nspan-2].vert(2*_nchord-2-j).x();
-      y4 = _sections[_nspan-2].vert(2*_nchord-2-j).y();
-      z4 = _sections[_nspan-2].vert(2*_nchord-2-j).z();
-      norm = quad_normal(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
-
-      // Transform from normal vector
-
-      trans = transform_from_normal(norm(0), norm(1), norm(2));
-
-      // Tangential vector is the projection of the tip section's normal vector
-      // on this plane
-
-      tang(0) = 0.;
-      tang(1) = cos(_sections[_nspan-1].roll()*M_PI/180.);
-      tang(2) = sin(_sections[_nspan-1].roll()*M_PI/180.);
-
-      // Account for local swept dihedral angle
-
-      tangb = trans*tang;
-      phin = atan(tangb(0)/tangb(1))*180./M_PI; 
-      T1 = euler_rotation(0., 0., -phin);
-
-      // Center of revolution and radial vector in x-y plane
-
-      cen(0) = 0.5*(_sections[_nspan-1].vert(j).x() + 
-                    _sections[_nspan-1].vert(2*_nchord-2-j).x());
-      cen(1) = 0.5*(_sections[_nspan-1].vert(j).y() + 
-                    _sections[_nspan-1].vert(2*_nchord-2-j).y());
-      cen(2) = 0.5*(_sections[_nspan-1].vert(j).z() + 
-                    _sections[_nspan-1].vert(2*_nchord-2-j).z());
-      r0(0) = _sections[_nspan-1].vert(j).x() - cen(0);
-      r0(1) = _sections[_nspan-1].vert(j).y() - cen(1);
-      r0(2) = _sections[_nspan-1].vert(j).z() - cen(2);
-      /* Use this to enable rounded tip caps. Also would need to make _ntipcap
-         an input again in that case.
-      r = r0.norm();
-      */
-      r = 0.;
-
-      // Radial vector in y-z plane
-
-      rb << r*cos(phi*M_PI/180.), r*sin(phi*M_PI/180.), 0.;
-
-      // Compute vertex location and create vertex
-
-      ri = (T1*trans).transpose()*rb;
-      point = cen + ri;
-      _tipverts[i-1][j-1].setIdx(next_global_vertidx);
-      _tipverts[i-1][j-1].setCoordinates(point(0), point(1), point(2));
-      _verts[vcounter] = &_tipverts[i-1][j-1];
-      vcounter += 1;
-      next_global_vertidx += 1;
-    }
-  } 
-
-  // Create tip panels wrapping around the tip from top TE to bottom TE.
-  // First loop connects to existing vertices on last section. Note: don't
-  // "connect" to vertices on top and bottom surfaces, because we don't want
-  // the tip panels to be included in averaging to those vertices.
-
-  _tris.resize(ntri);
-  tcounter = 0;
-  _panels[_nspan-1].resize(2*_nchord-2);
-  for ( j = 0; j < 2*_nchord-2; j++ )
-  {
-    // Tri panels at TE and LE
-
-    if (j == 0)
-    {
-      _tris[tcounter].setIdx(next_global_elemidx);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0),false);
-      _tris[tcounter].addVertex(&_tipverts[0][0]);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1),false);
-      _panels[_nspan-1][j] = &_tris[tcounter];
-      tcounter += 1;
-      next_global_elemidx += 1;
-    }
-    else if (j == _nchord-2)
-    {
-      _tris[tcounter].setIdx(next_global_elemidx);
-      _tris[tcounter].addVertex(&_tipverts[0][_nchord-3]);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),false);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2),false);
-      _panels[_nspan-1][j] = &_tris[tcounter];
-      tcounter += 1;
-      next_global_elemidx += 1;
-    }
-    else if (j == _nchord-1)
-    {
-      _tris[tcounter].setIdx(next_global_elemidx);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),false);
-      _tris[tcounter].addVertex(&_tipverts[_ntipcap-3][_nchord-3]);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord),false);
-      _panels[_nspan-1][j] = &_tris[tcounter];
-      tcounter += 1;
-      next_global_elemidx += 1;
-    }
-    else if (j == 2*_nchord-3)
-    {
-      _tris[tcounter].setIdx(next_global_elemidx);
-      _tris[tcounter].addVertex(&_tipverts[_ntipcap-3][0]);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2),false);
-      _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3),false);
-      _panels[_nspan-1][j] = &_tris[tcounter];
-      tcounter += 1;
-      next_global_elemidx += 1;
-    }
-
-    // Quad panels in between
-
-    else if (j < _nchord-2)
-    {
-      _quads[qcounter].setIdx(next_global_elemidx);
-      _quads[qcounter].addVertex(&_tipverts[0][j-1]);
-      _quads[qcounter].addVertex(&_tipverts[0][j]);
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1),false);
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j),false);
-      _panels[_nspan-1][j] = &_quads[qcounter];
-      qcounter += 1;
-      next_global_elemidx += 1;
-    }
-    else
-    {
-      _quads[qcounter].setIdx(next_global_elemidx);
-      _quads[qcounter].addVertex(&_tipverts[_ntipcap-3][2*_nchord-3-j]);
-      _quads[qcounter].addVertex(&_tipverts[_ntipcap-3][2*_nchord-3-j-1]);
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1),false);
-      _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j),false);
-      _panels[_nspan-1][j] = &_quads[qcounter];
-      qcounter += 1;
-      next_global_elemidx += 1;
-    }
-  }
-
-  // Next layers involve only _tipverts except at TE and LE points.
-  // As before, don't connect to top/bottom surfaces vertices.
-
-  for ( i = 1; i < (_ntipcap-1)/2; i++ )
-  {
-    _panels[_nspan-1+i].resize(2*_nchord-2);
-    for ( j = 0; j < 2*_nchord-2; j++ )
-    {
-      // Tri panels at TE and LE
-
-      if (j == 0)
-      {
-        _tris[tcounter].setIdx(next_global_elemidx);
-        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0),false);
-        _tris[tcounter].addVertex(&_tipverts[i][0]);
-        _tris[tcounter].addVertex(&_tipverts[i-1][0]);
-        _panels[_nspan-1+i][j] = &_tris[tcounter];
-        tcounter += 1;
-        next_global_elemidx += 1;
-      }
-      else if (j == _nchord-2)
-      {
-        _tris[tcounter].setIdx(next_global_elemidx);
-        _tris[tcounter].addVertex(&_tipverts[i][_nchord-3]);
-        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),false);
-        _tris[tcounter].addVertex(&_tipverts[i-1][_nchord-3]);
-        _panels[_nspan-1+i][j] = &_tris[tcounter];
-        tcounter += 1;
-        next_global_elemidx += 1;
-      }
-      else if (j == _nchord-1)
-      {
-        _tris[tcounter].setIdx(next_global_elemidx);
-        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),false);
-        _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i][_nchord-3]);
-        _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i+1][_nchord-3]);
-        _panels[_nspan-1+i][j] = &_tris[tcounter];
-        tcounter += 1;
-        next_global_elemidx += 1;
-      }
-      else if (j == 2*_nchord-3)
-      {
-        _tris[tcounter].setIdx(next_global_elemidx);
-        _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i][0]);
-        _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2),false);
-        _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i+1][0]);
-        _panels[_nspan-1+i][j] = &_tris[tcounter];
-        tcounter += 1;
-        next_global_elemidx += 1;
-      }
-
-      // Quad panels in between
-
-      else if (j < _nchord-2)
-      {
-        _quads[qcounter].setIdx(next_global_elemidx);
-        _quads[qcounter].addVertex(&_tipverts[i][j-1]);
-        _quads[qcounter].addVertex(&_tipverts[i][j]);
-        _quads[qcounter].addVertex(&_tipverts[i-1][j]);
-        _quads[qcounter].addVertex(&_tipverts[i-1][j-1]);
-        _panels[_nspan-1+i][j] = &_quads[qcounter];
-        qcounter += 1;
-        next_global_elemidx += 1;
-      }
-      else
-      {
-        _quads[qcounter].setIdx(next_global_elemidx);
-        _quads[qcounter].addVertex(&_tipverts[_ntipcap-3-i][2*_nchord-3-j]);
-        _quads[qcounter].addVertex(&_tipverts[_ntipcap-3-i][2*_nchord-3-j-1]);
-        _quads[qcounter].addVertex(&_tipverts[_ntipcap-3-i+1][2*_nchord-3-j-1]);
-        _quads[qcounter].addVertex(&_tipverts[_ntipcap-3-i+1][2*_nchord-3-j]);
-        _panels[_nspan-1+i][j] = &_quads[qcounter];
-        qcounter += 1;
-        next_global_elemidx += 1;
-      }
-    }
-  }
-
-  // Surface tangent vectors on tip panels
-
-  for ( i = 0; i < (_ntipcap-1)/2; i++ )
-  {
-    for ( j = 0; j < 2*_nchord-2; j++ )
+	unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, right;
+	double phin, phi, r;
+	Eigen::Matrix3d trans, T1;
+	Eigen::Vector3d cen, r0, rb, ri, point, norm, tang, tangb;
+	Eigen::Vector3d tanl, tanr, tanf, tanb, tan;
+	double x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4;
+	
+	// Set vertex pointers on top and bottom surfaces
+	
+	_verts.resize(_nspan*(2*_nchord-1) + (_ntipcap-2)*(_nchord-2));
+	vcounter = 0;
+	for ( i = 0; i < _nspan; i++ )
 	{
-      // Tri panels at TE and LE
+		for ( j = 0; j < 2*_nchord-1; j++ )
+		{
+			_sections[i].vert(j).setIdx(next_global_vertidx);
+			_verts[vcounter] = &_sections[i].vert(j);
+			vcounter += 1;
+			next_global_vertidx += 1;
+		}
+	}
+	
+	// Determine number of tris and quads
+	
+	ntri = 2*(_ntipcap-1);
+	nquad = (_nspan-1)*(2*_nchord-2) + (_ntipcap-1)*(_nchord-3);
+	
+	// Create quad panels on top/bottom surfaces
+	
+	_quads.resize(nquad);
+	qcounter = 0;
+	_panels.resize(_nspan-1 + (_ntipcap-1)/2);
+	for ( i = 0; i < _nspan-1; i++ )
+	{
+		_panels[i].resize(2*_nchord-2);
+		for ( j = 0; j < 2*_nchord-2; j++ )
+		{
+			_quads[qcounter].setIdx(next_global_elemidx);
+			_quads[qcounter].addVertex(&_sections[i].vert(j));
+			_quads[qcounter].addVertex(&_sections[i+1].vert(j));
+			_quads[qcounter].addVertex(&_sections[i+1].vert(j+1));
+			_quads[qcounter].addVertex(&_sections[i].vert(j+1));
+			
+			// Compute surface tangent vector at centroid
+			
+			tanl << _sections[i].vert(j+1).x() - _sections[i].vert(j).x(),
+			        _sections[i].vert(j+1).y() - _sections[i].vert(j).y(),
+			        _sections[i].vert(j+1).z() - _sections[i].vert(j).z();
+			tanr << _sections[i+1].vert(j+1).x() - _sections[i+1].vert(j).x(),
+			        _sections[i+1].vert(j+1).y() - _sections[i+1].vert(j).y(),
+			        _sections[i+1].vert(j+1).z() - _sections[i+1].vert(j).z();
+			tan = 0.5*(tanl + tanr);
+			tan /= tan.norm();
+			_quads[qcounter].setTangent(tan);
+			
+			_panels[i][j] = &_quads[qcounter];
+			qcounter += 1;
+			next_global_elemidx += 1;
+		}
+	}
 
-      if ( (j == 0) || (j == _nchord-1) )
-      {
-		tanf = _panels[_nspan-1+i][j+1]->centroid()
-			 - _panels[_nspan-1+i][j]->centroid();
-		tan = tanf / tanf.norm();
-      }
-      else if ( (j == _nchord-2) || (j == 2*_nchord-3) )
-      {
-		tanb = _panels[_nspan-1+i][j]->centroid()
-			 - _panels[_nspan-1+i][j-1]->centroid();
-		tan = tanb / tanb.norm();
-      }
+	// Create tip cap vertices. Currently, there's a lot of stuff in here that
+	// does nothing useful, because I switched back to flat tips. The code is
+	// kept here in case I want to go back to revolved tip caps again.
+	
+	_tipverts.resize(_ntipcap-2);
+	for ( i = 1; i < _ntipcap-1; i++ )
+	{
+		_tipverts[i-1].resize(_nchord-2);
+		for ( j = 1; j < _nchord-1; j++ )
+		{
+			// Arc angle
+			
+			phi = double(i)/double(_ntipcap-1)*180.;
+			
+			// Get normal vector from last spanwise section
+			
+			x1 = _sections[_nspan-2].vert(j).x();
+			y1 = _sections[_nspan-2].vert(j).y();
+			z1 = _sections[_nspan-2].vert(j).z();
+			x2 = _sections[_nspan-1].vert(j).x();
+			y2 = _sections[_nspan-1].vert(j).y();
+			z2 = _sections[_nspan-1].vert(j).z();
+			x3 = _sections[_nspan-1].vert(2*_nchord-2-j).x();
+			y3 = _sections[_nspan-1].vert(2*_nchord-2-j).y();
+			z3 = _sections[_nspan-1].vert(2*_nchord-2-j).z();
+			x4 = _sections[_nspan-2].vert(2*_nchord-2-j).x();
+			y4 = _sections[_nspan-2].vert(2*_nchord-2-j).y();
+			z4 = _sections[_nspan-2].vert(2*_nchord-2-j).z();
+			norm = quad_normal(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+			
+			// Transform from normal vector
+			
+			trans = transform_from_normal(norm(0), norm(1), norm(2));
+			
+			// Tangential vector is the projection of the tip section's normal
+			// vector on this plane
+			
+			tang(0) = 0.;
+			tang(1) = cos(_sections[_nspan-1].roll()*M_PI/180.);
+			tang(2) = sin(_sections[_nspan-1].roll()*M_PI/180.);
+			
+			// Account for local swept dihedral angle
+			
+			tangb = trans*tang;
+			phin = atan(tangb(0)/tangb(1))*180./M_PI; 
+			T1 = euler_rotation(0., 0., -phin);
+			
+			// Center of revolution and radial vector in x-y plane
+			
+			cen(0) = 0.5*(_sections[_nspan-1].vert(j).x() + 
+			              _sections[_nspan-1].vert(2*_nchord-2-j).x());
+			cen(1) = 0.5*(_sections[_nspan-1].vert(j).y() + 
+			              _sections[_nspan-1].vert(2*_nchord-2-j).y());
+			cen(2) = 0.5*(_sections[_nspan-1].vert(j).z() + 
+			              _sections[_nspan-1].vert(2*_nchord-2-j).z());
+			r0(0) = _sections[_nspan-1].vert(j).x() - cen(0);
+			r0(1) = _sections[_nspan-1].vert(j).y() - cen(1);
+			r0(2) = _sections[_nspan-1].vert(j).z() - cen(2);
+			/* Use this to enable rounded tip caps. Also would need to make
+			   _ntipcap an input again in that case.
+			r = r0.norm();
+			*/
+			r = 0.;
+			
+			// Radial vector in y-z plane
+			
+			rb << r*cos(phi*M_PI/180.), r*sin(phi*M_PI/180.), 0.;
+			
+			// Compute vertex location and create vertex
+			
+			ri = (T1*trans).transpose()*rb;
+			point = cen + ri;
+			_tipverts[i-1][j-1].setIdx(next_global_vertidx);
+			_tipverts[i-1][j-1].setCoordinates(point(0), point(1), point(2));
+			_verts[vcounter] = &_tipverts[i-1][j-1];
+			vcounter += 1;
+			next_global_vertidx += 1;
+		}
+	} 
 
-      // Quad panels in between
+	// Create tip panels wrapping around the tip from top TE to bottom TE.
+	// First loop connects to existing vertices on last section. Note: don't
+	// "connect" to vertices on top and bottom surfaces, because we don't want
+	// the tip panels to be included in averaging to those vertices.
 
-      else if (j < _nchord-2)
-      {
-		tanf = _panels[_nspan-1+i][j+1]->centroid()
-			 - _panels[_nspan-1+i][j]->centroid();
-		tanb = _panels[_nspan-1+i][j]->centroid()
-			 - _panels[_nspan-1+i][j-1]->centroid();
-		tan = 0.5*(tanf + tanb);
-		tan /= tan.norm();
-      }
+	_tris.resize(ntri);
+	tcounter = 0;
+	_panels[_nspan-1].resize(2*_nchord-2);
+	for ( j = 0; j < 2*_nchord-2; j++ )
+	{
+		// Tri panels at TE and LE
 
-      _panels[_nspan-1+i][j]->setTangent(tan);
-    }
-  }
+		if (j == 0)
+		{
+			_tris[tcounter].setIdx(next_global_elemidx);
+			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(0),false);
+			_tris[tcounter].addVertex(&_tipverts[0][0]);
+			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(1),false);
+			_panels[_nspan-1][j] = &_tris[tcounter];
+			tcounter += 1;
+			next_global_elemidx += 1;
+		}
+		else if (j == _nchord-2)
+		{
+			_tris[tcounter].setIdx(next_global_elemidx);
+			_tris[tcounter].addVertex(&_tipverts[0][_nchord-3]);
+			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
+			                          false);
+			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2),
+			                          false);
+			_panels[_nspan-1][j] = &_tris[tcounter];
+			tcounter += 1;
+			next_global_elemidx += 1;
+		}
+		else if (j == _nchord-1)
+		{
+			_tris[tcounter].setIdx(next_global_elemidx);
+			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
+			                          false);
+			_tris[tcounter].addVertex(&_tipverts[_ntipcap-3][_nchord-3]);
+			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord),
+			                          false);
+			_panels[_nspan-1][j] = &_tris[tcounter];
+			tcounter += 1;
+			next_global_elemidx += 1;
+		}
+		else if (j == 2*_nchord-3)
+		{
+			_tris[tcounter].setIdx(next_global_elemidx);
+			_tris[tcounter].addVertex(&_tipverts[_ntipcap-3][0]);
+			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2),
+			                          false);
+			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3),
+			                          false);
+			_panels[_nspan-1][j] = &_tris[tcounter];
+			tcounter += 1;
+			next_global_elemidx += 1;
+		}
+
+		// Quad panels in between
+		
+		else if (j < _nchord-2)
+		{
+			_quads[qcounter].setIdx(next_global_elemidx);
+			_quads[qcounter].addVertex(&_tipverts[0][j-1]);
+			_quads[qcounter].addVertex(&_tipverts[0][j]);
+			_quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1),false);
+			_quads[qcounter].addVertex(&_sections[_nspan-1].vert(j),false);
+			_panels[_nspan-1][j] = &_quads[qcounter];
+			qcounter += 1;
+			next_global_elemidx += 1;
+		}
+		else
+		{
+			_quads[qcounter].setIdx(next_global_elemidx);
+			_quads[qcounter].addVertex(&_tipverts[_ntipcap-3][2*_nchord-3-j]);
+			_quads[qcounter].addVertex(&_tipverts[_ntipcap-3][2*_nchord-3-j-1]);
+			_quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1),false);
+			_quads[qcounter].addVertex(&_sections[_nspan-1].vert(j),false);
+			_panels[_nspan-1][j] = &_quads[qcounter];
+			qcounter += 1;
+			next_global_elemidx += 1;
+		}
+	}
+
+	// Next layers involve only _tipverts except at TE and LE points.
+	// As before, don't connect to top/bottom surfaces vertices.
+	
+	for ( i = 1; i < (_ntipcap-1)/2; i++ )
+	{
+		_panels[_nspan-1+i].resize(2*_nchord-2);
+		for ( j = 0; j < 2*_nchord-2; j++ )
+		{
+			// Tri panels at TE and LE
+			
+			if (j == 0)
+			{
+				_tris[tcounter].setIdx(next_global_elemidx);
+				_tris[tcounter].addVertex(&_sections[_nspan-1].vert(0),false);
+				_tris[tcounter].addVertex(&_tipverts[i][0]);
+				_tris[tcounter].addVertex(&_tipverts[i-1][0]);
+				_panels[_nspan-1+i][j] = &_tris[tcounter];
+				tcounter += 1;
+				next_global_elemidx += 1;
+			}
+			else if (j == _nchord-2)
+			{
+				_tris[tcounter].setIdx(next_global_elemidx);
+				_tris[tcounter].addVertex(&_tipverts[i][_nchord-3]);
+				_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
+				                          false);
+				_tris[tcounter].addVertex(&_tipverts[i-1][_nchord-3]);
+				_panels[_nspan-1+i][j] = &_tris[tcounter];
+				tcounter += 1;
+				next_global_elemidx += 1;
+			}
+			else if (j == _nchord-1)
+			{
+				_tris[tcounter].setIdx(next_global_elemidx);
+				_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
+				                          false);
+				_tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i][_nchord-3]);
+				_tris[tcounter].addVertex(
+				                         &_tipverts[_ntipcap-3-i+1][_nchord-3]);
+				_panels[_nspan-1+i][j] = &_tris[tcounter];
+				tcounter += 1;
+				next_global_elemidx += 1;
+			}
+			else if (j == 2*_nchord-3)
+			{
+				_tris[tcounter].setIdx(next_global_elemidx);
+				_tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i][0]);
+				_tris[tcounter].addVertex(
+				                  &_sections[_nspan-1].vert(2*_nchord-2),false);
+				_tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i+1][0]);
+				_panels[_nspan-1+i][j] = &_tris[tcounter];
+				tcounter += 1;
+				next_global_elemidx += 1;
+			}
+			
+			// Quad panels in between
+			
+			else if (j < _nchord-2)
+			{
+				_quads[qcounter].setIdx(next_global_elemidx);
+				_quads[qcounter].addVertex(&_tipverts[i][j-1]);
+				_quads[qcounter].addVertex(&_tipverts[i][j]);
+				_quads[qcounter].addVertex(&_tipverts[i-1][j]);
+				_quads[qcounter].addVertex(&_tipverts[i-1][j-1]);
+				_panels[_nspan-1+i][j] = &_quads[qcounter];
+				qcounter += 1;
+				next_global_elemidx += 1;
+			}
+			else
+			{
+				_quads[qcounter].setIdx(next_global_elemidx);
+				_quads[qcounter].addVertex(
+				                       &_tipverts[_ntipcap-3-i][2*_nchord-3-j]);
+				_quads[qcounter].addVertex(
+				                     &_tipverts[_ntipcap-3-i][2*_nchord-3-j-1]);
+				_quads[qcounter].addVertex(
+				                   &_tipverts[_ntipcap-3-i+1][2*_nchord-3-j-1]);
+				_quads[qcounter].addVertex(
+				                     &_tipverts[_ntipcap-3-i+1][2*_nchord-3-j]);
+				_panels[_nspan-1+i][j] = &_quads[qcounter];
+				qcounter += 1;
+				next_global_elemidx += 1;
+			}
+		}
+	}
+
+	// Surface tangent vectors on tip panels
+	
+	for ( i = 0; i < (_ntipcap-1)/2; i++ )
+	{
+		for ( j = 0; j < 2*_nchord-2; j++ )
+		{
+			// Tri panels at TE and LE
+			
+			if ( (j == 0) || (j == _nchord-1) )
+			{
+				tanf = _panels[_nspan-1+i][j+1]->centroid()
+				     - _panels[_nspan-1+i][j]->centroid();
+				tan = tanf / tanf.norm();
+			}
+			else if ( (j == _nchord-2) || (j == 2*_nchord-3) )
+			{
+				tanb = _panels[_nspan-1+i][j]->centroid()
+				     - _panels[_nspan-1+i][j-1]->centroid();
+				tan = tanb / tanb.norm();
+			}
+			
+			// Quad panels in between
+			
+			else if (j < _nchord-2)
+			{
+				tanf = _panels[_nspan-1+i][j+1]->centroid()
+				     - _panels[_nspan-1+i][j]->centroid();
+				tanb = _panels[_nspan-1+i][j]->centroid()
+				     - _panels[_nspan-1+i][j-1]->centroid();
+				tan = 0.5*(tanf + tanb);
+				tan /= tan.norm();
+			}
+			
+			_panels[_nspan-1+i][j]->setTangent(tan);
+		}
+	}
 	  
 
-  // Set panel neighbors (top and bottom surfaces only for now)
-  // We don't add panel neighbors from top/bottom to tip caps, because there can
-  // be very large changes in sizing across that boundary, which would produce
-  // error in gradient calculations.
+	// Set panel neighbors (top and bottom surfaces only for now)
+	// We don't add panel neighbors from top/bottom to tip caps, because there
+	// can be very large changes in sizing across that boundary, which would
+	// produce error in gradient calculations.
 
-  for ( i = 0; i < _nspan-1; i++ )
-  {
-    for ( j = 0; j < 2*_nchord-2; j++ )
-    {
-      if (i > 0)
-        _panels[i][j]->setLeftNeighbor(_panels[i-1][j]);
-      if (i < _nspan-2)
-        _panels[i][j]->setRightNeighbor(_panels[i+1][j]);
-      if (j > 0)
-        _panels[i][j]->setBackNeighbor(_panels[i][j-1]);
-      if (j < 2*_nchord-3)
-        _panels[i][j]->setFrontNeighbor(_panels[i][j+1]);
-    }
-  }
+	for ( i = 0; i < _nspan-1; i++ )
+	{
+		for ( j = 0; j < 2*_nchord-2; j++ )
+		{
+			if (i > 0)
+				_panels[i][j]->setLeftNeighbor(_panels[i-1][j]);
+			if (i < _nspan-2)
+				_panels[i][j]->setRightNeighbor(_panels[i+1][j]);
+			if (j > 0)
+				_panels[i][j]->setBackNeighbor(_panels[i][j-1]);
+			if (j < 2*_nchord-3)
+				_panels[i][j]->setFrontNeighbor(_panels[i][j+1]);
+		}
+	}
+	
+	// Neighbor panels on tip caps
+	
+	for ( i = 0; i < (_ntipcap-1)/2; i++ )
+	{
+		for ( j = 0; j < 2*_nchord-2; j++ )
+		{
+			if (i > 0)
+				_panels[_nspan-1+i][j]->setLeftNeighbor(
+				                                      _panels[_nspan-1+i-1][j]);
+			if (i < (_ntipcap-1)/2-1)
+				_panels[_nspan-1+i][j]->setRightNeighbor(
+				                                      _panels[_nspan-1+i+1][j]);
+			if ( (j > 0) && (j != _nchord-1) )
+				_panels[_nspan-1+i][j]->setBackNeighbor(
+				                                      _panels[_nspan-1+i][j-1]);
+			if ( (j < 2*_nchord-3) && (j != _nchord-2) )
+				_panels[_nspan-1+i][j]->setFrontNeighbor(
+				                                      _panels[_nspan-1+i][j+1]);
+			
+			// Add right neighbor across the tip cut
+			
+			if (i == (_ntipcap-1)/2-1)
+			{
+				right = 2*_nchord-3-j;
+				_panels[_nspan-1+i][j]->setRightNeighbor(
+				                                    _panels[_nspan-1+i][right]);
+			}
+		}
+	}
 
-  // Neighbor panels on tip caps
-
-  for ( i = 0; i < (_ntipcap-1)/2; i++ )
-  {
-    for ( j = 0; j < 2*_nchord-2; j++ )
-    {
-      if (i > 0)
-        _panels[_nspan-1+i][j]->setLeftNeighbor(_panels[_nspan-1+i-1][j]);
-      if (i < (_ntipcap-1)/2-1)
-        _panels[_nspan-1+i][j]->setRightNeighbor(_panels[_nspan-1+i+1][j]);
-      if ( (j > 0) && (j != _nchord-1) )
-        _panels[_nspan-1+i][j]->setBackNeighbor(_panels[_nspan-1+i][j-1]);
-      if ( (j < 2*_nchord-3) && (j != _nchord-2) )
-        _panels[_nspan-1+i][j]->setFrontNeighbor(_panels[_nspan-1+i][j+1]);
-
-      // Add right neighbor across the tip cut
-
-      if (i == (_ntipcap-1)/2-1)
-      {
-        right = 2*_nchord-3-j;
-        _panels[_nspan-1+i][j]->setRightNeighbor(_panels[_nspan-1+i][right]);
-      }
-    }
-  }
-
-  // Compute grid metrics
+	// Compute grid metrics
 
 #pragma omp parallel for private(i,j)
-  for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
-  {
-    for ( j = 0; j < 2*_nchord-2; j++ )
-    {
-      _panels[i][j]->computeGridTransformation();
-    }
-  }
+	for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
+	{
+		for ( j = 0; j < 2*_nchord-2; j++ )
+		{
+			_panels[i][j]->computeGridTransformation();
+		}
+	}
 }
 
 /******************************************************************************/
@@ -1362,11 +1381,11 @@ unsigned int Wing::nWStrips () const { return _wakestrips.size(); }
 WakeStrip * Wing::wStrip ( unsigned int wsidx )
 {
 #ifdef DEBUG
-  if (wsidx >= _wakestrips.size())
-    conditional_stop(1, "Wing::wStrip", "Index out of range.");
+	if (wsidx >= _wakestrips.size())
+		conditional_stop(1, "Wing::wStrip", "Index out of range.");
 #endif
 
-  return &_wakestrips[wsidx];
+	return &_wakestrips[wsidx];
 }
 
 ViscousWake & Wing::viscousWake () { return _vwake; }
@@ -1821,113 +1840,118 @@ int Wing::writeForceMoment ( int iter ) const
 /******************************************************************************/
 int Wing::writeSectionForceMoment ( int iter ) const
 {
-  std::ofstream f;
-  std::string fname;
-  std::vector<double> y_flat;
-  int i;
-  double dy, dz, ds;
-
-  // Compute "flattened" spanwise locations
-
-  y_flat.resize(_nspan);
-  y_flat[0] = 0.;
-  for ( i = 1; i < int(_nspan); i++ )
-  {
-    dy = _sections[i].y() - _sections[i-1].y();
-    dz = _sections[i].zle() - _sections[i-1].zle();
-    ds = std::sqrt(dy*dy + dz*dz);
-    y_flat[i] = y_flat[i-1] + ds;
-  }
-
-  fname = "sectional/" + _name + "_sectional_iter" + int2string(iter) + ".csv";
-
-  // Write header
-
-  f.open(fname.c_str(), std::fstream::out);
-  if (! f.is_open())
-  {
-    print_warning("Wing::writeSectionForces",
-                  "Unable to open " + fname + " for writing.");
-    return 1;
-  }
-  f << "\"xle\",\"y\",\"y_flat\",\"zle\",\"c\",";
-  if (viscous)
-  {
-	f << "\"Re\",\"Cl\",\"Clp\",\"Clv\",\"Cd\",\"Cdp\",\"Cdv\","
-	  <<        "\"Cm\",\"Cmp\",\"Cmv\",\"cCl\",\"cCd\"" << std::endl;
-  }
-  else
-  {
-	f << "\"Cl\",\"Cd\",\"Cm\",\"cCl\",\"cCd\"" << std::endl;
-  }
-
-  // Write data for sections and mirror image
-  
-  f.setf(std::ios_base::scientific);
-  f << std::setprecision(7);
-  for ( i = _nspan-1; i >= 0; i-- )
-  {
-    f << _sections[i].xle() << ",";
-    f << _sections[i].y() << ",";
-    f << y_flat[i] << ",";
-    f << _sections[i].zle() << ",";
-    f << _sections[i].chord() << ",";
+	std::ofstream f;
+	std::string fname;
+	std::vector<double> y_flat;
+	int i;
+	double dy, dz, ds;
+	
+	// Compute "flattened" spanwise locations
+	
+	y_flat.resize(_nspan);
+	y_flat[0] = 0.;
+	for ( i = 1; i < int(_nspan); i++ )
+	{
+		dy = _sections[i].y() - _sections[i-1].y();
+		dz = _sections[i].zle() - _sections[i-1].zle();
+		ds = std::sqrt(dy*dy + dz*dz);
+		y_flat[i] = y_flat[i-1] + ds;
+	}
+	
+	fname = "sectional/" + _name + "_sectional_iter" + int2string(iter)
+	      + ".csv";
+	
+	// Write header
+	
+	f.open(fname.c_str(), std::fstream::out);
+	if (! f.is_open())
+	{
+		print_warning("Wing::writeSectionForces",
+		              "Unable to open " + fname + " for writing.");
+		return 1;
+	}
+	f << "\"xle\",\"y\",\"y_flat\",\"zle\",\"c\",";
 	if (viscous)
 	{
-	  f << _sections[i].reynoldsNumber() << ",";
-	  f << _sections[i].liftCoefficient() << ",";
-	  f << _sections[i].pressureLiftCoefficient() << ",";
-	  f << _sections[i].viscousLiftCoefficient() << ",";
-	  f << _sections[i].dragCoefficient() << ",";
-	  f << _sections[i].pressureDragCoefficient() << ",";
-	  f << _sections[i].viscousDragCoefficient() << ",";
-	  f << _sections[i].pitchingMomentCoefficient() << ",";
-	  f << _sections[i].pressurePitchingMomentCoefficient() << ",";
-	  f << _sections[i].viscousPitchingMomentCoefficient() << ",";
-	  f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
-	  f << _sections[i].chord() * _sections[i].dragCoefficient() << std::endl;
+		f << "\"Re\",\"Cl\",\"Clp\",\"Clv\",\"Cd\",\"Cdp\",\"Cdv\","
+		  <<        "\"Cm\",\"Cmp\",\"Cmv\",\"cCl\",\"cCd\"" << std::endl;
 	}
 	else
 	{
-	  f << _sections[i].liftCoefficient() << ",";
-	  f << _sections[i].dragCoefficient() << ",";
-	  f << _sections[i].pitchingMomentCoefficient() << ",";
-	  f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
-	  f << _sections[i].chord() * _sections[i].dragCoefficient() << std::endl;
+		f << "\"Cl\",\"Cd\",\"Cm\",\"cCl\",\"cCd\"" << std::endl;
 	}
-  }
-  for ( i = 1; i < int(_nspan); i++ )
-  {
-    f << _sections[i].xle() << ",";
-    f << -_sections[i].y() << ",";
-    f << -y_flat[i] << ",";
-    f << _sections[i].zle() << ",";
-    f << _sections[i].chord() << ",";
-	if (viscous)
+	
+	// Write data for sections and mirror image
+	
+	f.setf(std::ios_base::scientific);
+	f << std::setprecision(7);
+	for ( i = _nspan-1; i >= 0; i-- )
 	{
-	  f << _sections[i].reynoldsNumber() << ",";
-	  f << _sections[i].liftCoefficient() << ",";
-	  f << _sections[i].pressureLiftCoefficient() << ",";
-	  f << _sections[i].viscousLiftCoefficient() << ",";
-	  f << _sections[i].dragCoefficient() << ",";
-	  f << _sections[i].pressureDragCoefficient() << ",";
-	  f << _sections[i].viscousDragCoefficient() << ",";
-	  f << _sections[i].pitchingMomentCoefficient() << ",";
-	  f << _sections[i].pressurePitchingMomentCoefficient() << ",";
-	  f << _sections[i].viscousPitchingMomentCoefficient() << ",";
-	  f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
-	  f << _sections[i].chord() * _sections[i].dragCoefficient() << std::endl;
+		f << _sections[i].xle() << ",";
+		f << _sections[i].y() << ",";
+		f << y_flat[i] << ",";
+		f << _sections[i].zle() << ",";
+		f << _sections[i].chord() << ",";
+		if (viscous)
+		{
+			f << _sections[i].reynoldsNumber() << ",";
+			f << _sections[i].liftCoefficient() << ",";
+			f << _sections[i].pressureLiftCoefficient() << ",";
+			f << _sections[i].viscousLiftCoefficient() << ",";
+			f << _sections[i].dragCoefficient() << ",";
+			f << _sections[i].pressureDragCoefficient() << ",";
+			f << _sections[i].viscousDragCoefficient() << ",";
+			f << _sections[i].pitchingMomentCoefficient() << ",";
+			f << _sections[i].pressurePitchingMomentCoefficient() << ",";
+			f << _sections[i].viscousPitchingMomentCoefficient() << ",";
+			f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+			f << _sections[i].chord() * _sections[i].dragCoefficient()
+			  << std::endl;
+		}
+		else
+		{
+			f << _sections[i].liftCoefficient() << ",";
+			f << _sections[i].dragCoefficient() << ",";
+			f << _sections[i].pitchingMomentCoefficient() << ",";
+			f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+			f << _sections[i].chord() * _sections[i].dragCoefficient()
+			  << std::endl;
+		}
 	}
-	else
+	for ( i = 1; i < int(_nspan); i++ )
 	{
-	  f << _sections[i].liftCoefficient() << ",";
-	  f << _sections[i].dragCoefficient() << ",";
-	  f << _sections[i].pitchingMomentCoefficient() << ",";
-	  f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
-	  f << _sections[i].chord() * _sections[i].dragCoefficient() << std::endl;
+		f << _sections[i].xle() << ",";
+		f << -_sections[i].y() << ",";
+		f << -y_flat[i] << ",";
+		f << _sections[i].zle() << ",";
+		f << _sections[i].chord() << ",";
+		if (viscous)
+		{
+			f << _sections[i].reynoldsNumber() << ",";
+			f << _sections[i].liftCoefficient() << ",";
+			f << _sections[i].pressureLiftCoefficient() << ",";
+			f << _sections[i].viscousLiftCoefficient() << ",";
+			f << _sections[i].dragCoefficient() << ",";
+			f << _sections[i].pressureDragCoefficient() << ",";
+			f << _sections[i].viscousDragCoefficient() << ",";
+			f << _sections[i].pitchingMomentCoefficient() << ",";
+			f << _sections[i].pressurePitchingMomentCoefficient() << ",";
+			f << _sections[i].viscousPitchingMomentCoefficient() << ",";
+			f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+			f << _sections[i].chord() * _sections[i].dragCoefficient()
+			  << std::endl;
+		}
+		else
+		{
+			f << _sections[i].liftCoefficient() << ",";
+			f << _sections[i].dragCoefficient() << ",";
+			f << _sections[i].pitchingMomentCoefficient() << ",";
+			f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+			f << _sections[i].chord() * _sections[i].dragCoefficient()
+			  << std::endl;
+		}
 	}
-  }
-  f.close();
-
-  return 0;
+	f.close();
+	
+	return 0;
 }

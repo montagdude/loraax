@@ -209,7 +209,7 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
 		_uverts[i].scale(_chord);
 	}
 
-  // Finds interpolation points on airfoil for section vertices
+	// Finds interpolation points on airfoil for section vertices
 
 	_foilinterp.resize(_nverts);
 	nsmoothed = _foil.nSmoothed();

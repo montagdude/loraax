@@ -1063,13 +1063,14 @@ unsigned int Aircraft::systemSize () const { return _panels.size(); }
 /******************************************************************************/
 void Aircraft::computeSurfaceQuantities ()
 {
-  unsigned int i, nwings;
-
-  nwings = _wings.size();
-  for ( i = 0; i < nwings; i++ )
-  {
-    _wings[i].computeSurfaceQuantities();
-  }
+	unsigned int i, nwings;
+	Eigen::Vector3d wi;
+	
+	nwings = _wings.size();
+	for ( i = 0; i < nwings; i++ )
+	{
+		_wings[i].computeSurfaceQuantities();
+	}
 }
 
 /******************************************************************************/

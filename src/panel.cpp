@@ -278,7 +278,7 @@ const Eigen::Vector3d & Panel::tan () const { return _tan; }
 
 /******************************************************************************/
 //
-// Set usrface tangent vector
+// Set surface tangent vector
 //
 /******************************************************************************/
 void Panel::setTangent ( const Eigen::Vector3d & tan ) { _tan = tan; }
