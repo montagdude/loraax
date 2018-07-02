@@ -1407,16 +1407,22 @@ void Wing::computeBL ()
 #pragma omp parallel for private(i)
 	for ( i = 0; i < _nspan; i++ )
 	{
-		_sections[i].computeBL(uinfvec, rhoinf, pinf, alpha);
+		_sections[i].computeBL(uinfvec, rhoinf, pinf, alpha, reinit_freq);
 		if (not _sections[i].blConverged())
 		{
 			warning = "Xfoil BL calculations did not converge for section "
 			        + int2string(i+1) + std::string(".");
-			if (reinitialize)
-				_sections[i].airfoil().reinitializeBL();
 #pragma omp critical
 			{
 				print_warning("Wing::computeBL", warning);
+			}
+			if (_sections[i].blReinitialized())
+			{
+#pragma omp critical
+				{
+					std::cout << "Reinitializing BL for section "
+					          << int2string(i+1) << "." << std::endl;
+				}
 			}
 		}
 	}

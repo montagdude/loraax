@@ -63,6 +63,8 @@ Section::Section ()
 	_wverts.resize(0);
 	_re = 0.;
 	_converged = false;
+	_unconverged_count = 0;
+	_reinitialized = false;
 	_foilinterp.resize(0);
 }
 
@@ -280,7 +282,7 @@ void Section::setMachNumber ( const double & minf )
 /******************************************************************************/
 void Section::computeBL ( const Eigen::Vector3d & uinfvec,
                           const double & rhoinf, const double & pinf,
-                          const double & alpha )
+                          const double & alpha, int reinit_freq )
 {
 	Eigen::Vector3d uinfvec_p;
 	double qinfp, uinf, uinfp, cl2d;
@@ -315,9 +317,22 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
   // Run xfoil at 2D Cl
 
 	if (_foil.runXfoil(cl2d) != 0)
+	{
 		_converged = false;
+		_unconverged_count += 1;
+		if (int(_unconverged_count) == reinit_freq)
+		{
+			_foil.reinitializeBL();
+			_reinitialized = true;
+			_unconverged_count = 0;
+		}
+	}
 	else
+	{
 		_converged = true;
+		_unconverged_count = 0;
+		_reinitialized = false;
+	}
 
 	// Interpolate BL quantities to vertices. These will be overwritten for
 	// unconverged sections if interpolation/extrapolation is possible. Perform
@@ -362,6 +377,7 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
 }
 
 bool Section::blConverged () const { return _converged; }
+bool Section::blReinitialized () const { return _reinitialized; }
 
 /******************************************************************************/
 //

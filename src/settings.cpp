@@ -31,7 +31,7 @@ int wakeiters;
 double wakeangle;
 bool viscous;
 bool compressible;
-bool reinitialize;
+int reinit_freq;
 double stop_tol;
 int maxiters;
 int viz_freq;
@@ -190,8 +190,8 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		return 2;
 	if (read_setting(xfrun, "vaccel", xfoil_run_opts.vaccel) != 0)
 		return 2;
-	if (read_setting(xfrun, "reinitialize", reinitialize, false) != 0)
-		reinitialize = true;
+	if (read_setting(xfrun, "reinit_freq", reinit_freq, false) != 0)
+		reinit_freq = 5;
 	xfoil_run_opts.viscous_mode = viscous;
 	xfoil_run_opts.silent_mode = true;
 	

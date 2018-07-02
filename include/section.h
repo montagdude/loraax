@@ -46,6 +46,9 @@ class Section: public SectionalObject {
 	double _clp, _clv, _cdp, _cdv, _cmp, _cmv;
 						// Sectional lift, drag, and moment coefficients
 	bool _converged;	// Whether Xfoil BL calculations converged
+	unsigned int _unconverged_count;
+						// Number of unconverged attempts
+	bool _reinitialized;// Whether BL was reinitialized following last attempt
 	std::vector<interpdata> _foilinterp;
 						// Airfoil interpolation points & weights for verts
 	
@@ -100,8 +103,10 @@ class Section: public SectionalObject {
 	// BL calculations with Xfoil
 	
 	void computeBL ( const Eigen::Vector3d & uinfvec, const double & rhoinf,
-		             const double & pinf, const double & alpha );
+		             const double & pinf, const double & alpha,
+		             int reinit_freq );
 	bool blConverged () const;
+	bool blReinitialized () const;
 	
 	// Computes section forces and moments
 	
