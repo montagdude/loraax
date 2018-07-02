@@ -47,6 +47,7 @@ int main (int argc, char* argv[])
 	Aircraft ac;
 	unsigned int iter, viz_iter;
 	double lift, oldlift;
+	bool converged;
 	
 	// Parse CLOs
 	
@@ -83,7 +84,8 @@ int main (int argc, char* argv[])
 	
 	iter = 0;
 	viz_iter = 0;
-	while (int(iter) <= maxiters)
+	converged = false;
+	while (int(iter) < maxiters)
 	{
 		iter++;
 		viz_iter++;
@@ -193,11 +195,15 @@ int main (int argc, char* argv[])
 			if (std::abs(lift - oldlift) < stop_tol)
 			{
 				std::cout << "Solution is converged." << std::endl;
+				converged = true;
 				break;
 			}
 			oldlift = lift;
 		}
 	}
+
+	if (! converged)
+		print_warning("main", "Solution did not converge.");
 	
 	// Write final visualization
 	
