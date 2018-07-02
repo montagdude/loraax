@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <string>
 #include <ctime>
+#include <cmath>
 #include <sys/stat.h>
 #include <dirent.h>
 #include "clo_parser.h"
@@ -45,6 +46,7 @@ int main (int argc, char* argv[])
 	int check;
 	Aircraft ac;
 	unsigned int iter, viz_iter;
+	double lift, oldlift;
 	
 	// Parse CLOs
 	
@@ -79,10 +81,13 @@ int main (int argc, char* argv[])
 	
 	// Iterate
 	
-	iter = 1;
-	viz_iter = 1;
+	iter = 0;
+	viz_iter = 0;
 	while (int(iter) <= maxsteps)
 	{
+		iter++;
+		viz_iter++;
+
 	  // Convect wake
 	
 		std::cout << "Iteration " << iter << std::endl;
@@ -137,6 +142,7 @@ int main (int argc, char* argv[])
 		std::cout << "  Computing forces and moments ..." << std::endl;
 		ac.computeForceMoment();
 		ac.writeForceMoment(iter);
+		lift = ac.liftCoefficient();
 		if (viscous)
 		{
 			std::cout << "  CL: " << std::setprecision(5) << std::setw(8)
@@ -179,16 +185,28 @@ int main (int argc, char* argv[])
 			ac.writeSectionForceMoment(iter);
 			viz_iter = 0;
 		}
-		
-		iter++;
-		viz_iter++;
+
+		// Stop iterating if converged
+
+		if (iter > 1)
+		{
+			if (std::abs(lift - oldlift) < stop_tol)
+			{
+				std::cout << "Solution is converged." << std::endl;
+				break;
+			}
+			oldlift = lift;
+		}
 	}
 	
 	// Write final visualization
 	
-	std::cout << "Writing final VTK visualization ..." << std::endl;
-	ac.writeViz(casename, iter-1);
-	ac.writeSectionForceMoment(iter-1);
+	if (int(viz_iter) != viz_freq)
+	{
+		std::cout << "Writing final VTK visualization ..." << std::endl;
+		ac.writeViz(casename, iter);
+		ac.writeSectionForceMoment(iter);
+	}
 	
 	return 0;
 }
