@@ -27,13 +27,13 @@ double minf;
 double alpha;
 double dt;
 double rollupdist;
-int wakesteps;
+int wakeiters;
 double wakeangle;
 bool viscous;
 bool compressible;
 bool reinitialize;
 double stop_tol;
-int maxsteps;
+int maxiters;
 int viz_freq;
 
 xfoil_geom_options_type xfoil_geom_opts;
@@ -158,7 +158,7 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		return 2;
 	if (read_setting(main, "RollupDist", rollupdist) != 0)
 		return 2;
-	if (read_setting(main, "WakeSteps", wakesteps) != 0)
+	if (read_setting(main, "WakeIters", wakeiters) != 0)
 		return 2;
 	if (read_setting(main, "InitialWakeAngle", wakeangle, false) != 0)
 		wakeangle = alpha;
@@ -168,7 +168,7 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		compressible = true;
 	if (read_setting(main, "StoppingTolerance", stop_tol) != 0)
 		return 2;
-	if (read_setting(main, "MaxSteps", maxsteps) != 0)
+	if (read_setting(main, "MaxIters", maxiters) != 0)
 		return 2;
 	if (read_setting(main, "VisualizationFrequency", viz_freq) != 0)
 		return 2;
@@ -221,7 +221,7 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 	uinfvec(1) = 0.;
 	uinfvec(2) = uinf*sin(alpha*M_PI/180.);
 	minf = uinf / std::sqrt(1.4*pinf/rhoinf);
-	dt = rollupdist / (uinf * double(wakesteps));
+	dt = rollupdist / (uinf * double(wakeiters));
 	
 	return 0;
 }

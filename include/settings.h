@@ -25,13 +25,13 @@ extern double muinf;
 extern double alpha;
 extern double dt;
 extern double rollupdist;
-extern int wakesteps;
+extern int wakeiters;
 extern double wakeangle;
 extern bool viscous;
 extern bool compressible;
 extern bool reinitialize;
 extern double stop_tol;
-extern int maxsteps;
+extern int maxiters;
 extern int viz_freq;
 
 // Xfoil settings

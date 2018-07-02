@@ -1183,7 +1183,7 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
 	
 	// Create wake strips
 	
-	nstream = wakesteps+1;
+	nstream = wakeiters+1;
 	_wakestrips.resize(_nspan-1);
 	for ( i = 0; i < _nspan-1; i++ )
 	{

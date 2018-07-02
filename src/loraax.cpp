@@ -83,7 +83,7 @@ int main (int argc, char* argv[])
 	
 	iter = 0;
 	viz_iter = 0;
-	while (int(iter) <= maxsteps)
+	while (int(iter) <= maxiters)
 	{
 		iter++;
 		viz_iter++;
@@ -178,7 +178,7 @@ int main (int argc, char* argv[])
 		
 		// Write visualization
 		
-		if ( (int(viz_iter) == viz_freq) && (int(iter) < maxsteps) )
+		if ( (int(viz_iter) == viz_freq) && (int(iter) < maxiters) )
 		{
 			std::cout << "  Writing VTK visualization ..." << std::endl;
 			ac.writeViz(casename, iter);
