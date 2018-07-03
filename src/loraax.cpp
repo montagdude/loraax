@@ -192,7 +192,8 @@ int main (int argc, char* argv[])
 
 		if (iter > 1)
 		{
-			if (std::abs(lift - oldlift) < stop_tol)
+			if ( (std::abs(lift - oldlift) < stop_tol) &&
+			     (int(iter) >= wakeiters) )
 			{
 				std::cout << "Solution is converged." << std::endl;
 				converged = true;
