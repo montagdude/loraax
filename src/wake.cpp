@@ -438,7 +438,7 @@ void Wake::farfieldForces ( const double & xtrefftz, const double & ztrefftz,
 {
 	int i;
 	unsigned int j, nwake;;
-	double a, b, c, d, dx, dy, dz, wy, wz;
+	double a, b, c, d, dx, dy, dz, wy, wz, minf2, beta;
 	std::vector<Eigen::Vector3d> w;
 	Eigen::Vector3d p0, p, p1, p2, edge;
 	Eigen::Matrix3d transform;
@@ -519,4 +519,14 @@ void Wake::farfieldForces ( const double & xtrefftz, const double & ztrefftz,
 
 	lift *= 2.*rhoinf*uinf;
 	drag *= rhoinf;
+
+	// Prandtl-Glauert compressibility correction
+
+	if (compressible)
+	{
+		minf2 = std::pow(minf, 2.);
+		beta = std::sqrt(1. - minf2);
+		lift /= beta;
+		drag /= beta;
+	}
 }
