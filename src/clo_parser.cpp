@@ -117,17 +117,18 @@ void CLOParser::printVersion ( const std::string & version ) const
 
 void CLOParser::printHelp () const
 {
-  std::cout << "Usage: loraax OPTION" << std::endl;
-  std::cout << std::endl;
-  std::cout << "Options:" << std::endl;
-  std::cout << "  -i, --inputfile FILE   Perform analysis specified in input "
-            << "file" << std::endl;
-  std::cout << "  --help                 Display usage information and exit"
-            << std::endl;
-  std::cout << "  --version              Display version number and exit"
-            << std::endl;
-  std::cout << std::endl;
-  std::cout << "loraax home page: None yet!" << std::endl;
+	std::cout << "Usage: loraax OPTION" << std::endl;
+	std::cout << std::endl;
+	std::cout << "Options:" << std::endl;
+	std::cout << "  -i, --inputfile FILE   Perform analysis specified in input "
+	          << "file" << std::endl;
+	std::cout << "  --help                 Display usage information and exit"
+	          << std::endl;
+	std::cout << "  --version              Display version number and exit"
+	          << std::endl;
+	std::cout << std::endl;
+	std::cout << "loraax home page: https://github.com/montagdude/loraax"
+	          << std::endl;
 }
 
 /*******************************************************************************

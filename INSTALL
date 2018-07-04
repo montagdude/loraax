@@ -1,0 +1,20 @@
+Please note that LORAAX is currently in a pre-release stage, so if you want to
+try it, you will have to compile it and install its dependencies yourself. When
+the initial release is ready, binaries for Windows and Linux will be provided.
+
+For now, a Makefile is provided to build LORAAX. You will need a C++ compiler
+(by default g++, the GNU compiler). Before you can build libxfoil, you will
+first need to install:
+
+tinyxml2: http://www.grinninglizard.com/tinyxml2
+libxfoil: https://github.com/montagdude/libxfoil
+
+Once these are installed, you can just type `make` from the build directory to
+compile LORAAX (this assumes you also have make on your system).
+
+To run LORAAX, first set up an input XML or try one of the provided sample
+cases. Then type the command:
+
+loraax -i input.xml
+
+substituting the actual name of the XML file for input.xml.
