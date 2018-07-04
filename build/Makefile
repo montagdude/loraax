@@ -3,8 +3,8 @@
 CXX=g++
 DEBUGFLAGS=-g -Wall -Wno-unknown-pragmas
 GPPFLAGS=-O2 -fopenmp
-CXXFLAGS=$(DEBUGFLAGS)
-#CXXFLAGS=$(GPPFLAGS)
+#CXXFLAGS=$(DEBUGFLAGS)
+CXXFLAGS=$(GPPFLAGS)
 
 ################################################################################
 

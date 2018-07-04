@@ -1,0 +1,32 @@
+<Main>
+  <CaseName>wonky</CaseName>
+  <GeometryFile>wonky_aircraft.xml</GeometryFile>
+  <FreestreamSpeed>4.7717</FreestreamSpeed>
+  <FreestreamStaticPressure>101325</FreestreamStaticPressure>
+  <FreestreamDensity>1.125</FreestreamDensity>
+  <FreestreamViscosity>1.7894e-05</FreestreamViscosity>
+  <AngleOfAttack>3.</AngleOfAttack>
+  <WakeIters>50</WakeIters>
+  <RollupDist>2</RollupDist>
+<!--
+  <InitialWakeAngle>7.0</InitialWakeAngle>
+-->
+  <Viscous>true</Viscous>
+  <Compressible>false</Compressible>
+  <StoppingTolerance>1e-06</StoppingTolerance>
+  <MaxIters>100</MaxIters>
+  <VisualizationFrequency>1</VisualizationFrequency>
+  <XfoilRunOptions>
+    <ncrit>9.0</ncrit>
+    <xtript>1.0</xtript>
+    <xtripb>1.0</xtripb>
+    <maxit>100</maxit>
+    <vaccel>0.01</vaccel>
+  </XfoilRunOptions>
+  <XfoilPaneling>
+    <npan>160</npan>
+    <cvpar>1.0</cvpar>
+    <cterat>0.15</cterat>
+    <ctrrat>0.2</ctrrat>
+  </XfoilPaneling>
+</Main>

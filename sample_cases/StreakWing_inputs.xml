@@ -5,7 +5,7 @@
   <FreestreamStaticPressure>14.7</FreestreamStaticPressure>
   <FreestreamDensity>1.1463e-7</FreestreamDensity>
   <FreestreamViscosity>2.5953e-09</FreestreamViscosity>
-  <AngleOfAttack>1.</AngleOfAttack>
+  <AngleOfAttack>7.</AngleOfAttack>
   <WakeIters>30</WakeIters>
   <RollupDist>60</RollupDist>
 <!--
@@ -14,15 +14,15 @@
   <Viscous>true</Viscous>
   <Compressible>false</Compressible>
   <StoppingTolerance>1e-05</StoppingTolerance>
-  <MaxIters>200</MaxIters>
+  <MaxIters>10</MaxIters>
   <VisualizationFrequency>1</VisualizationFrequency>
   <XfoilRunOptions>
     <ncrit>9.0</ncrit>
     <xtript>1.0</xtript>
     <xtripb>1.0</xtripb>
-    <maxit>100</maxit>
+    <maxit>200</maxit>
     <vaccel>0.01</vaccel>
-    <reinitialize>true</reinitialize>
+    <reinit_freq>5</reinit_freq>
   </XfoilRunOptions>
   <XfoilPaneling>
     <npan>160</npan>
