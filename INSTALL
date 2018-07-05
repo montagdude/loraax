@@ -6,11 +6,15 @@ For now, a Makefile is provided to build LORAAX. You will need a C++ compiler
 (by default g++, the GNU compiler). Before you can build libxfoil, you will
 first need to install:
 
-tinyxml2: http://www.grinninglizard.com/tinyxml2
-libxfoil: https://github.com/montagdude/libxfoil
+eigen (linear algebra library): http://eigen.tuxfamily.org
+tinyxml2 (XML parser): http://www.grinninglizard.com/tinyxml2
+libxfoil (Xfoil library): https://github.com/montagdude/libxfoil
 
 Once these are installed, you can just type `make` from the build directory to
-compile LORAAX (this assumes you also have make on your system).
+compile LORAAX (this assumes you also have make on your system). You may need
+to edit the CXX variable in the Makefile to point to the C++ compiler installed
+on your system and the INCLUDE variable depending on where the header files for
+the dependencies listed above are located.
 
 To run LORAAX, first set up an input XML or try one of the provided sample
 cases. Then type the command:
