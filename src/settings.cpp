@@ -31,6 +31,7 @@ int wakeiters;
 double wakeangle;
 bool viscous;
 bool compressible;
+bool rollup_wake;
 int reinit_freq;
 double stop_tol;
 int maxiters;
@@ -156,10 +157,20 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		return 2;
 	if (read_setting(main, "AngleOfAttack", alpha) != 0)
 		return 2;
-	if (read_setting(main, "RollupDist", rollupdist) != 0)
-		return 2;
-	if (read_setting(main, "WakeIters", wakeiters) != 0)
-		return 2;
+	if (read_setting(main, "RollupWake", rollup_wake, false) != 0)
+		rollup_wake = false;
+	if (rollup_wake)
+	{
+		if (read_setting(main, "RollupDist", rollupdist) != 0)
+			return 2;
+		if (read_setting(main, "WakeIters", wakeiters) != 0)
+			return 2;
+	}
+	else
+	{
+		rollupdist = -1.;	// Will get set to max span later
+		wakeiters = 1;
+	}
 	if (read_setting(main, "InitialWakeAngle", wakeangle, false) != 0)
 		wakeangle = alpha;
 	if (read_setting(main, "Viscous", viscous) != 0)
@@ -221,7 +232,8 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 	uinfvec(1) = 0.;
 	uinfvec(2) = uinf*sin(alpha*M_PI/180.);
 	minf = uinf / std::sqrt(1.4*pinf/rhoinf);
-	dt = rollupdist / (uinf * double(wakeiters));
+	if (rollup_wake)
+		dt = rollupdist / (uinf * double(wakeiters));
 	
 	return 0;
 }

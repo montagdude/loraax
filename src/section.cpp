@@ -321,7 +321,8 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
 	// Uses 1st order Taylor series approximation for the nonlinear equation
 	//  cl = f(x, cl) about clguess. A 0th-order approximation would result
 	//  in clguessnew = f(x, clguess). The 1st-order approximation includes
-	//  the first derivative of f and has lower error and faster convergence.
+	//  the first derivative of f and has lower error and better convergence
+	//  properties.
 
 	if (_cl2dprev > -1.E+06)
 	{

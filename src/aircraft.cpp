@@ -775,20 +775,6 @@ int Aircraft::readXML ( const std::string & geom_file )
 		nwings += 1;
 	}
 	
-	// Set up wake for each wing
-	
-	for ( i = 0; i < nwings; i++ )
-	{
-		_wings[i].setupWake(next_global_vertidx, next_global_elemidx, i);
-	}
-	
-	if (nwings < 1)
-	{
-		conditional_stop(1, "Aircraft::readXML",
-		                 "At least one wing is required.");
-		return 2;
-	}
-
 	// Determine furthest aft root TE points for Trefftz plane calculation
 
 	_xte = -1.E+06;
@@ -803,6 +789,26 @@ int Aircraft::readXML ( const std::string & geom_file )
 			_maxspan = _wings[i].span();
 	}
 	_zte /= double(nwings);
+
+	if (rollupdist < 0.)
+	{
+		rollupdist = _maxspan;
+		dt = rollupdist / (uinf * double(wakeiters));
+	}
+
+	// Set up wake for each wing
+	
+	for ( i = 0; i < nwings; i++ )
+	{
+		_wings[i].setupWake(next_global_vertidx, next_global_elemidx, i);
+	}
+	
+	if (nwings < 1)
+	{
+		conditional_stop(1, "Aircraft::readXML",
+		                 "At least one wing is required.");
+		return 2;
+	}
 	
 	// Set pointers to vertices, panels, and wake elements
 	
@@ -850,7 +856,7 @@ void Aircraft::setSourceStrengths ( bool init )
 // strengths to vertices.
 //
 /******************************************************************************/
-void Aircraft::setDoubletStrengths ( bool init )
+void Aircraft::setDoubletStrengths ()
 {
 	unsigned int i, j, k, npanels, nwings, nstrips, nwakepans, nwakeverts;
 	double mu;
@@ -971,32 +977,36 @@ void Aircraft::constructSystem ( bool init )
 		for ( j = 0; j < npanels; j++ )
 		{
 			_rhs(i) -= _panels[j]->sourceStrength()*_sourceic(i,j);
-			_aic(i,j) = _doubletic(i,j);
+			if (init || rollup_wake)
+				_aic(i,j) = _doubletic(i,j);
 		}
 		
 		// Wake contribution to AIC and RHS
 		
 		for ( k = 0; k < nwings; k++ )
 		{
-			nstrips = _wings[k].nWStrips();
-			for ( l = 0; l < nstrips; l++ )
+			if (init || rollup_wake)
 			{
-				strip = _wings[k].wStrip(l);
-				nwakepans = strip->nPanels();
-				
-				// All wake panels in a strip have strength equal to
-				// mu_topte - mu_botte
-				
-				stripic = 0.;
-				for ( m = 0; m < nwakepans; m++ )
+				nstrips = _wings[k].nWStrips();
+				for ( l = 0; l < nstrips; l++ )
 				{
-					stripic += strip->panel(m)->doubletPhiCoeff(col(0),
-					                 col(1), col(2), false, "bottom", true);
+					strip = _wings[k].wStrip(l);
+					nwakepans = strip->nPanels();
+					
+					// All wake panels in a strip have strength equal to
+					// mu_topte - mu_botte
+					
+					stripic = 0.;
+					for ( m = 0; m < nwakepans; m++ )
+					{
+						stripic += strip->panel(m)->doubletPhiCoeff(col(0),
+						                 col(1), col(2), false, "bottom", true);
+					}
+					toptepan = strip->topTEPan()->idx();
+					bottepan = strip->botTEPan()->idx();
+					_aic(i,toptepan) += stripic;
+					_aic(i,bottepan) -= stripic;
 				}
-				toptepan = strip->topTEPan()->idx();
-				bottepan = strip->botTEPan()->idx();
-				_aic(i,toptepan) += stripic;
-				_aic(i,bottepan) -= stripic;
 			}
 
 			// Viscous wake influence

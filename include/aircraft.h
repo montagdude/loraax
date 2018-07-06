@@ -74,7 +74,7 @@ class Aircraft {
 	// Set source and doublet strengths
 	
 	void setSourceStrengths ( bool init );
-	void setDoubletStrengths ( bool init );
+	void setDoubletStrengths ();
 	
 	// Construct AIC matrix and RHS vector, factorize, and solve
 	

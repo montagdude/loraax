@@ -94,7 +94,7 @@ int main (int argc, char* argv[])
 	
 		std::cout << "Iteration " << iter << std::endl;
 		
-		if (iter > 1)
+		if ( (iter > 1) && rollup_wake )
 		{
 			std::cout << "  Convecting wake ..." << std::endl;
 			ac.moveWake();
@@ -109,8 +109,11 @@ int main (int argc, char* argv[])
 		
 		std::cout << "  Constructing the linear system ..." << std::endl;
 		ac.constructSystem(iter==1);
-		std::cout << "  Factorizing the AIC matrix ..." << std::endl;
-		ac.factorize();
+		if ( (iter == 1) || rollup_wake )
+		{
+			std::cout << "  Factorizing the AIC matrix ..." << std::endl;
+			ac.factorize();
+		}
 		std::cout << "  Solving the linear system with " << ac.systemSize()
 		          << " unknowns ..." << std::endl;
 		ac.solveSystem();
@@ -118,7 +121,7 @@ int main (int argc, char* argv[])
 		// Set doublet strengths on surface and wake
 		
 		std::cout << "  Setting doublet strengths ..." << std::endl;
-		ac.setDoubletStrengths(iter==1);
+		ac.setDoubletStrengths();
 		
 		// Compute surface velocities and pressures
 		
@@ -190,6 +193,12 @@ int main (int argc, char* argv[])
 		if (iter > 1)
 		{
 			if (std::abs(lift - oldlift) < stop_tol)
+			{
+				std::cout << "Solution is converged." << std::endl;
+				converged = true;
+				break;
+			}
+			else if ( (! rollup_wake) && (! viscous) )
 			{
 				std::cout << "Solution is converged." << std::endl;
 				converged = true;
