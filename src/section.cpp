@@ -62,6 +62,9 @@ Section::Section ()
 	_uverts.resize(0); 
 	_wverts.resize(0);
 	_re = 0.;
+	_cl2dprev = -1.E+06;
+	_cl2dguessprev = -1.E+06;
+	_cl2dguessprev = -1.E+06;
 	_converged = false;
 	_unconverged_count = 0;
 	_reinitialized = false;
@@ -285,7 +288,7 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
                           const double & alpha, int reinit_freq )
 {
 	Eigen::Vector3d uinfvec_p;
-	double qinfp, uinf, uinfp, cl2d;
+	double qinfp, uinf, uinfp, cl2d, dcl2d, cl2dguessnew;
 	Eigen::Matrix3d inertial2section, section2inertial;
 	std::vector<double> bldata;
 	std::vector<double> xw, zw, dstarw, uedgew;
@@ -314,9 +317,26 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
 	cl2d = -_fa*uinfvec_p[2]/uinfp + _fn*uinfvec_p[0]/uinfp;
 	cl2d /= qinfp*_chord;
 
-  // Run xfoil at 2D Cl
+	// Approximation of Cl for next iteration
+	// Uses 1st order Taylor series approximation for the nonlinear equation
+	//  cl = f(x, cl) about clguess. A 0th-order approximation would result
+	//  in clguessnew = f(x, clguess). The 1st-order approximation includes
+	//  the first derivative of f and has lower error and faster convergence.
 
-	if (_foil.runXfoil(cl2d) != 0)
+	if (_cl2dprev > -1.E+06)
+	{
+		dcl2d = (cl2d - _cl2dprev) / (_cl2dguess - _cl2dguessprev);
+		cl2dguessnew = (cl2d - _cl2dguess*dcl2d) / (1. - dcl2d);
+	}
+	else
+		cl2dguessnew = cl2d;
+	_cl2dprev = cl2d;
+	_cl2dguessprev = _cl2dguess;
+	_cl2dguess = cl2dguessnew;
+
+	// Run xfoil at 2D Cl
+
+	if (_foil.runXfoil(cl2dguessnew) != 0)
 	{
 		_converged = false;
 		_unconverged_count += 1;

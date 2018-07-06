@@ -45,6 +45,8 @@ class Section: public SectionalObject {
 	double _fa, _fn;	// Axial and normal force/span in section frame
 	double _clp, _clv, _cdp, _cdv, _cmp, _cmv;
 						// Sectional lift, drag, and moment coefficients
+	double _cl2dprev, _cl2dguess, _cl2dguessprev;
+						// Stores previous values of Cl for Xfoil
 	bool _converged;	// Whether Xfoil BL calculations converged
 	unsigned int _unconverged_count;
 						// Number of unconverged attempts
