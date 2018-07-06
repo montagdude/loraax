@@ -108,12 +108,9 @@ int main (int argc, char* argv[])
 		// Construct, factorize, and solve the system
 		
 		std::cout << "  Constructing the linear system ..." << std::endl;
-		ac.constructSystem(iter);
-		if (iter < 3)	// AIC matrix does not change after 2nd iteration
-		{
-			std::cout << "  Factorizing the AIC matrix ..." << std::endl;
-			ac.factorize();
-		}
+		ac.constructSystem(iter==1);
+		std::cout << "  Factorizing the AIC matrix ..." << std::endl;
+		ac.factorize();
 		std::cout << "  Solving the linear system with " << ac.systemSize()
 		          << " unknowns ..." << std::endl;
 		ac.solveSystem();
@@ -192,8 +189,7 @@ int main (int argc, char* argv[])
 
 		if (iter > 1)
 		{
-			if ( (std::abs(lift - oldlift) < stop_tol) &&
-			     (int(iter) >= wakeiters) )
+			if (std::abs(lift - oldlift) < stop_tol)
 			{
 				std::cout << "Solution is converged." << std::endl;
 				converged = true;

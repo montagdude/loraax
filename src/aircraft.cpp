@@ -906,7 +906,7 @@ void Aircraft::setDoubletStrengths ( bool init )
 // Constructs AIC matrix and RHS vector
 //
 /******************************************************************************/
-void Aircraft::constructSystem ( unsigned int iter )
+void Aircraft::constructSystem ( bool init )
 {
 	unsigned int i, j, k, l, m, nwings, npanels, nstrips, nwakepans, nvwtris;
 	int toptepan, bottepan;
@@ -925,7 +925,7 @@ void Aircraft::constructSystem ( unsigned int iter )
 
 	// Compute influence coefficient matrices the first time through
 
-	if (iter == 1)
+	if (init)
 	{
 		_sourceic.resize(npanels,npanels);
 		_doubletic.resize(npanels,npanels);
@@ -970,12 +970,8 @@ void Aircraft::constructSystem ( unsigned int iter )
 		_rhs(i) = 0.;
 		for ( j = 0; j < npanels; j++ )
 		{
-		  _rhs(i) -= _panels[j]->sourceStrength()*_sourceic(i,j);
-		
-		  // AIC matrix is static after iteration 2
-		
-		  if (iter < 3)
-		    _aic(i,j) = _doubletic(i,j);
+			_rhs(i) -= _panels[j]->sourceStrength()*_sourceic(i,j);
+			_aic(i,j) = _doubletic(i,j);
 		}
 		
 		// Wake contribution to AIC and RHS
@@ -988,40 +984,24 @@ void Aircraft::constructSystem ( unsigned int iter )
 				strip = _wings[k].wStrip(l);
 				nwakepans = strip->nPanels();
 				
-				// During initial step, all wake panels in a strip have strength
-				// equal to mu_topte - mu_botte
+				// All wake panels in a strip have strength equal to
+				// mu_topte - mu_botte
 				
-				if (iter == 1)
+				stripic = 0.;
+				for ( m = 0; m < nwakepans; m++ )
 				{
-					stripic = 0.;
-					for ( m = 0; m < nwakepans; m++ )
-					{
-						stripic += strip->panel(m)->doubletPhiCoeff(col(0),
-						                 col(1), col(2), false, "bottom", true);
-					}
-					toptepan = strip->topTEPan()->idx();
-					bottepan = strip->botTEPan()->idx();
-					_aic(i,toptepan) += stripic;
-					_aic(i,bottepan) -= stripic;
+					stripic += strip->panel(m)->doubletPhiCoeff(col(0),
+					                 col(1), col(2), false, "bottom", true);
 				}
-				
-				// For subsequent time steps, lag the wake strength in time so
-				// that we don't need to constantly recompute AIC
-				
-				if (iter > 1)
-				{
-					for ( m = 0; m < nwakepans; m++ )
-					{
-						_rhs(i) -= strip->panel(m)->doubletPhiCoeff(col(0),
-						              col(1), col(2), false, "bottom", true)
-						         * strip->panel(m)->doubletStrength();
-					}
-				}
+				toptepan = strip->topTEPan()->idx();
+				bottepan = strip->botTEPan()->idx();
+				_aic(i,toptepan) += stripic;
+				_aic(i,bottepan) -= stripic;
 			}
 
 			// Viscous wake influence
 
-			if ( (viscous) && (iter > 1) )
+			if ( (viscous) && (! init) )
 			{
 				nvwtris = _wings[k].viscousWake().nTris();
 				for ( l = 0; l < nvwtris; l++ )

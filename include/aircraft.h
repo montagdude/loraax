@@ -78,7 +78,7 @@ class Aircraft {
 	
 	// Construct AIC matrix and RHS vector, factorize, and solve
 	
-	void constructSystem ( unsigned int iter );
+	void constructSystem ( bool init );
 	void factorize ();
 	void solveSystem ();
 	
