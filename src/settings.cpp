@@ -30,7 +30,6 @@ double rollupdist;
 int wakeiters;
 double wakeangle;
 bool viscous;
-bool compressible;
 bool rollup_wake;
 int reinit_freq;
 double stop_tol;
@@ -175,8 +174,6 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		wakeangle = alpha;
 	if (read_setting(main, "Viscous", viscous) != 0)
 		return 2;
-	if (read_setting(main, "Compressible", compressible, false) != 0)
-		compressible = true;
 	if (read_setting(main, "StoppingTolerance", stop_tol) != 0)
 		return 2;
 	if (read_setting(main, "MaxIters", maxiters) != 0)

@@ -156,8 +156,7 @@ class Panel: public Element {
 	// Compute or access pressure and pressure coefficient
 	
 	int computePressure ( const double & uinf, const double & rhoinf,
-	                      const double & pinf, const double & minf,
-	                      bool compressible );
+	                      const double & pinf );
 	const double & pressure () const;
 	const double & pressureCoefficient () const;
 	

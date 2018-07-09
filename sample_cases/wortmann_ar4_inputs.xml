@@ -60,10 +60,6 @@
 <!-- Whether to run Xfoil for a coupled viscous solution. -->
   <Viscous>true</Viscous>
 
-<!-- Whether to apply Karman-Tsien compressibility correction to surface
-     pressure and velocity -->
-  <Compressible>false</Compressible>
-
 <!-- Tolerance in change in CL between time steps to consider the solution
      converged and stop doing time steps. -->
   <StoppingTolerance>1e-06</StoppingTolerance>

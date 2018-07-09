@@ -343,40 +343,17 @@ const Eigen::Vector3d & Panel::velocity () const { return _vel; }
 
 /******************************************************************************/
 //
-// Compute / access pressure and pressure coefficient. Also performs
-// compressibility corrections on surface pressure.
+// Compute / access pressure and pressure coefficient
 //
 /******************************************************************************/
 int Panel::computePressure ( const double & uinf, const double & rhoinf,
-                             const double & pinf, const double & minf,
-                             bool compressible )
+                             const double & pinf )
 {
-	double uinf2, vel2, cpinc, minf2, beta2, beta;
-	std::string msg;
+	double uinf2, vel2;
 
 	uinf2 = std::pow(uinf, 2.);
 	vel2 = _vel.squaredNorm();
-	cpinc = 1. - vel2 / uinf2;
-	
-	// Prandtl-Glauert compressibility correction
-	
-	if (compressible)
-	{
-		minf2 = std::pow(minf, 2.);
-		beta2 = 1. - minf2;
-		beta = std::sqrt(beta2);
-		if (beta2 <= 0.0)
-		{
-			msg = "Locally supersonic flow detected. "
-				+ std::string("Compressibility correction is invalid.");
-			conditional_stop(1, "Panel::computePressure", msg);
-			return 1;
-		}
-		_cp = cpinc / beta;
-	}
-	else
-	  _cp = cpinc;
-	
+	_cp = 1. - vel2 / uinf2;
 	_p = 0.5*_cp*rhoinf*uinf2 + pinf;
 	
 	return 0;

@@ -6,15 +6,15 @@
   <FreestreamDensity>1.1463e-7</FreestreamDensity>
   <FreestreamViscosity>2.5953e-09</FreestreamViscosity>
   <AngleOfAttack>7.</AngleOfAttack>
+  <RollupWake>true</RollupWake>
   <WakeIters>30</WakeIters>
   <RollupDist>60</RollupDist>
 <!--
   <InitialWakeAngle>7.0</InitialWakeAngle>
 -->
   <Viscous>true</Viscous>
-  <Compressible>false</Compressible>
   <StoppingTolerance>1e-05</StoppingTolerance>
-  <MaxIters>10</MaxIters>
+  <MaxIters>50</MaxIters>
   <VisualizationFrequency>1</VisualizationFrequency>
   <XfoilRunOptions>
     <ncrit>9.0</ncrit>

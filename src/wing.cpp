@@ -708,10 +708,8 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 		if (viscous) 
 		{
 			_sections[i].computeReynoldsNumber(rhoinf, uinf, muinf);
-			if (compressible)
-				_sections[i].setMachNumber(minf);
-			else
-				_sections[i].setMachNumber(0.0);
+//FIXME: when compressible flow is supported, set Mach number appropriately
+			_sections[i].setMachNumber(0.0);
 		}
 	}
 
@@ -1222,7 +1220,7 @@ void Wing::computeSurfaceQuantities ()
     for ( j = 0; j < 2*_nchord-2; j++ )
     {
       _panels[i][j]->computeVelocity(uinfvec);
-      _panels[i][j]->computePressure(uinf, rhoinf, pinf, minf, compressible);
+      _panels[i][j]->computePressure(uinf, rhoinf, pinf);
     }
   }
 
