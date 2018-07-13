@@ -249,6 +249,26 @@ void Section::setVertices ( unsigned int nchord, const double & lesprat,
 
 /******************************************************************************/
 //
+// Prandtl-Glauert geometric transformation (xinc = x/beta)
+//
+/******************************************************************************/
+void Section::transformPrandtlGlauert ( const double & minf )
+{
+	double beta, x, y, z;
+	unsigned int i;
+
+	beta = std::sqrt(1. - std::pow(minf, 2.));
+	for ( i = 0; i < _nverts; i++ )
+	{
+		x = _verts[i].x();
+		y = _verts[i].y();
+		z = _verts[i].z();
+		_verts[i].setIncompressibleCoordinates(x/beta, y, z);
+	}
+}
+
+/******************************************************************************/
+//
 // Access airfoil
 //
 /******************************************************************************/
@@ -289,6 +309,7 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
 {
 	Eigen::Vector3d uinfvec_p;
 	double qinfp, uinf, uinfp, cl2d, dcl2d, cl2dguessnew;
+	double minf, beta, x, y, z;
 	Eigen::Matrix3d inertial2section, section2inertial;
 	std::vector<double> bldata;
 	std::vector<double> xw, zw, dstarw, uedgew;
@@ -384,6 +405,8 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
 	// Set wake vertex positions and scaled data
 
 	section2inertial = inverse_euler_rotation(_roll, _twist, 0.0, "123");
+	minf = uinf / std::sqrt(1.4*pinf/rhoinf);
+	beta = std::sqrt(1. - std::pow(minf, 2.));
 	for ( i = 0; i < _nwake; i++ )
 	{
 		_wverts[i].setCoordinates(xw[i], 0.0, zw[i]);
@@ -394,6 +417,13 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
 		_wverts[i].translate(_xle, _y, _zle);
 		_wverts[i].setData(8, dstarw[i]*_chord);
 		_wverts[i].setData(10, uedgew[i]*uinf);
+
+		// Prandtl-Glauert transformation
+
+		x = _wverts[i].x();
+		y = _wverts[i].y();
+		z = _wverts[i].z();
+		_wverts[i].setIncompressibleCoordinates(x/beta, y, z);
 	}
 }
 

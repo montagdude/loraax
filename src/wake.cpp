@@ -36,6 +36,9 @@ Wake::Wake ()
 	_newx.resize(0);
 	_newy.resize(0);
 	_newz.resize(0);
+	_newxinc.resize(0);
+	_newyinc.resize(0);
+	_newzinc.resize(0);
 	_topteverts.resize(0);
 	_botteverts.resize(0);
 	_tris.resize(0); 
@@ -44,7 +47,7 @@ Wake::Wake ()
 
 /******************************************************************************/
 //
-// initialize with a vector of vertices along the wing trailing edge
+// Initialize with a vector of vertices along the wing trailing edge
 //
 /******************************************************************************/
 void Wake::initialize ( const std::vector<Vertex *> & topteverts,
@@ -54,7 +57,7 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
 {
 	int ntris, nquads;
 	unsigned int i, j, blvert, brvert, trvert, tlvert;
-	double x, y, z, xviz, yviz, zviz;
+	double x, y, z, beta, xinc, yinc, zinc, xviz, yviz, zviz, dx, dy, dz;
 
 	_idx = wakeidx;
 	
@@ -71,9 +74,13 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
 	_newx.resize(_nspan*(_nstream-1));
 	_newy.resize(_nspan*(_nstream-1));
 	_newz.resize(_nspan*(_nstream-1));
+	_newxinc.resize(_nspan*(_nstream-1));
+	_newyinc.resize(_nspan*(_nstream-1));
+	_newzinc.resize(_nspan*(_nstream-1));
 
 	// Add vertices along freestream direction
 	
+	beta = std::sqrt(1. - std::pow(minf, 2.));
 	for ( i = 0; int(i) < _nspan; i++ )
 	{
 		for ( j = 0; int(j) < _nstream+1; j++ )
@@ -84,31 +91,59 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
 				y = _topteverts[i]->y();
 				z = _topteverts[i]->z();
 				_verts[i*(_nstream+1)].setCoordinates(x, y, z);
+
+				xinc = _topteverts[i]->xInc();
+				yinc = _topteverts[i]->yInc();
+				zinc = _topteverts[i]->zInc();
+				_verts[i*(_nstream+1)].setIncompressibleCoordinates(xinc,
+				                                                    yinc, zinc);
 			}
 			else if (int(j) < _nstream)
 			{
-				// Vertices that will roll up
+				// Vertices that will roll up. Note freestream velocity is the
+				// same in actual and incompressible coordinates (see BAH book),
+				// but timestep is scaled by 1/beta in incompressible coords.
 
-				x = _verts[i*(_nstream+1)].x()
-				  + std::cos(wakeangle*M_PI/180.)*uinf*double(j)*dt;
-				y = _verts[i*(_nstream+1)].y();
-				z = _verts[i*(_nstream+1)].z()
-				  + std::sin(wakeangle*M_PI/180.)*uinf*double(j)*dt;
+				dx = std::cos(wakeangle*M_PI/180.)*uinf*double(j)*dt; 
+				dy = 0.;
+				dz = std::sin(wakeangle*M_PI/180.)*uinf*double(j)*dt;
+
+				xinc = _verts[i*(_nstream+1)].xInc() + dx;
+				yinc = _verts[i*(_nstream+1)].yInc() + dy;
+				zinc = _verts[i*(_nstream+1)].zInc() + dz;
+				_verts[i*(_nstream+1)+j].setIncompressibleCoordinates(xinc,
+				                                                    yinc, zinc);
+
+				x = _verts[i*(_nstream+1)].x() + dx*beta;
+				y = _verts[i*(_nstream+1)].y() + dy*beta;
+				z = _verts[i*(_nstream+1)].z() + dz*beta;
 				_verts[i*(_nstream+1)+j].setCoordinates(x, y, z);
 			}
 			else
 			{
 				// Trailing vertex at "infinity"
 
-				x = _verts[i*(_nstream+1)+_nstream-1].x()
-				  + uinfvec(0)*1000.*rollupdist/uinf;
-				y = _verts[i*(_nstream+1)+_nstream-1].y();
-				z = _verts[i*(_nstream+1)+_nstream-1].z()
-				  + uinfvec(2)*1000.*rollupdist/uinf;
+				dx = uinfvec(0)*1000.*rollupdist/uinf; 
+				dy = 0.;
+				dz = uinfvec(2)*1000.*rollupdist/uinf; 
+
+				xinc = _verts[i*(_nstream+1)+_nstream-1].xInc() + dx;
+				yinc = _verts[i*(_nstream+1)+_nstream-1].yInc() + dy;
+				zinc = _verts[i*(_nstream+1)+_nstream-1].zInc() + dz;
+				_verts[i*(_nstream+1)+j].setIncompressibleCoordinates(xinc,
+				                                                    yinc, zinc);
+
+				x = _verts[i*(_nstream+1)+_nstream-1].x() + dx*beta;
+				y = _verts[i*(_nstream+1)+_nstream-1].y() + dy*beta;
+				z = _verts[i*(_nstream+1)+_nstream-1].z() + dz*beta;
 				_verts[i*(_nstream+1)+j].setCoordinates(x, y, z);
-				xviz = _verts[i*(_nstream+1)+_nstream-1].x() + uinfvec(0)*dt;
-				yviz = _verts[i*(_nstream+1)+_nstream-1].y();
-				zviz = _verts[i*(_nstream+1)+_nstream-1].z() + uinfvec(2)*dt;
+
+				xviz = _verts[i*(_nstream+1)+_nstream-1].x()
+				     + uinfvec(0)*dt*beta;
+				yviz = _verts[i*(_nstream+1)+_nstream-1].y()
+				     + uinfvec(1)*dt*beta;
+				zviz = _verts[i*(_nstream+1)+_nstream-1].z()
+				     + uinfvec(2)*dt*beta;
 				_verts[i*(_nstream+1)+j].setVizCoordinates(xviz, yviz, zviz);
 			}
 			_verts[i*(_nstream+1)+j].setIdx(next_global_vertidx);
@@ -200,31 +235,36 @@ void Wake::convectVertices ( const double & dt,
 	int i, j;
 	unsigned int v, k, nsurfpan, nwakepan, nmove;
 	Eigen::Vector3d k1, dvel;
-	double x, y, z;
+	double xinc, yinc, zinc, x, y, z, beta;
 
 	nsurfpan = allsurf.size();
 	nwakepan = allwake.size();
 	nmove = _nspan*(_nstream-1);
+	beta = std::sqrt(1. - std::pow(minf, 2.0));
 
-#pragma omp parallel for private(v,i,j,x,y,z,k,k1,dvel)
+#pragma omp parallel for private(v,i,j,x,y,z,xinc,yinc,zinc,k,k1,dvel)
 	for ( v = 0; v < nmove; v++ )
 	{
 		i = int(floor(v/(_nstream-1)));
 		j = v - i*(_nstream-1);
 		
+		xinc = _verts[i*(_nstream+1)+j].xInc();
+		yinc = _verts[i*(_nstream+1)+j].yInc();
+		zinc = _verts[i*(_nstream+1)+j].zInc();
+
 		x = _verts[i*(_nstream+1)+j].x();
 		y = _verts[i*(_nstream+1)+j].y();
 		z = _verts[i*(_nstream+1)+j].z();
 	
-	  // Calculate velocity and update position
+		// Calculate velocity and update position
 	
 		if (j == 0)
 		{
 		  // At trailing edge, use average top + bottom surface velocity
 		
-			k1(0) = 0.5*(_topteverts[i]->data(2) + _botteverts[i]->data(2));
-			k1(1) = 0.5*(_topteverts[i]->data(3) + _botteverts[i]->data(3));
-			k1(2) = 0.5*(_topteverts[i]->data(4) + _botteverts[i]->data(4));
+			k1(0) = 0.5*beta*(_topteverts[i]->data(2)+_botteverts[i]->data(2));
+			k1(1) = 0.5     *(_topteverts[i]->data(3)+_botteverts[i]->data(3));
+			k1(2) = 0.5     *(_topteverts[i]->data(4)+_botteverts[i]->data(4));
 		}
 		else
 		{
@@ -233,22 +273,28 @@ void Wake::convectVertices ( const double & dt,
 			k1 = uinfvec;
 			for ( k = 0; k < nsurfpan; k++ )
 			{
-				dvel = allsurf[k]->inducedVelocity(x, y, z, false, "top", true);
+				dvel = allsurf[k]->inducedVelocity(xinc, yinc, zinc, false,
+				                                   "top", true);
 				k1 += dvel;
 			}
 			for ( k = 0; k < nwakepan; k++ )
 			{
-				dvel = allwake[k]->vortexVelocity(x, y, z, rcore, true);
+				dvel = allwake[k]->vortexVelocity(xinc, yinc, zinc, rcore,
+				                                  true);
 				k1 += dvel;
 			}
 		}
 		if (i == 0)
 			k1(1) = 0.;
 		k1 *= dt;
-		
-		_newx[v] = x + k1(0);
-		_newy[v] = y + k1(1);
-		_newz[v] = z + k1(2);
+
+		_newxinc[v] = xinc + k1(0);
+		_newyinc[v] = yinc + k1(1);
+		_newzinc[v] = zinc + k1(2);
+
+		_newx[v] = x + beta*k1(0);
+		_newy[v] = y + beta*k1(1);
+		_newz[v] = z + beta*k1(2);
 	}
 }
 
@@ -260,12 +306,14 @@ void Wake::convectVertices ( const double & dt,
 void Wake::update ()
 {
 	unsigned int i, j, ntris, nquads;
-	double x, y, z, xviz, yviz, zviz;
+	double beta, xinc, yinc, zinc, x, y, z, xviz, yviz, zviz;
 	
+	beta = std::sqrt(1. - std::pow(minf, 2.));
+
 	// Update vertex positions. New position for vertex (i,j) is equal to
 	// convected position of vertex (i,j-1).
 
-#pragma omp parallel for private(i,j,x,y,z,xviz,yviz,zviz)
+#pragma omp parallel for private(i,j,x,y,z,xinc,yinc,zinc,xviz,yviz,zviz)
 	for ( i = 0; int(i) < _nspan; i++ )
 	{
 		_verts[i*(_nstream+1)].incrementWakeTime(dt);
@@ -275,20 +323,40 @@ void Wake::update ()
 			y = _newy[i*(_nstream-1)+j-1];
 			z = _newz[i*(_nstream-1)+j-1];
 			_verts[i*(_nstream+1)+j].setCoordinates(x, y, z);
-			_verts[i*(_nstream+1)+j].incrementWakeTime(dt);
+
+			xinc = _newxinc[i*(_nstream-1)+j-1];
+			yinc = _newyinc[i*(_nstream-1)+j-1];
+			zinc = _newzinc[i*(_nstream-1)+j-1];
+			_verts[i*(_nstream+1)+j].setIncompressibleCoordinates(xinc, yinc,
+			                                                      zinc);
+			_verts[i*(_nstream+1)+j].incrementWakeTime(dt*beta);
 		}
 	
 		// Trailing vertices at "infinity" extend along freestream direction
-		
-		x = _newx[i*(_nstream-1)+_nstream-2] + uinfvec(0)*1000.*rollupdist/uinf;
-		y = _newy[i*(_nstream-1)+_nstream-2];
-		z = _newz[i*(_nstream-1)+_nstream-2] + uinfvec(2)*1000.*rollupdist/uinf;
+
+		x = _newx[i*(_nstream-1)+_nstream-2]
+		  + beta*uinfvec(0)*1000.*rollupdist/uinf;
+		y = _newy[i*(_nstream-1)+_nstream-2]
+		  + beta*uinfvec(1)*1000.*rollupdist/uinf;
+		z = _newz[i*(_nstream-1)+_nstream-2]
+		  + beta*uinfvec(2)*1000.*rollupdist/uinf;
 		_verts[i*(_nstream+1)+_nstream].setCoordinates(x, y, z);
-		_verts[i*(_nstream+1)+_nstream].incrementWakeTime(dt);
-		xviz = _newx[i*(_nstream-1)+_nstream-2] + uinfvec(0)*dt;
-		yviz = _newy[i*(_nstream-1)+_nstream-2];
-		zviz = _newz[i*(_nstream-1)+_nstream-2] + uinfvec(2)*dt;
+		
+		xinc = _newxinc[i*(_nstream-1)+_nstream-2]
+		     + uinfvec(0)*1000.*rollupdist/uinf;
+		yinc = _newyinc[i*(_nstream-1)+_nstream-2]
+		     + uinfvec(1)*1000.*rollupdist/uinf;
+		zinc = _newzinc[i*(_nstream-1)+_nstream-2]
+		     + uinfvec(2)*1000.*rollupdist/uinf;
+		_verts[i*(_nstream+1)+_nstream].setIncompressibleCoordinates(xinc, yinc,
+		                                                             zinc);
+
+		xviz = _newx[i*(_nstream-1)+_nstream-2] + uinfvec(0)*dt*beta;
+		yviz = _newy[i*(_nstream-1)+_nstream-2] + uinfvec(1)*dt*beta;
+		zviz = _newz[i*(_nstream-1)+_nstream-2] + uinfvec(2)*dt*beta;
 		_verts[i*(_nstream+1)+_nstream].setVizCoordinates(xviz, yviz, zviz);
+
+		_verts[i*(_nstream+1)+_nstream].incrementWakeTime(dt*beta);
 	}
 
 	// Recompute panel geometry
@@ -356,6 +424,8 @@ QuadPanel * Wake::quadPanel ( unsigned int qidx )
 // This is used for Trefftz plane induced drag calculation, where a planar
 // wake is preferred (see Kroo paper and comments for farfieldForces method).
 //
+// This calculation uses incompressible coordinates for wake geometry.
+//
 /******************************************************************************/
 Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
                                              const double & y, const double & z,
@@ -379,9 +449,9 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 		else
 			gamma = _quads[i-1].doubletStrength();
 
-		x1 = _verts[i*(_nstream+1)+0].x();
-		y1 = _verts[i*(_nstream+1)+0].y();
-		z1 = _verts[i*(_nstream+1)+0].z();
+		x1 = _verts[i*(_nstream+1)+0].xInc();
+		y1 = _verts[i*(_nstream+1)+0].yInc();
+		z1 = _verts[i*(_nstream+1)+0].zInc();
 		x2 = x1 + 1000.*rollupdist*uinfvec(0)/uinf;
 		y2 = y1;
 		z2 = z1 + 1000.*rollupdist*uinfvec(2)/uinf;
@@ -404,12 +474,12 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 		{
 			gamma = _quads[i].doubletStrength();
 
-			x1 = _verts[i*(_nstream+1)+0].x();
-			y1 = _verts[i*(_nstream+1)+0].y();
-			z1 = _verts[i*(_nstream+1)+0].z();
-			x2 = _verts[(i+1)*(_nstream+1)+0].x();
-			y2 = _verts[(i+1)*(_nstream+1)+0].y();
-			z2 = _verts[(i+1)*(_nstream+1)+0].z();
+			x1 = _verts[i*(_nstream+1)+0].xInc();
+			y1 = _verts[i*(_nstream+1)+0].yInc();
+			z1 = _verts[i*(_nstream+1)+0].zInc();
+			x2 = _verts[(i+1)*(_nstream+1)+0].xInc();
+			y2 = _verts[(i+1)*(_nstream+1)+0].yInc();
+			z2 = _verts[(i+1)*(_nstream+1)+0].zInc();
 
 			// Induced velocity + mirror contribution
 
@@ -430,6 +500,9 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 // results in high sensitivity to the rolled up shape, and it was found to
 // underpredict induced drag and be very sensitive to the rollup distance.
 // See Kroo paper for more information.
+//
+// Trefftz plane calculation is performed using incompressible coordinates,
+// though results should be equivalent either way (see BAH book).
 //
 /******************************************************************************/
 void Wake::farfieldForces ( const double & xtrefftz, const double & ztrefftz,
@@ -461,12 +534,12 @@ void Wake::farfieldForces ( const double & xtrefftz, const double & ztrefftz,
 	{
 		// Aft TE midpoint projected on Trefftz plane
 
-		p0(0) = 0.5*(_verts[    i*(_nstream+1)+0].x()
-		      +      _verts[(i+1)*(_nstream+1)+0].x());
-		p0(1) = 0.5*(_verts[    i*(_nstream+1)+0].y()
-		      +      _verts[(i+1)*(_nstream+1)+0].y());
-		p0(2) = 0.5*(_verts[    i*(_nstream+1)+0].z()
-		      +      _verts[(i+1)*(_nstream+1)+0].z());
+		p0(0) = 0.5*(_verts[    i*(_nstream+1)+0].xInc()
+		      +      _verts[(i+1)*(_nstream+1)+0].xInc());
+		p0(1) = 0.5*(_verts[    i*(_nstream+1)+0].yInc()
+		      +      _verts[(i+1)*(_nstream+1)+0].yInc());
+		p0(2) = 0.5*(_verts[    i*(_nstream+1)+0].zInc()
+		      +      _verts[(i+1)*(_nstream+1)+0].zInc());
 		p = line_plane_intersection(p0, uinfvec/uinf, a, b, c, d);
 
 		// Induced velocity from all wakes and transform to Trefftz plane
@@ -488,14 +561,14 @@ void Wake::farfieldForces ( const double & xtrefftz, const double & ztrefftz,
 	{
 		// TE points projected on Trefftz plane
 
-		p1(0) = _verts[i*(_nstream+1)+0].x();
-		p1(1) = _verts[i*(_nstream+1)+0].y();
-		p1(2) = _verts[i*(_nstream+1)+0].z();
+		p1(0) = _verts[i*(_nstream+1)+0].xInc();
+		p1(1) = _verts[i*(_nstream+1)+0].yInc();
+		p1(2) = _verts[i*(_nstream+1)+0].zInc();
 		p1 = line_plane_intersection(p1, uinfvec/uinf, a, b, c ,d);
 
-		p2(0) = _verts[(i+1)*(_nstream+1)+0].x();
-		p2(1) = _verts[(i+1)*(_nstream+1)+0].y();
-		p2(2) = _verts[(i+1)*(_nstream+1)+0].z();
+		p2(0) = _verts[(i+1)*(_nstream+1)+0].xInc();
+		p2(1) = _verts[(i+1)*(_nstream+1)+0].yInc();
+		p2(2) = _verts[(i+1)*(_nstream+1)+0].zInc();
 		p2 = line_plane_intersection(p2, uinfvec/uinf, a, b, c ,d);
 
 		dx = p2(0) - p1(0);

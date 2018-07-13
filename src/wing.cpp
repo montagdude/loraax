@@ -702,14 +702,17 @@ int Wing::setupSections ( std::vector<Section> & user_sections )
 		// Set vertices from spacing distribution
 		
 		_sections[i].setVertices(_nchord, _lesprat, _tesprat);
-		
+
+		// Prandtl-Glauert transformation to equivalent incompressible geometry
+
+		_sections[i].transformPrandtlGlauert(minf);
+
 		// Set Reynolds number and Mach number if viscous
 		
 		if (viscous) 
 		{
 			_sections[i].computeReynoldsNumber(rhoinf, uinf, muinf);
-//FIXME: when compressible flow is supported, set Mach number appropriately
-			_sections[i].setMachNumber(0.0);
+			_sections[i].setMachNumber(minf);
 		}
 	}
 
@@ -742,7 +745,7 @@ const double & Wing::planformArea () const { return _splanform; }
 void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 {
 	unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, right;
-	double phin, phi, r;
+	double phin, phi, r, beta;
 	Eigen::Matrix3d trans, T1;
 	Eigen::Vector3d cen, r0, rb, ri, point, norm, tang, tangb;
 	Eigen::Vector3d tanl, tanr, tanf, tanb, tan;
@@ -794,7 +797,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 			        _sections[i+1].vert(j+1).z() - _sections[i+1].vert(j).z();
 			tan = 0.5*(tanl + tanr);
 			tan /= tan.norm();
-			_quads[qcounter].setTangent(tan);
+			_quads[qcounter].setTangentComp(tan);
 			
 			_panels[i][j] = &_quads[qcounter];
 			qcounter += 1;
@@ -806,6 +809,7 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 	// does nothing useful, because I switched back to flat tips. The code is
 	// kept here in case I want to go back to revolved tip caps again.
 	
+	beta = std::sqrt(1. - std::pow(minf,2.));
 	_tipverts.resize(_ntipcap-2);
 	for ( i = 1; i < _ntipcap-1; i++ )
 	{
@@ -876,6 +880,8 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 			point = cen + ri;
 			_tipverts[i-1][j-1].setIdx(next_global_vertidx);
 			_tipverts[i-1][j-1].setCoordinates(point(0), point(1), point(2));
+			_tipverts[i-1][j-1].setIncompressibleCoordinates(point(0)/beta,
+			                                                point(1), point(2));
 			_verts[vcounter] = &_tipverts[i-1][j-1];
 			vcounter += 1;
 			next_global_vertidx += 1;
@@ -1063,14 +1069,14 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 			
 			if ( (j == 0) || (j == _nchord-1) )
 			{
-				tanf = _panels[_nspan-1+i][j+1]->centroid()
-				     - _panels[_nspan-1+i][j]->centroid();
+				tanf = _panels[_nspan-1+i][j+1]->centroidComp()
+				     - _panels[_nspan-1+i][j]->centroidComp();
 				tan = tanf / tanf.norm();
 			}
 			else if ( (j == _nchord-2) || (j == 2*_nchord-3) )
 			{
-				tanb = _panels[_nspan-1+i][j]->centroid()
-				     - _panels[_nspan-1+i][j-1]->centroid();
+				tanb = _panels[_nspan-1+i][j]->centroidComp()
+				     - _panels[_nspan-1+i][j-1]->centroidComp();
 				tan = tanb / tanb.norm();
 			}
 			
@@ -1078,15 +1084,15 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 			
 			else if (j < _nchord-2)
 			{
-				tanf = _panels[_nspan-1+i][j+1]->centroid()
-				     - _panels[_nspan-1+i][j]->centroid();
-				tanb = _panels[_nspan-1+i][j]->centroid()
-				     - _panels[_nspan-1+i][j-1]->centroid();
+				tanf = _panels[_nspan-1+i][j+1]->centroidComp()
+				     - _panels[_nspan-1+i][j]->centroidComp();
+				tanb = _panels[_nspan-1+i][j]->centroidComp()
+				     - _panels[_nspan-1+i][j-1]->centroidComp();
 				tan = 0.5*(tanf + tanb);
 				tan /= tan.norm();
 			}
 			
-			_panels[_nspan-1+i][j]->setTangent(tan);
+			_panels[_nspan-1+i][j]->setTangentComp(tan);
 		}
 	}
 	  
@@ -1207,128 +1213,128 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
 /******************************************************************************/
 void Wing::computeSurfaceQuantities ()
 {
-  unsigned int i, j, nverts;
-  double s12, s1, s2;
-  Eigen::Matrix3d A;
-  Eigen::Vector3d x, b;
-  Eigen::PartialPivLU<Eigen::Matrix3d> lu;
-  Vertex * v0, * v1, * v2;
+	unsigned int i, j, nverts;
+	double s12, s1, s2;
+	Eigen::Matrix3d A;
+	Eigen::Vector3d x, b;
+	Eigen::PartialPivLU<Eigen::Matrix3d> lu;
+	Vertex * v0, * v1, * v2;
 
 #pragma omp parallel for private(i,j)
-  for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
-  {
-    for ( j = 0; j < 2*_nchord-2; j++ )
-    {
-      _panels[i][j]->computeVelocity(uinfvec);
-      _panels[i][j]->computePressure(uinf, rhoinf, pinf);
-    }
-  }
-
-  // Interpolate to vertices
-
-  nverts = _verts.size();
+	for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
+	{
+		for ( j = 0; j < 2*_nchord-2; j++ )
+		{
+			_panels[i][j]->computeVelocity(uinfvec);
+			_panels[i][j]->computePressure(uinf, rhoinf, pinf);
+		}
+	}
+	
+	// Interpolate to vertices
+	
+	nverts = _verts.size();
 #pragma omp parallel for private(i)
-  for ( i = 0; i < nverts; i++ )
-  {
-    _verts[i]->averageFromPanels();
-  }
+	for ( i = 0; i < nverts; i++ )
+	{
+		_verts[i]->averageFromPanels();
+	}
 
-  /* Extrapolate to vertices at edges using quadratic fit. Note that the
-     originally calculated values at edge vertices actually apply to the
-     midpoint of the boundary between adjacent panels, since it is averaged only
-     from these two panels. */
+	/* Extrapolate to vertices at edges using quadratic fit. Note that the
+	   originally calculated values at edge vertices actually apply to the
+	   midpoint of the boundary between adjacent panels, since it is averaged
+	   only from these two panels. */
 
-  // Top trailing edge
+	// Top trailing edge
 #pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
-  for ( i = 0; i < _nspan-1; i++ )
-  {
-    v0 = &_sections[i].vert(0);
-    v1 = &_sections[i].vert(1);
-    v2 = &_sections[i].vert(2);
-    s1 = v0->distance(*v1);
-    s12 = 0.5*s1;
-    s2 = s1 + v1->distance(*v2);
-    A << std::pow(s12,2.), s12, 1.,
-         std::pow(s1,2.),  s1,  1.,
-         std::pow(s2,2.),  s2,  1.;
-    lu.compute(A);
-
-    for ( j = 0; j < Vertex::firstBLData; j++ )
-    { 
-      b << v0->data(j), v1->data(j), v2->data(j);
-      x = lu.solve(b);
-      v0->setData(j, x(2));
-    }
-  }
-
-  // Bottom trailing edge
+	for ( i = 0; i < _nspan-1; i++ )
+	{
+		v0 = &_sections[i].vert(0);
+		v1 = &_sections[i].vert(1);
+		v2 = &_sections[i].vert(2);
+		s1 = v0->distance(*v1);
+		s12 = 0.5*s1;
+		s2 = s1 + v1->distance(*v2);
+		A << std::pow(s12,2.), s12, 1.,
+		     std::pow(s1,2.),  s1,  1.,
+		     std::pow(s2,2.),  s2,  1.;
+		lu.compute(A);
+		
+		for ( j = 0; j < Vertex::firstBLData; j++ )
+		{ 
+			b << v0->data(j), v1->data(j), v2->data(j);
+			x = lu.solve(b);
+			v0->setData(j, x(2));
+		}
+	}
+	
+	// Bottom trailing edge
 #pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
-  for ( i = 0; i < _nspan-1; i++ )
-  {
-    v0 = &_sections[i].vert(2*_nchord-2);
-    v1 = &_sections[i].vert(2*_nchord-3);
-    v2 = &_sections[i].vert(2*_nchord-4);
-    s1 = v0->distance(*v1);
-    s12 = 0.5*s1;
-    s2 = s1 + v1->distance(*v2);
-    A << std::pow(s12,2.), s12, 1.,
-         std::pow(s1,2.),  s1,  1.,
-         std::pow(s2,2.),  s2,  1.;
-    lu.compute(A);
+	for ( i = 0; i < _nspan-1; i++ )
+	{
+		v0 = &_sections[i].vert(2*_nchord-2);
+		v1 = &_sections[i].vert(2*_nchord-3);
+		v2 = &_sections[i].vert(2*_nchord-4);
+		s1 = v0->distance(*v1);
+		s12 = 0.5*s1;
+		s2 = s1 + v1->distance(*v2);
+		A << std::pow(s12,2.), s12, 1.,
+		     std::pow(s1,2.),  s1,  1.,
+		     std::pow(s2,2.),  s2,  1.;
+		lu.compute(A);
+		
+		for ( j = 0; j < Vertex::firstBLData; j++ )
+		{ 
+			b << v0->data(j), v1->data(j), v2->data(j);
+			x = lu.solve(b);
+			v0->setData(j, x(2));
+		}
+	}
 
-    for ( j = 0; j < Vertex::firstBLData; j++ )
-    { 
-      b << v0->data(j), v1->data(j), v2->data(j);
-      x = lu.solve(b);
-      v0->setData(j, x(2));
-    }
-  }
-
-  // Centerline
+	// Centerline
 #pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
-  for ( i = 1; i < 2*_nchord-2; i++ )
-  {
-    v0 = &_sections[0].vert(i);
-    v1 = &_sections[1].vert(i);
-    v2 = &_sections[2].vert(i);
-    s1 = v0->distance(*v1);
-    s12 = 0.5*s1;
-    s2 = s1 + v1->distance(*v2);
-    A << std::pow(s12,2.), s12, 1.,
-         std::pow(s1,2.),  s1,  1.,
-         std::pow(s2,2.),  s2,  1.;
-    lu.compute(A);
+	for ( i = 1; i < 2*_nchord-2; i++ )
+	{
+		v0 = &_sections[0].vert(i);
+		v1 = &_sections[1].vert(i);
+		v2 = &_sections[2].vert(i);
+		s1 = v0->distance(*v1);
+		s12 = 0.5*s1;
+		s2 = s1 + v1->distance(*v2);
+		A << std::pow(s12,2.), s12, 1.,
+		     std::pow(s1,2.),  s1,  1.,
+		     std::pow(s2,2.),  s2,  1.;
+		lu.compute(A);
+		
+		for ( j = 0; j < Vertex::firstBLData; j++ )
+		{ 
+			b << v0->data(j), v1->data(j), v2->data(j);
+			x = lu.solve(b);
+			v0->setData(j, x(2));
+		}
+	}
 
-    for ( j = 0; j < Vertex::firstBLData; j++ )
-    { 
-      b << v0->data(j), v1->data(j), v2->data(j);
-      x = lu.solve(b);
-      v0->setData(j, x(2));
-    }
-  }
-
-  // Tip
+	// Tip
 #pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
-  for ( i = 1; i < 2*_nchord-2; i++ )
-  {
-    v0 = &_sections[_nspan-1].vert(i);
-    v1 = &_sections[_nspan-2].vert(i);
-    v2 = &_sections[_nspan-3].vert(i);
-    s1 = v0->distance(*v1);
-    s12 = 0.5*s1;
-    s2 = s1 + v1->distance(*v2);
-    A << std::pow(s12,2.), s12, 1.,
-         std::pow(s1,2.),  s1,  1.,
-         std::pow(s2,2.),  s2,  1.;
-    lu.compute(A);
-
-    for ( j = 0; j < Vertex::firstBLData; j++ )
-    { 
-      b << v0->data(j), v1->data(j), v2->data(j);
-      x = lu.solve(b);
-      v0->setData(j, x(2));
-    }
-  }
+	for ( i = 1; i < 2*_nchord-2; i++ )
+	{
+		v0 = &_sections[_nspan-1].vert(i);
+		v1 = &_sections[_nspan-2].vert(i);
+		v2 = &_sections[_nspan-3].vert(i);
+		s1 = v0->distance(*v1);
+		s12 = 0.5*s1;
+		s2 = s1 + v1->distance(*v2);
+		A << std::pow(s12,2.), s12, 1.,
+		     std::pow(s1,2.),  s1,  1.,
+		     std::pow(s2,2.),  s2,  1.;
+		lu.compute(A);
+		
+		for ( j = 0; j < Vertex::firstBLData; j++ )
+		{ 
+			b << v0->data(j), v1->data(j), v2->data(j);
+			x = lu.solve(b);
+			v0->setData(j, x(2));
+		}
+	}
 }
 
 /******************************************************************************/
@@ -1342,18 +1348,18 @@ unsigned int Wing::nTris () const { return _tris.size(); }
 Vertex * Wing::vert ( unsigned int vidx )
 {
 #ifdef DEBUG
-  if (vidx >= _verts.size())
-    conditional_stop(1, "Wing::vert", "Index out of range.");
+	if (vidx >= _verts.size())
+		conditional_stop(1, "Wing::vert", "Index out of range.");
 #endif
 
-  return _verts[vidx];
+	return _verts[vidx];
 }
 
 QuadPanel * Wing::quadPanel ( unsigned int qidx )
 {
 #ifdef DEBUG
-  if (qidx >= _quads.size())
-    conditional_stop(1, "Wing::quadPanel", "Index out of range.");
+	if (qidx >= _quads.size())
+		conditional_stop(1, "Wing::quadPanel", "Index out of range.");
 #endif
 
   return &_quads[qidx];
@@ -1362,11 +1368,11 @@ QuadPanel * Wing::quadPanel ( unsigned int qidx )
 TriPanel * Wing::triPanel ( unsigned int tidx )
 {
 #ifdef DEBUG
-  if (tidx >= _tris.size())
-    conditional_stop(1, "Wing::triPanel", "Index out of range.");
+	if (tidx >= _tris.size())
+		conditional_stop(1, "Wing::triPanel", "Index out of range.");
 #endif
 
-  return &_tris[tidx];
+	return &_tris[tidx];
 }
 
 /******************************************************************************/
@@ -1402,25 +1408,20 @@ void Wing::computeBL ()
 	std::string warning;
 	bool extrapolate;
 
-#pragma omp parallel for private(i)
+#pragma omp parallel for private(i,warning)
 	for ( i = 0; i < _nspan; i++ )
 	{
 		_sections[i].computeBL(uinfvec, rhoinf, pinf, alpha, reinit_freq);
+
 		if (not _sections[i].blConverged())
 		{
 			warning = "Xfoil BL calculations did not converge for section "
 			        + int2string(i+1) + std::string(".");
-#pragma omp critical
-			{
-				print_warning("Wing::computeBL", warning);
-			}
+			print_warning("Wing::computeBL", warning);
 			if (_sections[i].blReinitialized())
 			{
-#pragma omp critical
-				{
-					std::cout << "Reinitializing BL for section "
-					          << int2string(i+1) << "." << std::endl;
-				}
+				std::cout << "Reinitializing BL for section "
+				          << int2string(i+1) << "." << std::endl;
 			}
 		}
 	}

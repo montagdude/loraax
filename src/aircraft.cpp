@@ -511,7 +511,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 	XMLDocument doc;
 	unsigned int i, nwings;
 	int nchord, nspan, check;
-	double lesprat, tesprat, rootsprat, tipsprat;
+	double lesprat, tesprat, rootsprat, tipsprat, beta;
 	std::vector<Section> user_sections;
 	std::vector<Airfoil> foils;
 	double xle, y, zle, chord, twist, ymax;
@@ -777,7 +777,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 	
 	// Determine furthest aft root TE points for Trefftz plane calculation
 
-	_xte = -1.E+06;
+	_xte = -1.E+12;
 	_zte = 0.;
 	_maxspan = 0.;
 	for ( i = 0; i < nwings; i++ )
@@ -792,7 +792,8 @@ int Aircraft::readXML ( const std::string & geom_file )
 
 	if (rollupdist < 0.)
 	{
-		rollupdist = _maxspan;
+		beta = std::sqrt(1. - std::pow(minf, 2.0));
+		rollupdist = _maxspan / beta;	// P-G transform
 		dt = rollupdist / (uinf * double(wakeiters));
 	}
 
@@ -1106,12 +1107,18 @@ void Aircraft::setupViscousWake ()
 void Aircraft::computeForceMoment ()
 {
 	unsigned int i, nwings;
-	double xtrefftz, ztrefftz;
+	double beta, xteinc, zteinc, xtrefftz, ztrefftz;
+
+	// P-G transformation to get aft TE point in incompressible coordinates
+
+	beta = std::sqrt(1. - std::pow(minf,2.));
+	xteinc = _xte/beta;
+	zteinc = _zte;
 
 	// Trefftz plane 500 span lengths downstream from aftmost TE
 
-	xtrefftz = _xte + 500.*_maxspan*uinfvec(0)/uinf;
-	ztrefftz = _zte + 500.*_maxspan*uinfvec(2)/uinf;
+	xtrefftz = xteinc + 500.*_maxspan*uinfvec(0)/uinf;
+	ztrefftz = zteinc + 500.*_maxspan*uinfvec(2)/uinf;
 	
 	nwings = _wings.size();
 	for ( i = 0; i < nwings; i++ )

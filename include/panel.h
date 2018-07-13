@@ -20,11 +20,13 @@ class Panel: public Element {
 
 	protected:
 
+	// Note: all geometric quantities use incompressible (Prandtl-Glauert
+	// transformed) coordinates unless suffixed with 'comp'
+
 	double _sigma, _mu;				// Source and doublet strength
 	double _length;					// A characteristic length
 	double _area;					// Face area
 	Eigen::Vector3d _norm;			// Outward-facing normal
-	Eigen::Vector3d _tan;			// Surface tangent vector in streamwise dir.
 	Eigen::Vector3d _cen;			// Face centroid
 	Eigen::Vector3d _colloc;		// Collocation point (defaults to centroid)
 	bool _colloc_is_centroid;		// Whether collocation point is centroid
@@ -33,6 +35,13 @@ class Panel: public Element {
 									// frame and vice versa
 	std::vector<double> _xtrans, _ytrans;
 									// Panel endpoint coordinates in panel frame
+
+	// Geometric quantities in actual (non P-G transformed) coordinates
+
+	double _areacomp;
+	Eigen::Vector3d _normcomp, _cencomp;
+	Eigen::Vector3d _tancomp;		// Surface tangent vector in streamwise dir.
+
 	Eigen::Vector3d _vel;			// Flow velocity at centroid
 	double _cp, _p;					// Pressure coefficient and pressure
 	double _cf, _mdefect, _dmdefect;// Skin friction coefficient, mass defect,
@@ -46,7 +55,8 @@ class Panel: public Element {
 	
 	const static double _farfield_distance_factor;
 	
-	// Computing geometric quantities
+	// Computing geometric quantities. Note: computes both actual and
+	// incompressible (Prandtl-Glauert) quantities.
 	
 	virtual void computeCharacteristicLength () = 0;
 	virtual void computeArea () = 0;
@@ -92,16 +102,20 @@ class Panel: public Element {
 	void setDoubletStrength ( const double & mu );
 	const double & doubletStrength () const;
 
-	// Returns geometric quantities
+	// Returns geometric quantities. Compressible and P-G coordinates as
+	// inidicated
 
 	const double & area () const;
+	const double & areaComp () const;
 	const Eigen::Vector3d & centroid () const;
+	const Eigen::Vector3d & centroidComp () const;
 	const Eigen::Vector3d & normal () const;
-	const Eigen::Vector3d & tan () const;
+	const Eigen::Vector3d & normalComp () const;
+	const Eigen::Vector3d & tanComp () const;
 
 	// Set surface tangent direction
 
-	void setTangent ( const Eigen::Vector3d & tan );
+	void setTangentComp ( const Eigen::Vector3d & tancomp );
 
 	// Set/access collocation point. If not set, defaults to centroid.
 

@@ -19,21 +19,24 @@
 /******************************************************************************/
 Vertex::Vertex ()
 {
-  unsigned int i;
+	unsigned int i;
 
-  _idx = -1;
-  _x = 0.0;
-  _y = 0.0;
-  _z = 0.0;
-  _npanels = 0;
-  _panels.resize(0);
-  _vizcoords = false;
-  _xviz = 0.;
-  _yviz = 0.;
-  _zviz = 0.;
-  _data.resize(Vertex::dataSize);
-  for ( i = 0; i < Vertex::dataSize; i++ ) { _data[i] = 0.; }
-  _waketime = 0.;
+	_idx = -1;
+	_x = 0.0;
+	_y = 0.0;
+	_z = 0.0;
+	_npanels = 0;
+	_panels.resize(0);
+	_vizcoords = false;
+	_xviz = 0.;
+	_yviz = 0.;
+	_zviz = 0.;
+	_xinc = 0.;
+	_yinc = 0.;
+	_zinc = 0.;
+	_data.resize(Vertex::dataSize);
+	for ( i = 0; i < Vertex::dataSize; i++ ) { _data[i] = 0.; }
+	_waketime = 0.;
 }
 
 /******************************************************************************/
@@ -52,9 +55,9 @@ int Vertex::idx () const { return _idx; }
 void Vertex::setCoordinates ( const double & x, const double & y,
                               const double & z )
 {
-  _x = x;
-  _y = y;
-  _z = z;
+	_x = x;
+	_y = y;
+	_z = z;
 }
 
 const double & Vertex::x () const { return _x; }
@@ -64,67 +67,101 @@ const double & Vertex::z () const { return _z; }
 void Vertex::setVizCoordinates ( const double & x, const double & y,
                                  const double & z )
 {
-  _xviz = x;
-  _yviz = y;
-  _zviz = z;
-  _vizcoords = true;
+	_xviz = x;
+	_yviz = y;
+	_zviz = z;
+	_vizcoords = true;
 }
 
 const double & Vertex::xViz () const
 {
-  if (_vizcoords)
-    return _xviz;
-  else
-    return _x;
+	if (_vizcoords)
+		return _xviz;
+	else
+		return _x;
 }
 
 const double & Vertex::yViz () const
 {
-  if (_vizcoords)
-    return _yviz;
-  else
-    return _y;
+	if (_vizcoords)
+		return _yviz;
+	else
+		return _y;
 }
 
 const double & Vertex::zViz () const
 {
-  if (_vizcoords)
-    return _zviz;
-  else
-    return _z;
+	if (_vizcoords)
+		return _zviz;
+	else
+		return _z;
+}
+
+void Vertex::setIncompressibleCoordinates ( const double & x, const double & y,
+                                            const double & z )
+{
+	_xinc = x;
+	_yinc = y;
+	_zinc = z;
+	_inccoords = true;
+}
+
+const double & Vertex::xInc () const
+{
+	if (_inccoords)
+		return _xinc;
+	else
+		return _x;
+}
+
+const double & Vertex::yInc () const
+{
+	if (_inccoords)
+		return _yinc;
+	else
+		return _y;
+}
+
+const double & Vertex::zInc () const
+{
+	if (_inccoords)
+		return _zinc;
+	else
+		return _z;
 }
 
 /******************************************************************************/
 //
-// Transformations
+// Transformations. Note: only actual coordinates are transformed, not viz
+// coordinates or incompressible coordinates.
 //
 /******************************************************************************/
 void Vertex::scale ( const double & factor )
 {
-  _x *= factor;
-  _y *= factor;
-  _z *= factor;
+	_x *= factor;
+	_y *= factor;
+	_z *= factor;
 }
 
 void Vertex::translate ( const double & dx, const double & dy,
                          const double & dz )
 {
-  _x += dx;
-  _y += dy;
-  _z += dz;
+	_x += dx;
+	_y += dy;
+	_z += dz;
 }
 
 void Vertex::rotate ( const Eigen::Matrix3d & transform )
 {
-  Eigen::Vector3d point, transpoint;
-
-  point(0) = _x;
-  point(1) = _y;
-  point(2) = _z;
-  transpoint = transform*point;
-  _x = transpoint(0);
-  _y = transpoint(1);
-  _z = transpoint(2);
+	Eigen::Vector3d point, transpoint;
+	
+	point(0) = _x;
+	point(1) = _y;
+	point(2) = _z;
+	transpoint = transform*point;
+	_x = transpoint(0);
+	_y = transpoint(1);
+	_z = transpoint(2);
 }
 
 /******************************************************************************/
@@ -134,50 +171,50 @@ void Vertex::rotate ( const Eigen::Matrix3d & transform )
 /******************************************************************************/
 int Vertex::addPanel ( Panel * panel )
 {
-  unsigned int i;
-
-  // Only add if the panel is not already in the list
-
-  for ( i = 0; i < _npanels; i++ )
-  {
-    if (_panels[i]->idx() == panel->idx())
-    {
+	unsigned int i;
+	
+	// Only add if the panel is not already in the list
+	
+	for ( i = 0; i < _npanels; i++ )
+	{
+		if (_panels[i]->idx() == panel->idx())
+		{
 #ifdef DEBUG
-      print_warning("Vertex::addPanel", "Panel " + 
-                    int2string(panel->idx()) +
-                    std::string(" already in list."));
+			print_warning("Vertex::addPanel", "Panel " + 
+			             int2string(panel->idx()) +
+			             std::string(" already in list."));
 #endif
-      return 1;
-    }
-  }
+			return 1;
+		}
+	}
 
-  _npanels += 1;
-  _panels.push_back(panel);
+	_npanels += 1;
+	_panels.push_back(panel);
 
-  return 0;
+	return 0;
 }
 
 Panel * Vertex::panel ( unsigned int pidx )
 {
-  if (pidx >= _npanels)
-  {
-    conditional_stop(1, "Vertex::panel", "Index out of range.");
-  }
+	if (pidx >= _npanels)
+	{
+		conditional_stop(1, "Vertex::panel", "Index out of range.");
+	}
 
-  return _panels[pidx];
+	return _panels[pidx];
 }
 
 bool Vertex::isNeighbor ( const Panel * panel ) const
 {
-  unsigned int i;
-
-  for ( i = 0; i < _npanels; i++ )
-  {
-    if (_panels[i]->idx() == panel->idx())
-      return true;
-  }
-
-  return false;
+	unsigned int i;
+	
+	for ( i = 0; i < _npanels; i++ )
+	{
+		if (_panels[i]->idx() == panel->idx())
+			return true;
+	}
+	
+	return false;
 }
 
 unsigned int Vertex::nPanels () const { return _npanels; }
@@ -190,26 +227,26 @@ unsigned int Vertex::nPanels () const { return _npanels; }
 int Vertex::setData ( unsigned int idx, const double & var )
 {
 #ifdef DEBUG
-  if (idx >= _data.size())
-  {
-    conditional_stop(1, "Vertex::setData", "Index out of range.");
-    return 1;
-  }
+	if (idx >= _data.size())
+	{
+		conditional_stop(1, "Vertex::setData", "Index out of range.");
+		return 1;
+	}
 #endif
 
-  _data[idx] = var;
-
-  return 0;
+	_data[idx] = var;
+	
+	return 0;
 }
 
 const double & Vertex::data ( unsigned int idx ) const
 {
 #ifdef DEBUG
-  if (idx >= _data.size())
-    conditional_stop(1, "Vertex::data", "Index out of range.");
+	if (idx >= _data.size())
+		conditional_stop(1, "Vertex::data", "Index out of range.");
 #endif
 
-  return _data[idx];
+	return _data[idx];
 }
 
 /******************************************************************************/
@@ -228,37 +265,37 @@ const double & Vertex::wakeTime () const { return _waketime; }
 /******************************************************************************/
 void Vertex::averageFromPanels ()
 {
-  unsigned int i;
-  double dx, dy, dz, dist, weightsum;
-  Eigen::Vector3d cen;
-
-  // Only inviscid quantities are originally computed at panel centroids
-
-  for ( i = 0; i < Vertex::firstBLData; i++ )
-  {
-    _data[i] = 0.;
-  }
-  weightsum = 0.;
-  for ( i = 0; i < _npanels; i++ )
-  {
-    cen = _panels[i]->centroid();
-    dx = _x - cen(0);
-    dy = _y - cen(1);
-    dz = _z - cen(2);
-    dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
-    _data[0] += _panels[i]->sourceStrength()/dist;
-    _data[1] += _panels[i]->doubletStrength()/dist;
-    _data[2] += _panels[i]->velocity()(0)/dist;
-    _data[3] += _panels[i]->velocity()(1)/dist;
-    _data[4] += _panels[i]->velocity()(2)/dist;
-    _data[5] += _panels[i]->pressure()/dist;
-    _data[6] += _panels[i]->pressureCoefficient()/dist;
-    weightsum += 1./dist;
-  }
-  for ( i = 0; i < Vertex::firstBLData; i++ )
-  {
-    _data[i] /= weightsum;
-  }
+	unsigned int i;
+	double dx, dy, dz, dist, weightsum;
+	Eigen::Vector3d cen;
+	
+	// Only inviscid quantities are originally computed at panel centroids
+	
+	for ( i = 0; i < Vertex::firstBLData; i++ )
+	{
+		_data[i] = 0.;
+	}
+	weightsum = 0.;
+	for ( i = 0; i < _npanels; i++ )
+	{
+		cen = _panels[i]->centroid();
+		dx = xInc() - cen(0);
+		dy = yInc() - cen(1);
+		dz = zInc() - cen(2);
+		dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
+		_data[0] += _panels[i]->sourceStrength()/dist;
+		_data[1] += _panels[i]->doubletStrength()/dist;
+		_data[2] += _panels[i]->velocity()(0)/dist;
+		_data[3] += _panels[i]->velocity()(1)/dist;
+		_data[4] += _panels[i]->velocity()(2)/dist;
+		_data[5] += _panels[i]->pressure()/dist;
+		_data[6] += _panels[i]->pressureCoefficient()/dist;
+		weightsum += 1./dist;
+	}
+	for ( i = 0; i < Vertex::firstBLData; i++ )
+	{
+		_data[i] /= weightsum;
+	}
 }
 
 /******************************************************************************/
@@ -268,13 +305,13 @@ void Vertex::averageFromPanels ()
 /******************************************************************************/
 double Vertex::distance ( const Vertex & vert ) const
 {
-  double dx, dy, dz;
-
-  dx = vert.x() - _x;
-  dy = vert.y() - _y;
-  dz = vert.z() - _z;
- 
-  return std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
+	double dx, dy, dz;
+	
+	dx = vert.x() - _x;
+	dy = vert.y() - _y;
+	dz = vert.z() - _z;
+	
+	return std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
 }
 
 /******************************************************************************/
@@ -284,11 +321,11 @@ double Vertex::distance ( const Vertex & vert ) const
 /******************************************************************************/
 Eigen::Vector3d Vertex::vectorTo ( const Vertex & vert ) const
 {
-  Eigen::Vector3d vec;
-
-  vec(0) = vert.x() - _x;
-  vec(1) = vert.y() - _y;
-  vec(2) = vert.z() - _z;
- 
-  return vec;
+	Eigen::Vector3d vec;
+	
+	vec(0) = vert.x() - _x;
+	vec(1) = vert.y() - _y;
+	vec(2) = vert.z() - _z;
+	
+	return vec;
 }

@@ -24,7 +24,8 @@ class Wake {
 												//   vertices
 	std::vector<Vertex> _verts;					// Vertices
 	std::vector<double> _newx, _newy, _newz;	// New vertex positions after
-												//   wake rollup
+	                                        	//   wake rollup
+	std::vector<double> _newxinc, _newyinc, _newzinc;	
 	std::vector<Vertex *> _topteverts, _botteverts;
 												// Pointers to top and bottom TE
 												//   vertices on wing

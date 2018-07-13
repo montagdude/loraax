@@ -26,6 +26,8 @@ class Vertex {
 	double _xviz, _yviz, _zviz;	 	//   visualization. Used for trailing
 									//   wake vertices that are far
 									//   downstream.
+	bool _inccoords;				// Prandtl-Glauert transformed coordinates
+	double _xinc, _yinc, _zinc;
 
 	// Vertex data: source strength, doublet strength, Vx, Vy, Vz, pressure, cp,
 	// cf, deltastar, ampl, uedge, cp from Xfoil
@@ -61,6 +63,12 @@ class Vertex {
 	const double & xViz () const;
 	const double & yViz () const;
 	const double & zViz () const;
+
+	void setIncompressibleCoordinates ( const double & x, const double & y,
+	                                    const double & z );
+	const double & xInc () const;
+	const double & yInc () const;
+	const double & zInc () const;
 	
 	// Transformations
 	

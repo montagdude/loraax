@@ -87,6 +87,10 @@ class Section: public SectionalObject {
 	
 	void setVertices ( unsigned int nchord, const double & lesprat,
 	                   const double & tesprat );
+
+	// Prandtl-Glauert geometric transformation (xinc = x/beta)
+
+	void transformPrandtlGlauert ( const double & minf );
 	
 	// Access airfoil
 	
