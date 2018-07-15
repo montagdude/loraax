@@ -1164,8 +1164,8 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 // Sets up wake
 //
 /******************************************************************************/
-void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
-                       int wakeidx )
+void Wing::setupWake ( const double & maxspan, int & next_global_vertidx,
+                       int & next_global_elemidx, int wakeidx )
 {
 	unsigned int i, j, nstream;
 	std::vector<Vertex *> topteverts, botteverts;
@@ -1182,7 +1182,7 @@ void Wing::setupWake ( int & next_global_vertidx, int & next_global_elemidx,
 	
 	// Initialize wake
 	
-	_wake.initialize(topteverts, botteverts, next_global_vertidx,
+	_wake.initialize(topteverts, botteverts, maxspan, next_global_vertidx,
 	                 next_global_elemidx, wakeidx);
 	
 	// Create wake strips

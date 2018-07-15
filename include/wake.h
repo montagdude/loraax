@@ -22,6 +22,8 @@ class Wake {
 	int _idx;
 	int _nspan, _nstream;						// Spanwise and streamwise
 												//   vertices
+	double _infdist;							// Length of "infinite" last
+												//   set of panels
 	std::vector<Vertex> _verts;					// Vertices
 	std::vector<double> _newx, _newy, _newz;	// New vertex positions after
 	                                        	//   wake rollup
@@ -43,8 +45,8 @@ class Wake {
 	
 	void initialize ( const std::vector<Vertex *> & topteverts,
 	                  const std::vector<Vertex *> & botteverts,
-	                  int & next_global_vertidx, int & next_global_elemidx,
-	                  int wakeidx );
+	                  const double & maxspan, int & next_global_vertidx,
+	                  int & next_global_elemidx, int wakeidx );
 
 	// Get wake idx
 

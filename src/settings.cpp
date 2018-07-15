@@ -116,7 +116,6 @@ int read_setting ( const XMLElement *elem, const std::string & setting,
 int read_settings ( const std::string & inputfile, std::string & geom_file )
 {
 	XMLDocument doc;
-	double beta;
 
 //FIXME: a lot of these settings need to be made optional with default values
 
@@ -234,11 +233,7 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		conditional_stop(1, "read_settings",
 		                 "Mach number must be subsonic.");
 	if (rollup_wake)
-	{
-		beta = std::sqrt(1. - std::pow(minf, 2.0));
-		rollupdist /= beta;		// Prandtl-Glauert transform
 		dt = rollupdist / (uinf * double(wakeiters));
-	}
 	
 	return 0;
 }

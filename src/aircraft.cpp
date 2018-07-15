@@ -511,7 +511,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 	XMLDocument doc;
 	unsigned int i, nwings;
 	int nchord, nspan, check;
-	double lesprat, tesprat, rootsprat, tipsprat, beta;
+	double lesprat, tesprat, rootsprat, tipsprat;
 	std::vector<Section> user_sections;
 	std::vector<Airfoil> foils;
 	double xle, y, zle, chord, twist, ymax;
@@ -792,8 +792,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 
 	if (rollupdist < 0.)
 	{
-		beta = std::sqrt(1. - std::pow(minf, 2.0));
-		rollupdist = _maxspan / beta;	// P-G transform
+		rollupdist = _maxspan;
 		dt = rollupdist / (uinf * double(wakeiters));
 	}
 
@@ -801,7 +800,8 @@ int Aircraft::readXML ( const std::string & geom_file )
 	
 	for ( i = 0; i < nwings; i++ )
 	{
-		_wings[i].setupWake(next_global_vertidx, next_global_elemidx, i);
+		_wings[i].setupWake(_maxspan, next_global_vertidx, next_global_elemidx,
+		                    i);;
 	}
 	
 	if (nwings < 1)
@@ -1115,10 +1115,10 @@ void Aircraft::computeForceMoment ()
 	xteinc = _xte/beta;
 	zteinc = _zte;
 
-	// Trefftz plane 500 span lengths downstream from aftmost TE
+	// Trefftz plane 1000 span lengths downstream from aftmost TE
 
-	xtrefftz = xteinc + 500.*_maxspan*uinfvec(0)/uinf;
-	ztrefftz = zteinc + 500.*_maxspan*uinfvec(2)/uinf;
+	xtrefftz = xteinc + 1000.*_maxspan*uinfvec(0)/uinf;
+	ztrefftz = zteinc + 1000.*_maxspan*uinfvec(2)/uinf;
 	
 	nwings = _wings.size();
 	for ( i = 0; i < nwings; i++ )

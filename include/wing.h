@@ -114,8 +114,8 @@ class Wing {
 	
 	// Set up wake
 	
-	void setupWake ( int & next_global_vertidx, int & next_global_elemidx,
-	                 int wakeidx );
+	void setupWake ( const double & maxspan, int & next_global_vertidx,
+	                 int & next_global_elemidx, int wakeidx );
 
 	// Computes velocities and pressures on surface panels; interpolate to
 	// vertices
