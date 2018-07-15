@@ -32,6 +32,7 @@ extern bool rollup_wake;
 extern int reinit_freq;
 extern double stop_tol;
 extern int maxiters;
+extern int miniters;
 extern int viz_freq;
 
 // Xfoil settings

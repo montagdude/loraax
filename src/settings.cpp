@@ -34,6 +34,7 @@ bool rollup_wake;
 int reinit_freq;
 double stop_tol;
 int maxiters;
+int miniters;
 int viz_freq;
 
 xfoil_geom_options_type xfoil_geom_opts;
@@ -178,6 +179,8 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		return 2;
 	if (read_setting(main, "MaxIters", maxiters) != 0)
 		return 2;
+	if (read_setting(main, "MinIters", miniters, false) != 0)
+		miniters = 0;
 	if (read_setting(main, "VisualizationFrequency", viz_freq) != 0)
 		return 2;
 	

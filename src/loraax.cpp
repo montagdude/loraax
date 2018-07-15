@@ -190,7 +190,7 @@ int main (int argc, char* argv[])
 
 		// Stop iterating if converged
 
-		if (iter > 1)
+		if ( (iter > 1) && (iter >= miniters) )
 		{
 			if (std::abs(lift - oldlift) < stop_tol)
 			{
@@ -198,14 +198,15 @@ int main (int argc, char* argv[])
 				converged = true;
 				break;
 			}
-			else if ( (! rollup_wake) && (! viscous) )
-			{
-				std::cout << "Solution is converged." << std::endl;
-				converged = true;
-				break;
-			}
-			oldlift = lift;
 		}
+		else if ( (! rollup_wake) && (! viscous) )
+		{
+			std::cout << "Solution is converged." << std::endl;
+			converged = true;
+			break;
+		}
+
+		oldlift = lift;
 	}
 
 	if (! converged)
