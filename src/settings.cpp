@@ -118,8 +118,6 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 {
 	XMLDocument doc;
 
-//FIXME: a lot of these settings need to be made optional with default values
-
 	doc.LoadFile(inputfile.c_str());
 	if ( (doc.ErrorID() == XML_ERROR_FILE_NOT_FOUND) ||
 	     (doc.ErrorID() == XML_ERROR_FILE_COULD_NOT_BE_OPENED) ||
@@ -177,50 +175,44 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		return 2;
 	if (read_setting(main, "StoppingTolerance", stop_tol) != 0)
 		return 2;
-	if (read_setting(main, "MaxIters", maxiters) != 0)
-		return 2;
+	if (read_setting(main, "MaxIters", maxiters, false) != 0)
+		maxiters = 100;
 	if (read_setting(main, "MinIters", miniters, false) != 0)
 		miniters = 0;
-	if (read_setting(main, "VisualizationFrequency", viz_freq) != 0)
-		return 2;
+	if (read_setting(main, "VisualizationFrequency", viz_freq, false) != 0)
+		viz_freq = 1;
 	
+	xfoil_run_opts.ncrit = 9.;
+	xfoil_run_opts.xtript = 1.0;
+	xfoil_run_opts.xtripb = 1.0;
+	xfoil_run_opts.maxit = 100;
+	xfoil_run_opts.vaccel = 0.01;
+	reinit_freq = 5;
 	XMLElement *xfrun = main->FirstChildElement("XfoilRunOptions");
-	if (! xfrun)
+	if (xfrun)
 	{
-		conditional_stop(1, "read_settings",
-		                 "Expected 'XfoilRunOptions' element in input file.");
-		return 2;
+		read_setting(xfrun, "ncrit", xfoil_run_opts.ncrit, false);
+		read_setting(xfrun, "xtript", xfoil_run_opts.xtript, false);
+		read_setting(xfrun, "xtripb", xfoil_run_opts.xtripb, false);
+		read_setting(xfrun, "maxit", xfoil_run_opts.maxit, false);
+		read_setting(xfrun, "vaccel", xfoil_run_opts.vaccel, false);
+		read_setting(xfrun, "reinit_freq", reinit_freq, false);
 	}
-	if (read_setting(xfrun, "ncrit", xfoil_run_opts.ncrit) != 0)
-		return 2;
-	if (read_setting(xfrun, "xtript", xfoil_run_opts.xtript) != 0)
-		return 2;
-	if (read_setting(xfrun, "xtripb", xfoil_run_opts.xtripb) != 0)
-		return 2;
-	if (read_setting(xfrun, "maxit", xfoil_run_opts.maxit) != 0)
-		return 2;
-	if (read_setting(xfrun, "vaccel", xfoil_run_opts.vaccel) != 0)
-		return 2;
-	if (read_setting(xfrun, "reinit_freq", reinit_freq, false) != 0)
-		reinit_freq = 5;
 	xfoil_run_opts.viscous_mode = viscous;
 	xfoil_run_opts.silent_mode = true;
 	
+	xfoil_geom_opts.npan = 160.;
+	xfoil_geom_opts.cvpar = 1.0;
+	xfoil_geom_opts.cterat = 0.15;
+	xfoil_geom_opts.ctrrat = 0.20;
 	XMLElement *xfgeom = main->FirstChildElement("XfoilPaneling");
-	if (! xfgeom)
+	if (xfgeom)
 	{
-		conditional_stop(1, "read_settings",
-		                 "Expected 'XfoilPaneling' element in input file.");
-		return 2;
+		read_setting(xfgeom, "npan", xfoil_geom_opts.npan, false);
+		read_setting(xfgeom, "cvpar", xfoil_geom_opts.cvpar, false);
+		read_setting(xfgeom, "cterat", xfoil_geom_opts.cterat, false);
+		read_setting(xfgeom, "ctrrat", xfoil_geom_opts.ctrrat, false);
 	}
-	if (read_setting(xfgeom, "npan", xfoil_geom_opts.npan) != 0)
-		return 2;
-	if (read_setting(xfgeom, "cvpar", xfoil_geom_opts.cvpar) != 0)
-		return 2;
-	if (read_setting(xfgeom, "cterat", xfoil_geom_opts.cterat) != 0)
-		return 2;
-	if (read_setting(xfgeom, "ctrrat", xfoil_geom_opts.ctrrat) != 0)
-		return 2;
 	xfoil_geom_opts.xsref1 = 1.0;
 	xfoil_geom_opts.xsref2 = 1.0;
 	xfoil_geom_opts.xpref1 = 1.0;
