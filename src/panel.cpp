@@ -350,6 +350,7 @@ void Panel::computeVelocity ( const Eigen::Vector3d & uinfvec )
 	
 	_vel = gradmu + _sigma*_normcomp + uinfvec; 
 }
+
 const Eigen::Vector3d & Panel::velocity () const { return _vel; }
 
 /******************************************************************************/
@@ -392,7 +393,7 @@ int Panel::computePressure ( const double & uinf, const double & rhoinf,
 	qinf = 0.5*rhoinf*uinf2;
 	p0 = pinf * std::pow(1 + 0.5*gamm1*minf2, gamma/gamm1);
 	_p = p0 / std::pow(1 + 0.5*gamm1*m2, gamma/gamm1);
-	_cp = (_p - p0) / qinf;
+	_cp = (_p - pinf) / qinf;
 	
 	return 0;
 }
