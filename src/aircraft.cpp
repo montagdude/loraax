@@ -247,7 +247,7 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
 	writeSurfaceScalar(f, "source_strength", 0);
 	writeSurfaceScalar(f, "doublet_strength", 1);
 	
-	f << "Vectors velocity double" << std::endl;
+	f << "Vectors velocity_incompressible double" << std::endl;
 	f.setf(std::ios_base::scientific);
 	for ( i = 0; i < nverts; i++ )
 	{

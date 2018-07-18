@@ -190,7 +190,7 @@ int main (int argc, char* argv[])
 
 		// Stop iterating if converged
 
-		if ( (iter > 1) && (iter >= miniters) )
+		if ( (iter > 1) && (int(iter) >= miniters) )
 		{
 			if (std::abs(lift - oldlift) < stop_tol)
 			{
