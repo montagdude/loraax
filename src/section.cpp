@@ -358,6 +358,7 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
 
 	// Run xfoil at 2D Cl
 
+	_reinitialized = false;
 	if (_foil.runXfoil(cl2dguessnew) != 0)
 	{
 		_converged = false;
