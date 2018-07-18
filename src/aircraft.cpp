@@ -270,13 +270,14 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
 	
 	writeSurfaceScalar(f, "pressure", 5);
 	writeSurfaceScalar(f, "pressure_coefficient", 6);
+	writeSurfaceScalar(f, "mach", 7);
 	if (viscous)
 	{
-		writeSurfaceScalar(f, "skin_friction_coefficient", 7);
-		writeSurfaceScalar(f, "displacement_thickness", 8);
-		writeSurfaceScalar(f, "log_amplification_ratio", 9);
-		writeSurfaceScalar(f, "uedge", 10);
-		writeSurfaceScalar(f, "cp2d", 11);
+		writeSurfaceScalar(f, "skin_friction_coefficient", 8);
+		writeSurfaceScalar(f, "displacement_thickness", 9);
+		writeSurfaceScalar(f, "log_amplification_ratio", 10);
+		writeSurfaceScalar(f, "uedge", 11);
+		writeSurfaceScalar(f, "cp2d", 12);
 	}
 
 	int j, npanels;

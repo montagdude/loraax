@@ -30,7 +30,7 @@ class Vertex {
 	double _xinc, _yinc, _zinc;
 
 	// Vertex data: source strength, doublet strength, Vx, Vy, Vz, pressure, cp,
-	// cf, deltastar, ampl, uedge, cp from Xfoil
+	// mach, cf, deltastar, ampl, uedge, cp from Xfoil
 	
 	std::vector<double> _data;
 	
@@ -38,8 +38,8 @@ class Vertex {
 
 	public:
 
-	const static int dataSize = 12;     // Total number of data vars
-	const static int firstBLData = 7;   // Index of first data var from BL calcs
+	const static int dataSize = 13;     // Total number of data vars
+	const static int firstBLData = 8;   // Index of first data var from BL calcs
 	
 	// Constructor
 	

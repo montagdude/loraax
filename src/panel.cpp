@@ -399,6 +399,7 @@ int Panel::computePressure ( const double & uinf, const double & rhoinf,
 		                 "Locally supersonic flow detected.");
 		return 1;
 	}
+	_mach = std::sqrt(m2);
 
 	rho0 = rhoinf * std::pow(1. + 0.5*gamm1*minf2, 1./gamm1);
 	rho = rho0 / std::pow(1. + 0.5*gamm1*m2, 1./gamm1);
@@ -411,6 +412,13 @@ int Panel::computePressure ( const double & uinf, const double & rhoinf,
 
 const double & Panel::pressure () const { return _p; }
 const double & Panel::pressureCoefficient () const { return _cp; }
+
+/******************************************************************************/
+//
+// Mach number
+//
+/******************************************************************************/
+const double & Panel::mach () const { return _mach; }
 
 /******************************************************************************/
 //
@@ -441,8 +449,8 @@ void Panel::averageFromVertices ()
 		dz = _verts[i]->z() - _cen(2);
 		dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) +
 		                 std::pow(dz,2.));
-		_cf += _verts[i]->data(7)/dist;
-		_mdefect += (_verts[i]->data(8)*_verts[i]->data(10))/dist;
+		_cf += _verts[i]->data(8)/dist;
+		_mdefect += (_verts[i]->data(9)*_verts[i]->data(11))/dist;
 		weightsum += 1./dist;
 	}
 	_cf /= weightsum;
