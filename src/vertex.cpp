@@ -285,9 +285,9 @@ void Vertex::averageFromPanels ()
 		dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) + std::pow(dz,2.));
 		_data[0] += _panels[i]->sourceStrength()/dist;
 		_data[1] += _panels[i]->doubletStrength()/dist;
-		_data[2] += _panels[i]->velocity()(0)/dist;
-		_data[3] += _panels[i]->velocity()(1)/dist;
-		_data[4] += _panels[i]->velocity()(2)/dist;
+		_data[2] += _panels[i]->velocityComp()(0)/dist;
+		_data[3] += _panels[i]->velocityComp()(1)/dist;
+		_data[4] += _panels[i]->velocityComp()(2)/dist;
 		_data[5] += _panels[i]->pressure()/dist;
 		_data[6] += _panels[i]->pressureCoefficient()/dist;
 		weightsum += 1./dist;

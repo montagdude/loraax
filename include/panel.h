@@ -42,7 +42,8 @@ class Panel: public Element {
 	Eigen::Vector3d _normcomp, _cencomp;
 	Eigen::Vector3d _tancomp;		// Surface tangent vector in streamwise dir.
 
-	Eigen::Vector3d _vel;			// Flow velocity at centroid
+	Eigen::Vector3d _vel, _velcomp;	// Incompressible and compressible velocity
+									//   at centroid
 	double _cp, _p;					// Pressure coefficient and pressure
 	double _cf, _mdefect, _dmdefect;// Skin friction coefficient, mass defect,
 									//   and d/ds(mass defect)
@@ -166,6 +167,7 @@ class Panel: public Element {
 	
 	void computeVelocity ( const Eigen::Vector3d & uinfvec );
 	const Eigen::Vector3d & velocity () const;
+	const Eigen::Vector3d & velocityComp () const;
 	
 	// Compute or access pressure and pressure coefficient
 	

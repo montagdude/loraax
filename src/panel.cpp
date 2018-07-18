@@ -317,7 +317,7 @@ bool Panel::collocationPointIsCentroid () const { return _colloc_is_centroid; }
 /******************************************************************************/
 //
 // Compute / access flow velocity at centroid. Note: this is the incompressible
-// velocity.
+// velocity. Compressible version is computed in computePressure.
 //
 /******************************************************************************/
 void Panel::computeVelocity ( const Eigen::Vector3d & uinfvec )
@@ -350,36 +350,62 @@ void Panel::computeVelocity ( const Eigen::Vector3d & uinfvec )
 }
 
 const Eigen::Vector3d & Panel::velocity () const { return _vel; }
+const Eigen::Vector3d & Panel::velocityComp () const { return _velcomp; }
 
 /******************************************************************************/
 //
 // Compute / access pressure and pressure coefficient. Uses Prandtl-Glauert
-// compressibility correction.
+// compressibility correction. Also computes compressible velocity.
 //
 /******************************************************************************/
 int Panel::computePressure ( const double & uinf, const double & rhoinf,
                              const double & pinf )
 {
-	double uinf2, vel2, ainf2, cpinc, minf2, beta2;
+	double uinf2, vel2, ainf2, qinf, cpinc, minf2, beta, p0, m2, gamma, gamm1,
+	       rho0, rho, a2, velcomp2;
 	
+	gamma = 1.4;
+	gamm1 = gamma - 1.;
+
 	uinf2 = std::pow(uinf, 2.);
+	qinf = 0.5*rhoinf*uinf2;
 	vel2 = _vel.squaredNorm();
 	cpinc = 1. - vel2 / uinf2;
 	
-	// Prandtl-Glauert compressibility correction
+	// Prandtl-Glauert compressibility correction for pressure
 	
 	ainf2 = 1.4*pinf/rhoinf;
 	minf2 = uinf2/ainf2;
-	beta2 = 1. - minf2;
-	if (beta2 <= 0.0)
+	beta = std::sqrt(1. - minf2);
+	_cp = cpinc / beta;
+	_p = _cp*qinf + pinf;
+
+	// Physical limits on pressure
+
+	p0 = pinf * std::pow(1. + 0.5*gamm1*minf2, gamma/gamm1);
+	if (_p > p0)
+	{
+		_p = p0;
+		_cp = (_p - pinf) / qinf;
+	}
+
+	// Use isentropic relations to get local Mach number and compressible
+	// velocity
+
+	m2 = 2./gamm1 * (std::pow(p0/_p, gamm1/gamma) - 1.);
+	if (m2 > 1.0)
 	{
 		conditional_stop(1, "Panel::computePressure",
-		                 "Locally supersonic flow detected. ");
+		                 "Locally supersonic flow detected.");
 		return 1;
 	}
-	_cp = cpinc / std::sqrt(beta2);
-	_p = 0.5*_cp*rhoinf*uinf2 + pinf;
-	
+
+	rho0 = rhoinf * std::pow(1. + 0.5*gamm1*minf2, 1./gamm1);
+	rho = rho0 / std::pow(1. + 0.5*gamm1*m2, 1./gamm1);
+	a2 = gamma*_p/rho;
+	velcomp2 = m2*a2;
+	_velcomp = std::sqrt(velcomp2/vel2)*_vel;
+
 	return 0;
 }
 
@@ -451,7 +477,7 @@ void Panel::computeForceMoment ( const double & uinf, const double & rhoinf,
 
 		// Determine sign on _tan vector corresponding with flow direction
 
-		if (_vel.transpose()*_tancomp < 0.)
+		if (_velcomp.transpose()*_tancomp < 0.)
 			sign = -1.;
 		else
 			sign = 1.;
