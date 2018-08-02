@@ -13,35 +13,34 @@ Class to read and process command-line arguments
 *******************************************************************************/
 class CLOParser {
 
-  private:
+	private:
 
-    std::vector<std::string> _argv_str;
-    std::string _input_file;
+	std::vector<std::string> _argv_str;
+	std::string _input_file;
+	
+	/* Converts CLOs to vector of strings */
+	
+	void readCLOs ( int argc, char *argv[] );
 
-    /* Converts CLOs to vector of strings */
+	public:
 
-    void readCLOs ( int argc, char *argv[] );
-
-  public:
-
-    /* Constructor */
-
-    CLOParser();
-
-    /* Checks CLOs for errors */
-
-    int checkCLOs (int argc, char *argv[], const std::string & version );
-
-    /* Prints various information messages */
-
-    void printUsage () const;
-    void printVersion ( const std::string & version ) const;
-    void printHelp () const;
-
-    /* Query inputs */
-
-    bool requestInputFile () const;
-    const std::string & inputFile () const;
+	/* Constructor */
+	
+	CLOParser();
+	
+	/* Checks CLOs for errors */
+	
+	int checkCLOs (int argc, char *argv[], const std::string & version );
+	
+	/* Prints various information messages */
+	
+	void printVersion ( const std::string & version ) const;
+	void printHelp () const;
+	
+	/* Query inputs */
+	
+	bool requestInputFile () const;
+	const std::string & inputFile () const;
 };
 
 #endif
