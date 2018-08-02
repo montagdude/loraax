@@ -9,9 +9,6 @@
   <RollupWake>true</RollupWake>
   <WakeIters>30</WakeIters>
   <RollupDist>60</RollupDist>
-<!--
-  <InitialWakeAngle>7.0</InitialWakeAngle>
--->
   <Viscous>true</Viscous>
   <StoppingTolerance>1e-05</StoppingTolerance>
   <MaxIters>50</MaxIters>
@@ -28,6 +25,5 @@
     <npan>160</npan>
     <cvpar>1.0</cvpar>
     <cterat>0.15</cterat>
-    <ctrrat>0.2</ctrrat>
   </XfoilPaneling>
 </Main>

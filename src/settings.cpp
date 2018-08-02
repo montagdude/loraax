@@ -173,8 +173,8 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		wakeangle = alpha;
 	if (read_setting(main, "Viscous", viscous) != 0)
 		return 2;
-	if (read_setting(main, "StoppingTolerance", stop_tol) != 0)
-		return 2;
+	if (read_setting(main, "StoppingTolerance", stop_tol, false) != 0)
+		stop_tol = 1.E-5;
 	if (read_setting(main, "MaxIters", maxiters, false) != 0)
 		maxiters = 100;
 	if (read_setting(main, "MinIters", miniters, false) != 0)
@@ -204,15 +204,14 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 	xfoil_geom_opts.npan = 160.;
 	xfoil_geom_opts.cvpar = 1.0;
 	xfoil_geom_opts.cterat = 0.15;
-	xfoil_geom_opts.ctrrat = 0.20;
 	XMLElement *xfgeom = main->FirstChildElement("XfoilPaneling");
 	if (xfgeom)
 	{
 		read_setting(xfgeom, "npan", xfoil_geom_opts.npan, false);
 		read_setting(xfgeom, "cvpar", xfoil_geom_opts.cvpar, false);
 		read_setting(xfgeom, "cterat", xfoil_geom_opts.cterat, false);
-		read_setting(xfgeom, "ctrrat", xfoil_geom_opts.ctrrat, false);
 	}
+	xfoil_geom_opts.ctrrat = 0.20;
 	xfoil_geom_opts.xsref1 = 1.0;
 	xfoil_geom_opts.xsref2 = 1.0;
 	xfoil_geom_opts.xpref1 = 1.0;
