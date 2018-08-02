@@ -20,7 +20,6 @@ void conditional_stop ( int ecode, const std::string & location,
 {
 	// Exit only if exit code != 0
 	
-#pragma omp critical
 	if (ecode != 0)
 	{
 		std::cerr << "Error in " << location << ": " << message << std::endl;
@@ -35,10 +34,7 @@ void conditional_stop ( int ecode, const std::string & location,
 /******************************************************************************/
 void print_warning ( const std::string & location, const std::string & message)
 {
-#pragma omp critical
-	{
-		std::cout << "Warning in " << location << ": " << message << std::endl;
-	}
+	std::cout << "Warning in " << location << ": " << message << std::endl;
 }
 
 /******************************************************************************/
