@@ -1,0 +1,444 @@
+\documentclass[11pt]{article}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{color}
+\usepackage[left=1.2in, right=1in, top=1in, bottom=1in]{geometry}
+\usepackage{verbatim}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{LORAAX User Guide}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+\section{Input Files}
+
+Performing an analysis in LORAAX requires two input XML files: one specifying
+the conditions and settings for the analysis and the other defining the
+aircraft geometry.
+
+\subsection{Analysis Input File}
+
+The structure of the analysis input file is as follows:
+\begin{verbatim}
+<Main>
+    <!--
+    Main inputs 
+    -->
+    <XfoilRunOptions>
+        <!--
+        Xfoil analysis inputs
+        -->
+    </XfoilRunOptions>
+    <XfoilPaneling>
+        <!--
+        Xfoil paneling inputs
+        -->
+    </XfoilPaneling>
+</Main>
+\end{verbatim}
+
+\subsubsection{Main}
+
+\begin{itemize}
+	\item CaseName: String. Required: Yes. Description: Name identifying the
+		case. It serves as the prefix for various output files.
+	\item GeometryFile: String. Required: Yes. Description: Name of the geometry
+		XML file for the case.
+	\item FreestreamSpeed: Float. Required: Yes. Description: Magnitude of the
+		freestream velocity vector. See note on units below.
+	\item FreestreamStaticPressure: Float. Required: Yes. Description: Static
+		pressure of freestream flow. See note on units below.
+	\item FreestreamDensity: Float. Required: Yes. Description: Density of
+		freestream flow. See note on units below.
+	\item FreestreamViscosity: Float. Required: Yes. Description: Dynamic
+		(absolute) viscosity of freestream flow. See note on units below.
+	\item AngleOfAttack: Float. Required: Yes. Description: Angle of attack of
+		freestream flow, in degrees. If 0, the freestream flow is in the
+		x-direction; if 90, the freestream flow is in the z-direction, etc.
+	\item RollupWake: Boolean. Required: No. Default: false. Description: Whether to deform
+		the wake into its correct shape as part of the solution. If false, the
+		wake will remain planar and aligned with the freestream.
+	\item RollupDist: Float. Required: Only if RollupWake is true. Description:
+		Length of the deforming part of the wake. The remaining wake behind this
+		distance extending to infinity is assumed to be planar and aligned with
+		the freestream.
+	\item WakeIters: Integer. Required: Only if RollupWake is true. Description:
+		Number of iterations for a particle moving at the freestream speed to
+		traverse RollupDist. Dividing RollupDist by WakeIters gives the
+		approximate length of a wake panel.
+	\item InitialWakeAngle: Float. Required: No. Default: The angle of attack.
+		Description: In some cases, it may be desirable to change the initial wake angle and
+		allow the roll-up process to move it to its correct position; for
+		example, if the initial planar wake would intersect a downstream
+		stabilizer, or to improve stability of the solution. This setting only
+		takes effect if RollupWake is true. If enabled, MinIters should be no
+		less than WakeIters.
+	\item Viscous: Boolean. Required: Yes. Description: Whether to perform a
+		viscous or inviscid analysis.
+	\item StoppingTolerance: Float. Required: No. Default: $1\times 10^{-5}$.
+		Description: If the lift coefficient changes by less than this value
+		from one iteration to the next, the solution is considered converged.
+	\item MaxIters: Integer. Required: No. Default: 100. The maximum number of
+		iterations to perform. The analysis will stop after this number even
+		if the lift convergence criterion has not been met.
+	\item MinIters: Integer. Required: No. Default: 0. Description: The minimum number of
+		iterations to perform. The analysis will continue for at least this
+		number of iterations even if the lift convergence criterion has been
+		met.
+	\item VisualizationFrequency: Integer. Required: No. Default: 1.
+		Description: How often to write visualization files (surface+wake and
+		sectional data), in number of iterations. If 0, these files will be
+		written only at the end of the analysis.
+\end{itemize}
+
+\subsubsection{XfoilRunOptions}
+
+\begin{itemize}
+	\item ncrit: Float. Required: No. Default: 9. Description: Critical
+		log amplification ratio of boundary layer disturbances for
+		laminar-turbulent transition.
+	\item xtript: Float. Required: No. Default: 1. Description: Boundary layer
+		forced transition location on top surface, in terms of $x/c$.
+	\item xtripb: Float. Required: No. Default: 1. Description: Boundary layer
+		forced transition location on bottom surface, in terms of $x/c$.
+	\item maxit: Integer. Required: No. Default: 100. Maximum number of Xfoil
+		iterations for each section during each LORAAX analysis iteration.
+	\item vaccel: Float. Required: No. Default: 0.01. Description: Xfoil
+		viscous solution convergence acceleration parameter. In theory, a value of 0 results
+		in the fastest convergence but possibly less stability, but in practice
+		very little influence may be seen. It has no effect on the final
+		converged viscous solution (if obtained). See Xfoil's documentation for
+		more information.
+\end{itemize}
+
+\subsubsection{XfoilPaneling}
+
+\begin{itemize}
+	\item npan: Integer. Required: No. Default: 9. Description: Number of panels
+		around the airfoil for the Xfoil solution. It is independent of the 3D
+		wing paneling, which is defined in the aircraft geometry XML file.
+	\item cvpar: Float. Required: No. Default: 1. Description: Curvature
+		attraction parameter for airfoil paneling. A value of 0 results in
+		uniform spacing, and a value of 1 results in strong clustering in
+		areas of high curvature.
+	\item cterat: Float. Required: No. Default: 0.15. Description: Ratio of
+		trailing edge to leading edge panel density.
+\end{itemize}
+
+\subsubsection{Note on Units}
+
+LORAAX does not perform any internal unit conversions; it assumes that all
+units, including the length units for the aircraft geometry file and the
+freestream conditions, are consistent. This means that the units of force are
+equal to the units of mass times length divided by seconds squared. In practice,
+this means that if, for example, the geometry is defined in meters, then
+freestream pressure should be specified in Pascals (N/m$^2$), viscosity should
+be in kg/m-s, and the resulting lift and drag will be in Newtons.
+Consistent units are also important because no conversions are performed when
+computing the Reynolds number:
+
+\begin{equation}
+	Re = \frac{\rho U_\infty \overline{c}}{\mu}
+	\label{eq:reynolds_number}
+\end{equation}
+
+\noindent and the Mach number:
+
+\begin{equation}
+	M_\infty = \sqrt{1.4\frac{p_\infty}{\rho_\infty}}.
+	\label{eq:mach_number}
+\end{equation}
+
+If units are not consistent, then the non-dimensional lift, drag, and pitching
+moment may be wrong as well as the dimensional forces and moments. Of course,
+if one is only concerned with the non-dimensional coefficients, it is valid to
+``design'' the freestream conditions to achieve a desired
+Mach and Reynolds number without regard for the actual units. This may be done
+by, for instance, setting some of the freestream conditions to a fixed value
+and computing the other conditions using the Eqs. \ref{eq:reynolds_number} and
+\ref{eq:mach_number}.
+As long as those two parameters are correct, then the
+non-dimensional coefficients will be correct even though the dimensional forces
+and moments may not be meaningful. For convenience, Table \ref{table:units}
+lists atmospheric conditions at sea level in some common unit systems.
+
+\begin{table}
+\caption{Atmospheric conditions at sea level}
+\centering
+	\begin{tabular}{c c c} \hline \hline
+	Static pressure                  & Density                          & Viscosity \\
+	101325 N/m$^2$                   & 1.2252 kg/m$^3$                  & 1.7894$\times$10$^{-5}$ kg/m-s \\
+	2116.22 lb$_\text{f}$/ft$^2$ & 2.3773$\times$10$^{-3}$ slug/ft$^3$  & 3.7372$\times$10$^{-7}$ slug/ft-s \\
+	14.6959 lb$_\text{f}$/in$^2$ & 1.1465$\times$10$^{-7}$ snail/in$^3$ & 2.5953$\times$10$^{-9}$ snail/in-s
+	\end{tabular}
+\label{table:units}
+\end{table}
+
+\subsection{Geometry Input File}
+
+This file defines the aircraft geometry. An aircraft is made up of a number of
+wings. Each wing consists of a number of sections and airfoils. Sections are
+connected at the leading and trailing edges by straight lines, but curvature
+can be approximated by a number of straight segments. x is the chordwise
+direction and y is the spanwise direction. Only the right side of a wing may
+be defined; y = 0 is assumed to be a symmetry plane. The structure of the
+geometry input file is as follows:
+\begin{verbatim}
+<Aircraft>
+    <Reference>
+        <!--
+        Reference areas, lengths, and points
+        -->
+    </Reference>
+    <Wing>
+        <Paneling>
+            <!--
+            Paneling inputs
+            -->
+        </Paneling>
+        <Sections>
+            <Section>
+                <!--
+                Section geometry definition
+                -->
+            </Section>
+            <Section>
+                <!--
+                As many sections as desired (at least 2) can be used
+                -->
+            </Section>
+        </Sections>
+        <Airfoils>
+            <Airfoil>
+                <!--
+                Airfoil definition
+                -->
+            </Airfoil>
+            <Airfoil>
+                <!--
+                As many airfoils as desired (at least 1) can be used
+                -->
+            </Airfoil>
+        </Airfoils>
+    <Wing>
+        <!--
+        As many wings as desired (at least 1) can be used
+        -->
+    </Wing>
+</Aircraft>
+\end{verbatim}
+
+\noindent Note that all inputs in the geometry file are required unless
+otherwise noted.
+
+\subsubsection{Reference}
+
+\begin{itemize}
+	\item RefArea: Float. Description: The reference area used for computing
+		force and moment coefficients.
+	\item RefLength: Float. Description: The reference length used for computing
+		the pitching moment coefficient.
+	\item MomentCenX: Float. Description: The x-coordinate of the point about
+		which the pitching moment is computed.
+	\item MomentCenY: Float. Description: The y-coordinate of the point about
+		which the pitching moment is computed.
+	\item MomentCenZ: Float. Description: The z-coordinate of the point about
+		which the pitching moment is computed.
+\end{itemize}
+
+\subsubsection{Wing}
+
+\begin{itemize}
+	\item Name (optional attribute): If included, this name will be used for
+		per-wing output files. Otherwise, a name will be automatically generated
+		based on a sequential numbering of the wings in the input file. To set
+		this attribute, use the following syntax:
+		\begin{verbatim}
+		<Wing name="WingName">
+		\end{verbatim}
+	\item Paneling
+	\begin{itemize}
+		\item NChord: Integer. Description: Number of points along the chord
+			on both the top and bottom surfaces. The total number of panels
+			around the chord is $2\times\text{NChord} - 2$.
+		\item NSpan: Integer. Description: Number of points along the span on
+			the right half of the wing. The total number of panels along the
+			span, including both the left and right side of the wing, is
+			$2\times\text{NSpan} - 2$.
+		\item{LESpaceRat}: Float. Description: Ratio of point spacing at the
+			leading edge to uniform spacing. Uniform spacing is computed as the
+			total arc length of the section divided by the number of panels
+			around the chord.
+		\item{TESpaceRat}: Float. Description: Same as LESpaceRat, but applies
+			to the trailing edge.
+		\item{RootSpaceRat}: Float. Description: Ratio of point spacing at the
+			root relative to uniform spacing. Uniform spacing is computed as the
+			``flat'' length of the wing (if dihedral were removed) divided by
+			the number of panels along the span.
+		\item{TipSpaceRat}: Float. Description: Same as RootSpaceRat, but
+			applies to the tip.
+	\end{itemize}
+\end{itemize}
+
+\begin{itemize}
+	\item Section: Note that sections can be listed in any order; they are not
+		required to be ordered from root to tip. There is a distinction between
+		the sections that are listed in the XML file and the sections pertaining
+		to the numerical method. The sections listed here define the shape of
+		the wing, but the discretization process places NSpan sections along the
+		span as defined by the RootSpaceRat and TipSpaceRat spacing ratios. To
+		ensure the desired planform shape is preserved perfectly, the spacing
+		algorithm is constrained to place a section at each of the spanwise
+		positions defined here.
+	\begin{itemize}
+		\item Name (optional attribute): If name=``Root'' is set for this
+			attribute, then the section will automatically be placed at Y=0, and
+			Y does not need to be set for the section.
+		\item XLE: Float. Description. The x position of the
+			leading edge of the section, prior to twist.
+		\item Y: Float. Required: Yes, except if name=``Root'' attribute is set.
+			Description: The y position of the section.
+		\item ZLE: Float. Description: The z position of the
+			leading edge of the section, prior to twist.
+		\item Chord: Float. Description: Chord length of the
+			section.
+		\item Twist: Float. Description: Twist of the section
+			about the quarter-chord, in degrees. A positive twist is
+			leading-edge-up.
+	\end{itemize}
+\end{itemize}
+
+\begin{itemize}
+	\item Airfoil: Note that airfoils can be listed in any order; they are not
+		required to be ordered from root to tip. At least one airfoil is
+		needed, but any number of airfoils can be placed along the span.
+		LORAAX linearly interpolates airfoil coordinates to the discretized
+		spanwise section locations.
+	\begin{itemize}
+		\item Name (optional attribute): If name=``Root'' or name=``Tip'' is set for
+			this attribute, then the airfoil will automatically be placed at
+			Y=0 or the tip location, and Y does not need to be set for this
+			airfoil.
+		\item Y: Float. Required: Yes, except if name=``Root'' or name=``Tip''
+			attribute is set. Description: The y position of the airfoil.
+		\item Source: String. Description: Specifies how the airfoil coordinates
+			will be created. Either ``4 digit,'' ``5 digit,'' or ``File.'' 
+		\item Designation: String. Required: Only if Source is ``4 digit'' or
+			``5 digit.'' This is the code defining a 4- or 5-digit NACA airfoil.
+		\item Path: String. Required: Only if Source is ``File.'' This is the
+			relative or absolute path to the airfoil coordinates file.
+			Coordinates should be formatted in a single loop starting from the
+			trailing edge, either of the top surface or bottom surface, wrapping
+			around the leading edge and on to the trailing edge of the opposite
+			surface. Coordinates should be arranged in two space-delimited
+			columns representing
+			x and y in 2D space. The first line can either be text (usually the
+			name of the airfoil) or the first coordinate pair.
+	\end{itemize}
+\end{itemize}
+
+\section{Running a Case}
+
+After setting up the input files, a case can be run using the following
+command:
+
+\begin{verbatim}
+loraax analysis_input_file.xml
+\end{verbatim}
+
+\noindent This assumes that the loraax executable can be found by the shell,
+usually by placing its containing directory in the PATH environment variable. If
+loraax is not in PATH, it will have to be referenced with an absolute or
+relative path in the command above. The analysis input file must also be
+referenced with an absolute or relative path if it is not in the current working
+directory. Similarly, any files referenced within the analysis and geometry XML
+files must be referenced by an absolute or relative path if they are not in the
+current working directory.
+
+When a case is run, information about each iteration is printed to the shell,
+including the current operation that is being performed and, at the end of the
+iteration, a summary of the lift, drag, and pitching moment coefficients.
+
+\subsection{Solution Convergence}
+
+The solution is considered to be converged when the change in lift coefficient
+between interations is less than the specified StoppingTolerance. When the
+solution converges, ``Solution is converged'' is printed and iterations end,
+unless the iteration count is less than MinIters.
+
+If the solution fails to converge, it may be necessary to increase MaxIters.
+However, some cases may never converge, particularly if the case is viscous and
+the angle of attack is too high. Xfoil, the boundary layer method employed by
+LORAAX, can handle mild separation up to the onset of stall, but not beyond
+that. When Xfoil fails to converge for a section, warnings are printed to the
+shell and LORAAX attempts to approximate the boundary layer solution by
+interpolating or extrapolating from nearby sections. Often, one or two sections
+may not converge at some points during a simulation, even at fairly low angles
+of attack. This situation does not significantly degrade the solution. However,
+if a large percentage of the sections still fail to converge after 10 -- 20
+solver iterations, it is likely that either stall occurring or XfoilRunOptions
+$\rightarrow$ maxit may need to be increased. Be aware that the stall angle
+of attack decreases as Reynolds number decreases, and jagged or excessively
+coarse airfoil point distributions may degrade convergence. The discretization
+method in LORAAX uses spline fitting to interpolate points on the airfoil
+surface, but this method will not correct bumpy or jagged input
+coordinate distributions. Coordinates can sometimes be smoothed manually
+using the MDES $\rightarrow$ FILT
+operation in Xfoil and saving the smoothed coordinates.
+
+\subsection{Output Files}\label{sec:output}
+
+When LORAAX runs, it creates the following three directories:
+
+\begin{itemize}
+	\item forcemoment
+	\item sectional
+	\item visualization
+\end{itemize}
+
+Additionally, if these directories already exist, a backup directory will be
+created where the existing directories will be moved and renamed with a
+timestamp.
+
+\section{Analyzing / Postprocessing Results}
+
+Postprocessing a case can be done in a number of ways, depending on what
+information is desired. If only the final lift, drag, and pitching moment
+coefficients are desired, the information printed to the shell can be used
+directly (or redirected to a file). For more detailed analyses, the output files
+in the directories from Section \ref{sec:output} should be used. A description
+of the contents of each of these directories is given below.
+
+\begin{itemize}
+	\item forcemoment: Contains CSV-formatted files listing forces, moments, and
+		coefficients for the aircraft at each iteration. Separate files are
+		written for each wing and the total aircraft. Total aircraft
+		coefficients are normalized by the reference information in the geometry
+		input XML file, while coefficients for individual wings are normalized
+		by that wing's planform area and mean aerodynamic chord. These files
+		can be loaded and plotted in ParaView or by using a spreadsheet or
+		script.
+	\item sectional: Contains CSV-formatted files containing the lift
+		coefficient, drag coefficient, and pitching moment coefficients per unit
+		span, computed at each section. For viscous cases, the local Reynolds
+		number is also written. One file is written for each wing at an interval
+		controlled by the VisualizationFrequency input setting. These files can
+		be loaded and plotted in ParaView or by using a spreadsheet or script.
+	\item visualization: Contains VTK (legacy ASCII format) files to visualize
+		the wing surface and wake. All relevant wing surface variables,
+		including pressure, velocity, and boundary layer quantities, are
+		included. One file each is written for surfaces and wakes at an interval
+		controlled by the VisualizationFrequency input setting. These files can
+		be loaded and visualized in ParaView or any other visualization package
+		that supports the legacy VTK format.
+\end{itemize}
+
+\end{document}
