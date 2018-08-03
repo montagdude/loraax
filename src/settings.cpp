@@ -157,20 +157,20 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
 		return 2;
 	if (read_setting(main, "RollupWake", rollup_wake, false) != 0)
 		rollup_wake = false;
+	wakeangle = alpha;
 	if (rollup_wake)
 	{
 		if (read_setting(main, "RollupDist", rollupdist) != 0)
 			return 2;
 		if (read_setting(main, "WakeIters", wakeiters) != 0)
 			return 2;
+		read_setting(main, "InitialWakeAngle", wakeangle, false);
 	}
 	else
 	{
 		rollupdist = -1.;	// Will get set to max span later
 		wakeiters = 1;
 	}
-	if (read_setting(main, "InitialWakeAngle", wakeangle, false) != 0)
-		wakeangle = alpha;
 	if (read_setting(main, "Viscous", viscous) != 0)
 		return 2;
 	if (read_setting(main, "StoppingTolerance", stop_tol, false) != 0)
