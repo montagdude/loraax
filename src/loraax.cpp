@@ -10,6 +10,10 @@
 #include "aircraft.h"
 #include "util.h"
 
+#ifndef LORAAX_VERSION
+	#define LORAAX_VERSION ""
+#endif
+
 void create_or_backup_dir ( const std::string & dirname )
 {
 	DIR *pdir = NULL;
@@ -40,7 +44,6 @@ void create_or_backup_dir ( const std::string & dirname )
 
 int main (int argc, char* argv[])
 {
-	const std::string version = "0.1";
 	CLOParser parser;
 	std::string geom_file;
 	int check;
@@ -51,7 +54,7 @@ int main (int argc, char* argv[])
 	
 	// Parse CLOs
 	
-	check = parser.checkCLOs(argc, argv, version);
+	check = parser.checkCLOs(argc, argv, LORAAX_VERSION);
 	if (check < 0)
 	  return 0;
 	else if (check > 0)
