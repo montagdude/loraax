@@ -1,0 +1,42 @@
+<Aircraft>
+  <Reference>
+    <RefArea>10.0</RefArea>
+    <RefLength>1.0</RefLength>
+    <MomentCenX>0.25</MomentCenX>
+    <MomentCenY>0.0</MomentCenY>
+    <MomentCenZ>0.0</MomentCenZ>
+  </Reference>
+  <Wing>
+    <Paneling>
+      <NChord>61</NChord>
+      <NSpan>31</NSpan>
+      <LESpaceRat>0.2</LESpaceRat>
+      <TESpaceRat>0.4</TESpaceRat>
+      <RootSpaceRat>0.75</RootSpaceRat>
+      <TipSpaceRat>0.3</TipSpaceRat>
+    </Paneling>
+    <Sections>
+      <!-- Note that sections do not need to be given in order -->
+      <Section name="Root">
+        <!-- Y is not needed for root section -->
+        <XLE>0.</XLE>
+        <ZLE>0.</ZLE>
+        <Chord>1</Chord>
+        <Twist>0.</Twist>
+      </Section>
+      <Section>
+        <XLE>0.0</XLE>
+        <Y>5</Y>
+        <ZLE>0</ZLE>
+        <Chord>1.0</Chord>
+        <Twist>0.</Twist>
+      </Section>
+    </Sections>
+    <Airfoils>
+      <Airfoil name="Root">
+        <Source>4 digit</Source>
+        <Designation>0012</Designation>
+      </Airfoil>
+    </Airfoils>
+  </Wing>
+</Aircraft>
