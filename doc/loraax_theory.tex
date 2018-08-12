@@ -18,7 +18,286 @@
 
 \tableofcontents
 
-\section{Boundary Conditions}\label{sec:bcs}
+\section{Background}
+
+LORAAX combines a 3D panel method, which assumes inviscid, irrotational flow,
+with Xfoil, a 2D integral boundary layer code for flow over airfoils. Surface
+velocity and pressure are computed via the 3D panel method, and Xfoil computes
+the skin friction, displacement thickness, and parasitic drag at each spanwise
+section. The equivalent 2D flow condition is specified in Xfoil via the local
+sectional lift coefficient computed by integrating the surface pressure and
+skin friction. The displacement thickness from Xfoil is then used to modify the
+boundary condition for the inviscid solution via a transpiration velocity
+applied at the 3D panel centroids. The transpiration velocity has the effect
+of moving the normal-flow condition off the surface, where the real flow is
+viscous and rotational, to the edge of the boundary layer. Due to the change in
+boundary condition, the inviscid flow must be recomputed, which typically
+affects the sectional lift coefficient. Therefore, LORAAX iterates between the
+inviscid and boundary layer solutions until convergence is achieved. The
+remainder of this document describes the 3D panel method and coupling with
+Xfoil in detail.
+
+\section{Inviscid Solution}\label{sec:inviscid}
+
+\subsection{Governing Equation}
+
+The linearized small-disturbance equation for irrotational, steady compressible
+flow is
+\begin{equation}
+	(1 - M_\infty^2)\frac{\partial^2\Phi}{\partial x^2} +
+	                \frac{\partial^2\Phi}{\partial y^2} +
+	                \frac{\partial^2\Phi}{\partial z^2} = 0,
+	\label{eq:small_disturbance}
+\end{equation}
+
+\noindent where $M_\infty$ is the Mach number in the freestream and $\Phi$ is
+the velocity potential. $\Phi$ is related to the velocity vector by
+\begin{equation}
+	\mathbf{\nabla}\Phi = \mathbf{U}.
+	\label{eq:velocity_potential}
+\end{equation}
+
+\noindent In other words, velocity is the gradient of the velocity potential. By
+using the velocity potential formulation, the original system of partial
+differential equations (the Navier-Stokes equations governing fluid flow) have
+been reduced to a single partial differential equation. Such simplifications
+are, of course, accompanied by several limitations, including:
+
+\begin{itemize}
+	\item Irrotational flow: boundary layers and shocks cannot be captured by
+		this governing equation. In LORAAX, the boundary layer is computed
+		separately and coupled with the inviscid solution via the boundary
+		condition; see Section \ref{sec:viscous_coupling}.
+	\item Small disturbances: the induced velocities must be much smaller in
+		magnitude than the freestream velocity.
+		This assumption sometimes implies thin surfaces at small angles of
+		attack. However, the underlying \textit{incompressible} solution
+		procedure is not subject to this assumption, and in practice acceptable
+		results can be obtained even for thick surfaces near stall, from
+		incompressible through low subsonic conditions.
+\end{itemize}
+
+Significant computational advantages can be obtained by transforming Eq.
+\ref{eq:small_disturbance} into the Laplace equation. The Prandtl-Glauert
+transformation does just that. To perform this transformation, we define a new
+set of coordinates, $x_i$, $y_i$, and $z_i$, as follows:
+\begin{align}
+	\label{eq:prandtl_glauert_transform}
+	x_i & = \frac{x}{\sqrt{1 - M_\infty^2}} \\ \nonumber
+	y_i & = y \\ \nonumber
+	z_i & = z. \nonumber
+\end{align}
+
+\noindent $x_i$, $y_i$, and $z_i$ are also known as \textit{incompressible
+coordinates}, because the procedure transforms Eq. \ref{eq:small_disturbance}
+into the Laplace equation, which governs irrotational, incompressible flows
+(and is not limited to small disturbances). The Laplace equation is
+\begin{equation}
+	\frac{\partial^2\Phi_i}{\partial x_i^2} +
+	\frac{\partial^2\Phi_i}{\partial y_i^2} +
+	\frac{\partial^2\Phi_i}{\partial z_i^2} = 0.
+	\label{eq:laplace}
+\end{equation}
+
+Equation \ref{eq:laplace} represents an incompressible flow equivalent to the
+compressible flow of Eq. \ref{eq:small_disturbance}. This equation can be solved
+using the well-known technique of superposition of elementary solutions,
+including source and doublet panels and vortex rings, and results in a linear
+system of equations to determine the strengths of these elementary solutions.
+This process will be described in more detail in
+Section \ref{sec:discretization}.
+
+Notice that the
+transformation described in Eq. \ref{eq:prandtl_glauert_transform} produces
+an equivalent incompressible planform with the same span but greater chord and
+sweep than the real compressible planform. Due to these effects, in three
+dimensions it is not possible to simply solve Eq. \ref{eq:laplace} for the
+original geometry and then scale the pressure coefficient by
+$\frac{1}{\sqrt{1 - M_\infty^2}}$ to correct for compressibility as
+can be done in two dimensions. The geometric transformation must actually be
+applied and the problem solved for the equivalent incompressible geometry. In
+LORAAX, the incompressible geometry is always computed as a preprocessing step,
+and Eq. \ref{eq:laplace} is solved in incompressible coordinates.
+
+The velocity potential for the either the incompressible or compressible problem
+can be separated into a freestream and induced part as follows:
+\begin{align}
+	\label{eq:phi_sep}
+	\Phi_i(x_i,y_i,z_i) & = \Phi_i'(x_i,y_i,z_i)
+	                      + U_\infty(x_i\cos\alpha + z_i\sin\alpha) \\ \nonumber
+	\Phi(x,y,z) & = \Phi'(x,y,z)
+	              + U_\infty(x\cos\alpha + z\sin\alpha) \nonumber
+\end{align}
+
+\noindent where $\alpha$ is the angle of attack. $\Phi_i'$ is related to the
+compressible induced potential by
+\begin{equation}
+	\Phi_i'(x_i,y_i,z_i) = \Phi'(x,y,z).
+	\label{eq:phiprime_incompressible}
+\end{equation}
+
+\noindent Therefore, it is sufficient to solve the incompressible problem and
+then apply Eqs. \ref{eq:phi_sep} and \ref{eq:phiprime_incompressible} to obtain
+the solution in the compressible coordinate space. The velocity for the
+compressible problem can be obtained in a similar manner.
+Substituting Eqs. \ref{eq:phi_sep} and \ref{eq:phiprime_incompressible} into
+Eq. \ref{eq:velocity_potential}, the compressible velocity can be
+obtained anywhere in the flowfield by differentiating the
+incompressible velocity potential as follows:
+\begin{align}
+	\label{eq:velocity_compressible}
+	\mathbf{U} & = \left(\frac{\partial\Phi_i'}{\partial x} +
+	                    U_\infty\cos\alpha\right)\hat{i} +
+	              \frac{\partial\Phi_i'}{\partial y}\hat{j} +
+	              \left(\frac{\partial\Phi_i'}{\partial z} +
+	                    U_\infty\sin\alpha\right)\hat{k} \\ \nonumber
+	           & = \left(\frac{\partial\Phi_i'}{\partial x_i}
+	                    \frac{1}{\sqrt{1 - M_\infty^2}} +
+	                    U_\infty\cos\alpha\right)\hat{i} + 
+	              \frac{\partial\Phi_i'}{\partial y_i}\hat{j} +
+	              \left(\frac{\partial\Phi_i'}{\partial z_i} +
+	                    U_\infty\sin\alpha\right)\hat{k}. \nonumber
+\end{align}
+
+Similarly, the compressible pressure coefficient is related to the
+incompressible pressure coefficient by
+\begin{equation}
+	c_p = \frac{c_{p_i}}{\sqrt{1 - M_\infty^2}},
+	\label{eq:cp_compressible}
+\end{equation}
+
+\noindent but again, this correction assumes that Eq. \ref{eq:laplace} was
+solved in incompressible coordinates to obtain $c_{p_i}$. Other local properties
+can be computed via the isentropic flow relations.
+
+\subsection{Discretization}\label{sec:discretization}
+
+The biggest advantage of the potential flow governing equation
+(Eq. \ref{eq:laplace}) is that the solution can be constructed by linearly
+combining elementary solutions on the surfaces and wakes only. The linearity of
+the governing equation makes it very easy to construct a linear system of
+equations from the discretized geometry, and the fact that only surfaces and
+wakes need to be modeled makes it much less computationally expensive than
+methods that require the fluid volume to be discretized. Furthermore, the
+partial derivatives in Eq. \ref{eq:laplace} do not need to be approximated
+numerically as part of the discretization process, because the elementary
+solutions are exact solutions of the governing equation. (However, there is
+still discretization error in the final solution of any non-trivial problem,
+because the elementary solutions do not represent the actual geometry nor the
+actual circulation distribution exactly.)
+
+LORAAX uses a combination of source and doublet panels to represent wing
+surfaces and wakes. Both quadrilateral and triangular panels are employed.
+The underlying solutions assume that each of these elements is planar, though
+the quadrilateral elements on the wing surface may be slightly twisted without
+appreciable loss of accuracy. Because wake panels may undergo significant
+twist during the unsteady rollup procedure, the deforming panels in the wake
+are triangular, which are guaranteed to remain planar even when their defining
+vertices move. Surface panels include both source (to model wing and boundary
+layer thickness) and doublet (to provide circulation and lift) elements, while
+wake panels include only doublets. There is also a separate set of
+non-deforming wake panels containing only source elements, which are responsible
+for modeling the boundary layer dissipation in the wake.
+
+\subsubsection{Wing Modeling}
+
+Geometric discretization in LORAAX is fairly straightforward in concept. The
+user defines a number of sections, each of which are defined by their location
+in space, twist, and local dihedral angle. Sections are assumed to be aligned
+with the x-direction prior to applying twist and dihedral rotations. The user
+also defines one or more airfoils along the span of the wing. These airfoils
+are discretized into a number of vertices on the top and bottom surfaces (the
+number and spacing being defined by the user) and then interpolated to the
+section spanwise section locations. Vertices of adjacent sections are connected
+to form quadrilateral panels on the top and bottom surfaces of the wing. The
+wingtips are assumed to be flat and are discretized by connecting the top and
+bottom surface tip vertices and dividing into two along the mean camber line.
+Triangular panels are used at the leading and trailing edge tip panels where the
+geometry forms a point, and quadrilateral panels are used in between. Blunt
+trailing edges are not modeled; if the user-supplied airfoils have blunt
+trailing edges, LORAAX will remove the trailing edge thickness by smoothly
+modifying the airfoil shape beginning at the 90\% chord location. However, the
+original blunt trailing edge is retained when running Xfoil to obtain the
+parasitic drag and boundary layer properties.
+
+\subsubsection{Wake Modeling}
+
+The wake is modeled as a thin sheet of doublet panels initially extending along
+the direction parallel to the freestream. The user can elect to allow the wake
+to deform as part of the solution, in which case a rolling-up distance is
+specified along with the number of deforming panels that should be placed along
+this distance. As was mentioned previously, triangular panels are used for the
+deforming portion of the wake to ensure that each panel remains planar. Behind
+the deforming portion of the wake, a single quadrilateral panel is placed along
+the freestream direction and extending to infinity. (Since only finite
+lengths are allowed for doublet panels, ``infinity'' is actually 750 times the
+maximum span of any wing in the aircraft, which produces results that are
+indistinguishable from truly infinite panel. Induced velocity calculations are
+performed by treating wake panel edges as vortex elements, and in this case the
+trailing elements are assumed to actually be infinite.) If the user chooses to
+allow the wake to deform, a time-stepping approach is employed to convect the
+wake vertices, which is described in detail in Section \ref{sec:rollup}. The
+geometry of the wake panels is then recomputed after convection occurs. The
+doublet strengths for the wake panels are a function of the doublet strength
+distribution on the wing surface, which is described in Section
+\ref{sec:system}.
+
+The viscous wake is treated as a separate set of panels including only source
+elements. The vertex locations for these panels comes from Xfoil, and they do
+not convect. The viscous wake influence on the surface is considered during the
+solution procedure, but it is ignored during wake rollup calculations. The
+source strengths for the viscous wake are a function of the boundary layer
+displacement thickness and edge velocity, which is described in Section
+\ref{sec:viscous_coupling}.
+
+\subsubsection{Elementary Solutions}
+
+LORAAX uses a first-order panel representation, which means that each source and
+doublet element has constant strength across its surface assumed-planar surface.
+The induced potential due to a doublet panel at a point $(x_i, y_i, z_i)$ can
+therefore be represented by
+\begin{equation}
+	\Phi_d(x_i,y_i,z_i) = c_d(x_i,y_i,z_i)\mu_d,
+	\label{eq:doublet}
+\end{equation}
+
+\noindent where $c_d$ is the potential due to a unit-strength doublet panel,
+also known as an \textit{influence
+coefficient}, and $\mu_d$ is the doublet strength of the panel. Similarly, the
+induced potential due to a source panel is
+\begin{equation}
+	\Phi_s(x_i,y_i,z_i) = c_s(x_i,y_i,z_i)\sigma_s,
+	\label{eq:source}
+\end{equation}
+
+\noindent where $\sigma_s$ is the source strength. Induced velocities have a
+similar form, except that there are three influence coefficients per panel
+(representing
+the $x_i$-, $y_i$-, and $z_i$-components of the velocity due to a unit strength
+element). When using the vortex representation to compute the induced velocity
+of a doublet element, the Biot-Savart law is employed, treating each edge of
+the panel as a vortex leg with circulation strength equal to the doublet
+strength of the element. The equations for the influence coefficients are
+very long; LORAAX uses the equations from Katz and Plotkin
+\textcolor{red}{(citation)}, so the reader can refer to that text or read the
+source code (note that a few of the equations in Ref.
+\textcolor{red}{(citation)} needed to be corrected). The Biot-Savart law and its
+implementation for finite and semi-infinite vortex legs are also available from
+the same reference.
+
+As the point $(x_i, y_i, z_i)$ moves far away from the panel, the influence of
+the panel becomes essentially the same as a point source or doublet element
+located at the panel's centroid.
+Since the influence coefficients for point elements are much cheaper to
+compute, panels are treated as point elements whenever the point is sufficiently
+far away. Through testing, a distance of 8 characteristic panel lengths was
+found to be sufficiently accurate while significantly reducing the computational
+time. Here, the characteristic length is the length of the diagonal for
+quadrilateral panels and the longest side length for triangular panels.
+
+\subsection{Boundary Conditions}
+
+\subsection{Construction of the Linear System}\label{sec:system}
 
 The Neumann-type boundary condition specifies 0 normal flow through a panel:
 
@@ -145,5 +424,13 @@ vector of known quantities on the right hand side of the equation. $\mathbf{\ove
 is a
 dense square matrix, so a direct method like LU decomposition is most appropriate to solve
 it.
+
+\section{Viscous - Inviscid Coupling}\label{sec:viscous_coupling}
+
+Don't forget to mention the viscous wake.
+
+\section{Computation of Forces and Moments}
+
+\section{Wake Rollup}\label{sec:rollup}
 
 \end{document}
