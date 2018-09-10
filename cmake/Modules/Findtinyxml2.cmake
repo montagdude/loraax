@@ -1,0 +1,19 @@
+find_path(TINYXML2_INCLUDE_DIR tinyxml2.h)
+find_library(TINYXML2_LIBRARY NAMES tinyxml2)
+
+if (TINYXML2_INCLUDE_DIR AND TINYXML2_LIBRARY)
+	set(TINYXML2_FOUND TRUE)
+endif (TINYXML2_INCLUDE_DIR AND TINYXML2_LIBRARY)
+
+if (TINYXML2_FOUND)
+	message(STATUS "Found tinyxml2 header in ${TINYXML2_INCLUDE_DIR}")
+	message(STATUS "Found tinyxml2 library: ${TINYXML2_LIBRARY}")
+else (TINYXML2_FOUND)
+	if (NOT TINYXML2_INCLUDE_DIR)
+		message(FATAL_ERROR "Could NOT find tinyxml2.h!")
+	endif (NOT TINYXML2_INCLUDE_DIR)
+
+	if (NOT TINYXML2_LIBRARY)
+		message(FATAL_ERROR "Could NOT find tinyxml2 library!")
+	endif (NOT TINYXML2_LIBRARY)
+endif (TINYXML2_FOUND)
