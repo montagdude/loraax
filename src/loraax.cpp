@@ -26,7 +26,11 @@ void create_or_backup_dir ( const std::string & dirname )
 	{
 		pdir = opendir("backup");
 		if (pdir == NULL)
+#ifdef ISMINGW
+			mkdir("backup");
+#else
 			mkdir("backup", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#endif
 		now = time(0);
 		ltm = localtime(&now);
 		newpath = "backup/" + dirname;
@@ -39,7 +43,11 @@ void create_or_backup_dir ( const std::string & dirname )
 		rename(dirname.c_str(), newpath.c_str());
 	}
 	
+#ifdef ISMINGW
+	mkdir(dirname.c_str());
+#else
 	mkdir(dirname.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#endif
 }
 
 int main (int argc, char* argv[])

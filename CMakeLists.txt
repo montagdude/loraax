@@ -37,6 +37,13 @@ else (CMAKE_BUILD_TYPE MATCHES "Release")
 	set(CMAKE_CXX_FLAGS "-O2 ${OPENMP_FLAG}")
 endif (CMAKE_BUILD_TYPE MATCHES "Release")
 
+# MinGW build definitions
+if (MINGW)
+	add_definitions(-DISMINGW=1)
+else (MINGW)
+	add_definitions(-UISMINGW)
+endif (MINGW)
+
 # Paths
 set(DATADIR ${CMAKE_INSTALL_PREFIX}/share/loraax
     CACHE PATH "Directory to install documentation and examples.")
