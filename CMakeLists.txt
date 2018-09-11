@@ -83,6 +83,7 @@ install(TARGETS loraax DESTINATION bin)
 install(FILES
         "sample_cases/StreakWing.xml"
         "sample_cases/StreakWing_inputs.xml"
+        "sample_cases/clarky.dat"
         "sample_cases/fx63137sm.dat"
         "sample_cases/mh32_smoothed.dat"
         "sample_cases/naca0012.xml"
