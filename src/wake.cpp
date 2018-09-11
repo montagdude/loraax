@@ -13,9 +13,6 @@
 #include "geometry.h"
 #include "wake.h"
 
-// FIXME: make this a function of smallest panel size
-const double rcore = 1.E-8;
-
 /******************************************************************************/
 //
 // Wake class.
@@ -32,6 +29,7 @@ Wake::Wake ()
 	_idx = -1;
 	_nspan = 0;
 	_nstream = 0;
+	_rcore = 1.0E-08;
 	_verts.resize(0);
 	_newx.resize(0);
 	_newy.resize(0);
@@ -57,6 +55,7 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
 {
 	int ntris, nquads;
 	unsigned int i, j, blvert, brvert, trvert, tlvert;
+	double mindist, dist;
 	double x, y, z, xinc, yinc, zinc, xviz, yviz, zviz, dx, dy, dz;
 
 	_idx = wakeidx;
@@ -65,6 +64,16 @@ void Wake::initialize ( const std::vector<Vertex *> & topteverts,
 	_botteverts = botteverts;
 
 	_infdist = 750.*maxspan;
+
+	// Core radius 1/100 width of narrowest TE panel
+
+	mindist = 1.E+08;
+	for ( i = 0; int(i) < _nspan-1; i++ )
+	{
+		dist = _topteverts[i]->distance(*_topteverts[i+1]);
+		if (dist < mindist)
+			_rcore = 0.01*dist;
+	}
 	
 	// Determine number of rows to store based on inputs
 	
@@ -286,7 +295,7 @@ void Wake::convectVertices ( const double & dt,
 			}
 			for ( k = 0; k < nwakepan; k++ )
 			{
-				dvel = allwake[k]->vortexVelocity(xinc, yinc, zinc, rcore,
+				dvel = allwake[k]->vortexVelocity(xinc, yinc, zinc, _rcore,
 				                                  true);
 				k1 += dvel;
 
@@ -326,7 +335,7 @@ void Wake::update ()
 	// convected position of vertex (i,j-1).
 
 #pragma omp parallel for private(i,j,x,y,z,xinc,yinc,zinc,xviz,yviz,zviz)
-	for ( i = 0; int(i) < _nspan; i++ )
+	for ( i = 0; i < _nspan; i++ )
 	{
 		_verts[i*(_nstream+1)].incrementWakeTime(dt);
 		for ( j = 1; int(j) < _nstream; j++ )
@@ -466,9 +475,9 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 		// self-induced velocity of a trailing leg.
 
 		if (i != on_trailing_leg)
-			w += vortex_velocity(x, y, z, x1, y1, z1, x2, y2, z2, rcore,
+			w += vortex_velocity(x, y, z, x1, y1, z1, x2, y2, z2, _rcore,
 			                     true)*gamma;
-		w -= vortex_velocity(x, y, z, x1, -y1, z1, x2, -y2, z2, rcore,
+		w -= vortex_velocity(x, y, z, x1, -y1, z1, x2, -y2, z2, _rcore,
 		                     true)*gamma;
 	}
 
@@ -489,9 +498,9 @@ Eigen::Vector3d Wake::planarInducedVelocity ( const double & x,
 
 			// Induced velocity + mirror contribution
 
-			w += vortex_velocity(x, y, z, x1, y1, z1, x2, y2, z2, rcore,
+			w += vortex_velocity(x, y, z, x1, y1, z1, x2, y2, z2, _rcore,
 			                     false)*gamma;
-			w += vortex_velocity(x, y, z, x2, -y2, z2, x1, -y1, z1, rcore,
+			w += vortex_velocity(x, y, z, x2, -y2, z2, x1, -y1, z1, _rcore,
 			                     false)*gamma;
 		}
 	}
