@@ -46,7 +46,7 @@ class Airfoil: public SectionalObject {
 	Airfoil ();
 	Airfoil ( const Airfoil & foil );
 	Airfoil & operator = ( const Airfoil & foil );
-	~Airfoil ();
+	virtual ~Airfoil ();
 	
 	// Setting airfoil coordinates
 	

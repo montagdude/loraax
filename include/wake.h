@@ -24,6 +24,7 @@ class Wake {
 												//   vertices
 	double _infdist;							// Length of "infinite" last
 												//   set of panels
+	double _rcore;								// Vortex core radius
 	std::vector<Vertex> _verts;					// Vertices
 	std::vector<double> _newx, _newy, _newz;	// New vertex positions after
 	                                        	//   wake rollup

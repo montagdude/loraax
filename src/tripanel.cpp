@@ -29,6 +29,7 @@ TriPanel::TriPanel ()
 	_ytrans.resize(3);
 	_type = "tripanel";
 }
+TriPanel::~TriPanel () {};
 
 /******************************************************************************/
 //

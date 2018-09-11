@@ -70,6 +70,7 @@ Section::Section ()
 	_reinitialized = false;
 	_foilinterp.resize(0);
 }
+Section::~Section () {};
 
 /******************************************************************************/
 //
@@ -329,7 +330,6 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
 	    2. 2D angle of attack is atan(uinfvec_p[2]/uinfvec_p[0])
 	    3. 2D lift is -_fa*sin(alpha2d) + _fn*cos(alpha2d)
 	**/
-	//FIXME: this needs to be checked
 
 	inertial2section = euler_rotation(_roll, _twist, 0.0, "123");
 	uinfvec_p = inertial2section.transpose() * uinfvec;

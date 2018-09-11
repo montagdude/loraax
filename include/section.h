@@ -62,9 +62,10 @@ class Section: public SectionalObject {
 
 	public:
 
-	// Constructor
+	// Constructor and destructor
 	
 	Section (); 
+	virtual ~Section ();
 	
 	// Set or access position, orientation, and scale
 	

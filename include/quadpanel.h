@@ -28,9 +28,10 @@ class QuadPanel: public Panel {
 
 	public:
 
-	// Constructor
+	// Constructor and destructor
 	
 	QuadPanel ();
+	virtual ~QuadPanel ();
 	
 	// Add vertices and compute geometric quantities when 4 are set
 	

@@ -16,7 +16,7 @@ class Vertex;
 /******************************************************************************/
 class TriPanel: public Panel {
 
-  private:
+    private:
 
     // Computing geometric quantities
 
@@ -26,11 +26,12 @@ class TriPanel: public Panel {
     void computeCentroid ();
     void computeTransform ();
 
-  public:
+    public:
 
-    // Constructor
+    // Constructor and destructor
 
     TriPanel ();
+    virtual ~TriPanel ();
 
     // Add vertices and comput geometric quantities when 4 are set
 
