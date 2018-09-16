@@ -59,7 +59,7 @@ endif (TINYXML2_FOUND)
 find_package(LibXfoil REQUIRED)
 if (LIBXFOIL_FOUND)
 	include_directories(${LIBXFOIL_INCLUDE_DIR})
-	target_link_libraries(loraax ${LIBXFOIL_LIBRARY} gfortran)
+	target_link_libraries(loraax ${LIBXFOIL_LIBRARY} gfortran quadmath)
 endif (LIBXFOIL_FOUND)
 target_link_libraries(loraax Eigen3::Eigen) 
 
