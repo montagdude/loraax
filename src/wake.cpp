@@ -544,7 +544,7 @@ void Wake::farfieldForces ( const double & xtrefftz, const double & ztrefftz,
 
     w.resize(_nspan-1);
     nwake = allwake.size();
-//#pragma omp parallel for private(i,p0,p,j)
+#pragma omp parallel for private(i,p0,p,j)
     for ( i = 0; i < _nspan-1; i++ )
     {
         // Aft TE midpoint projected on Trefftz plane
