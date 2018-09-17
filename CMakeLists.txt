@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-set(LORAAX_VERSION 0.1)
+set(LORAAX_VERSION 0.1.1)
 project(loraax CXX)
 
 # Executable
