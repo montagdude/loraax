@@ -1,0 +1,6 @@
+2018-09-16   Daniel Prosser <dpross1100@msn.com>
+
+        version 0.1.1
+        * Fix a bug in induced drag calcuation.
+        * Remove as many shared library dependencies from Linux build as
+          possible; should work nearly everywhere now.
