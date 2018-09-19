@@ -1,6 +1,8 @@
-2018-09-16   Daniel Prosser <dpross1100@msn.com>
+2018-09-18   Daniel Prosser <dpross1100@msn.com>
 
         version 0.1.1
-        * Fix a bug in induced drag calcuation.
+        * Fix a bug in induced drag calcuation (would still give the right
+          answer for some compilers; bug invoked undefined behavior).
         * Remove as many shared library dependencies from Linux build as
           possible; should work nearly everywhere now.
+        * Add 32-bit Linux build.
