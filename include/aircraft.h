@@ -151,6 +151,7 @@ class Aircraft {
     // Write VTK viz
     
     int writeViz ( const std::string & prefix, int iter ) const;
+    int writeFarfieldViz ( const std::string & prefix );
 };
 
 #endif

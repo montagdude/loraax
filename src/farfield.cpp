@@ -1,5 +1,6 @@
 #include <vector>
 #include <cmath>
+#include "util.h"
 #include "vertex.h"
 #include "quadpanel.h"
 #include "farfield.h"
@@ -40,12 +41,15 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
                             int & next_global_vertidx,
                             int & next_global_elemidx )
 {
-    unsigned int i, j;
+    unsigned int i, j, k;
     double beta, x, y, z, dx, dy, dz;
 
     _nx = nx;
     _ny = ny;
     _nz = nz;
+    _lenx = lenx;
+    _leny = leny;
+    _lenz = lenz;
     dx = _lenx / double(_nx-1);
     dy = _leny / double(_ny-1);
     dz = _lenz / double(_nz-1);
@@ -71,7 +75,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _vertarray[0][i][j].setIdx(next_global_vertidx);
             _vertarray[0][i][j].setCoordinates(x, y, z);
             _vertarray[0][i][j].setIncompressibleCoordinates(x/beta, y, z);
-            _verts.push_back(&_vertarray[0][i][j]);
             next_global_vertidx += 1;
         }
     }
@@ -86,7 +89,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _quadarray[0][i][j].addVertex(&_vertarray[0][i+1][j]);
             _quadarray[0][i][j].addVertex(&_vertarray[0][i+1][j+1]);
             _quadarray[0][i][j].addVertex(&_vertarray[0][i][j+1]);
-            _quads.push_back(&_quadarray[0][i][j]);
             next_global_elemidx += 1;
         }
     }
@@ -105,7 +107,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _vertarray[1][i][j].setIdx(next_global_vertidx);
             _vertarray[1][i][j].setCoordinates(x, y, z);
             _vertarray[1][i][j].setIncompressibleCoordinates(x/beta, y, z);
-            _verts.push_back(&_vertarray[1][i][j]);
             next_global_vertidx += 1;
         }
     }
@@ -120,7 +121,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _quadarray[1][i][j].addVertex(&_vertarray[1][i][j+1]);
             _quadarray[1][i][j].addVertex(&_vertarray[1][i+1][j+1]);
             _quadarray[1][i][j].addVertex(&_vertarray[1][i+1][j]);
-            _quads.push_back(&_quadarray[1][i][j]);
             next_global_elemidx += 1;
         }
     }
@@ -139,7 +139,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _vertarray[2][i][j].setIdx(next_global_vertidx);
             _vertarray[2][i][j].setCoordinates(x, y, z);
             _vertarray[2][i][j].setIncompressibleCoordinates(x/beta, y, z);
-            _verts.push_back(&_vertarray[2][i][j]);
             next_global_vertidx += 1;
         }
     }
@@ -154,7 +153,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _quadarray[2][i][j].addVertex(&_vertarray[2][i][j+1]);
             _quadarray[2][i][j].addVertex(&_vertarray[2][i+1][j+1]);
             _quadarray[2][i][j].addVertex(&_vertarray[2][i+1][j]);
-            _quads.push_back(&_quadarray[2][i][j]);
             next_global_elemidx += 1;
         }
     }
@@ -173,7 +171,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _vertarray[3][i][j].setIdx(next_global_vertidx);
             _vertarray[3][i][j].setCoordinates(x, y, z);
             _vertarray[3][i][j].setIncompressibleCoordinates(x/beta, y, z);
-            _verts.push_back(&_vertarray[3][i][j]);
             next_global_vertidx += 1;
         }
     }
@@ -188,7 +185,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _quadarray[3][i][j].addVertex(&_vertarray[3][i+1][j]);
             _quadarray[3][i][j].addVertex(&_vertarray[3][i+1][j+1]);
             _quadarray[3][i][j].addVertex(&_vertarray[3][i][j+1]);
-            _quads.push_back(&_quadarray[3][i][j]);
             next_global_elemidx += 1;
         }
     }
@@ -207,7 +203,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _vertarray[4][i][j].setIdx(next_global_vertidx);
             _vertarray[4][i][j].setCoordinates(x, y, z);
             _vertarray[4][i][j].setIncompressibleCoordinates(x/beta, y, z);
-            _verts.push_back(&_vertarray[4][i][j]);
             next_global_vertidx += 1;
         }
     }
@@ -222,7 +217,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _quadarray[4][i][j].addVertex(&_vertarray[4][i][j+1]);
             _quadarray[4][i][j].addVertex(&_vertarray[4][i+1][j+1]);
             _quadarray[4][i][j].addVertex(&_vertarray[4][i+1][j]);
-            _quads.push_back(&_quadarray[4][i][j]);
             next_global_elemidx += 1;
         }
     }
@@ -241,7 +235,6 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _vertarray[5][i][j].setIdx(next_global_vertidx);
             _vertarray[5][i][j].setCoordinates(x, y, z);
             _vertarray[5][i][j].setIncompressibleCoordinates(x/beta, y, z);
-            _verts.push_back(&_vertarray[5][i][j]);
             next_global_vertidx += 1;
         }
     }
@@ -256,8 +249,57 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             _quadarray[5][i][j].addVertex(&_vertarray[5][i+1][j]);
             _quadarray[5][i][j].addVertex(&_vertarray[5][i+1][j+1]);
             _quadarray[5][i][j].addVertex(&_vertarray[5][i][j+1]);
-            _quads.push_back(&_quadarray[5][i][j]);
             next_global_elemidx += 1;
         }
     }
+
+    // Store pointers to vertices and quads
+
+    for ( k = 0; k < 6; k++ )
+    {
+        for ( i = 0; i < _vertarray[k].size(); i++ )
+        {
+            for ( j = 0; j < _vertarray[k][i].size(); j++ )
+            {
+                _verts.push_back(&_vertarray[k][i][j]);
+            }
+        }
+    }
+    for ( k = 0; k < 6; k++ )
+    {
+        for ( i = 0; i < _quadarray[k].size(); i++ )
+        {
+            for ( j = 0; j < _quadarray[k][i].size(); j++ )
+            {
+                _quads.push_back(&_quadarray[k][i][j]);
+            }
+        }
+    }
+}
+
+/*******************************************************************************
+
+Access vertices and panels
+
+*******************************************************************************/
+unsigned int Farfield::nVerts () const { return _verts.size(); }
+unsigned int Farfield::nQuads () const { return _quads.size(); }
+Vertex * Farfield::vert ( unsigned int vidx )
+{
+#ifdef DEBUG
+    if (vidx >= _verts.size())
+        conditional_stop(1, "Farfield::vert", "Index out of range.");
+#endif
+
+    return _verts[vidx];
+}
+
+QuadPanel * Farfield::quadPanel ( unsigned int qidx )
+{
+#ifdef DEBUG
+    if (qidx >= _quads.size())
+        conditional_stop(1, "Farfield::quad", "Index out of range.");
+#endif
+
+    return _quads[qidx];
 }

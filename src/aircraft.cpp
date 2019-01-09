@@ -479,6 +479,95 @@ void Aircraft::writeWakeData ( std::ofstream & f ) const
 
 /******************************************************************************/
 //
+// Writes legacy VTK farfield viz
+//
+/******************************************************************************/
+int Aircraft::writeFarfieldViz ( const std::string & prefix )
+{
+  std::string ffname, fname;
+  std::ofstream f;
+  int i, j;
+  unsigned int nverts, npanels, verts_offset, cellsize, ncellverts;
+
+  ffname = prefix + "_farfield.vtk";
+  fname = "visualization/" + ffname;
+
+  f.open(fname.c_str());
+  if (! f.is_open())
+  {
+    conditional_stop(1, "Aircraft::writeFarfieldViz",
+                     "Unable to open " + fname + " for writing.");
+    return 1;
+  }
+
+  // Header
+
+  f << "# vtk DataFile Version 3.0" << std::endl;
+  f << casename << std::endl;
+  f << "ASCII" << std::endl;
+  f << "DATASET UNSTRUCTURED_GRID" << std::endl;
+
+  // Write vertices
+
+  nverts = _farfield.nVerts();
+  verts_offset = _verts.size() + _wakeverts.size();
+  f << "POINTS " << nverts << " double" << std::endl;
+  f.setf(std::ios_base::scientific);
+  for ( i = 0; i < int(nverts); i++ )
+  {
+    f << std::setprecision(7) << std::setw(16) << std::left
+      << _farfield.vert(i)->xViz();
+    f << std::setprecision(7) << std::setw(16) << std::left
+      << _farfield.vert(i)->yViz();
+    f << std::setprecision(7) << std::setw(16) << std::left
+      << _farfield.vert(i)->zViz() << std::endl;
+  }
+
+  // Write panels
+
+  npanels = _farfield.nQuads();
+  cellsize = 0;
+  for ( i = 0; i < int(npanels); i++ )
+  {
+    cellsize += 1 + _farfield.quadPanel(i)->nVertices();
+  }
+  f << "CELLS " << npanels << " " << cellsize << std::endl;
+  for ( i = 0; i < int(npanels); i++ )
+  {
+    ncellverts = _farfield.quadPanel(i)->nVertices();
+    if ( (ncellverts != 4) && (ncellverts != 3) )
+    {
+      conditional_stop(1, "Aircraft::writeFarfieldViz",
+                       "Farfield panels must all be quad- or tri-type.");
+      return 1;
+    }
+    f << ncellverts;
+    for ( j = 0; j < int(ncellverts); j++ )
+    {
+      f << " " << _farfield.quadPanel(i)->vertex(j).idx()-verts_offset;
+    }
+    f << std::endl;
+  }
+
+  // Cell types
+
+  f << "CELL_TYPES " << npanels << std::endl;
+  for ( i = 0; i < int(npanels); i++ )
+  {
+    ncellverts = _farfield.quadPanel(i)->nVertices();
+    if (ncellverts == 4)
+      f << 9 << std::endl;
+    else if (ncellverts == 3)
+      f << 5 << std::endl;
+  }
+
+  f.close();
+
+  return 0;
+}
+
+/******************************************************************************/
+//
 // Default constructor
 //
 /******************************************************************************/

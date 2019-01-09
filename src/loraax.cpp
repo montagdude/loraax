@@ -231,6 +231,7 @@ int main (int argc, char* argv[])
         ac.writeViz(casename, iter);
         ac.writeSectionForceMoment(iter);
     }
+    ac.writeFarfieldViz(casename);
     
     return 0;
 }
