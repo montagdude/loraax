@@ -253,98 +253,98 @@ std::vector<double> Wing::adjustSpacing (
 /******************************************************************************/
 void Wing::computeAreaMAC ( const std::vector<Section> & sorted_user_sections )
 {
-	unsigned int i, nsecs;
-	double cenx, dceny, ceny, cenz, cbarx;
-	double xT1, xL1, y1, z1, xT2, xL2, y2, z2;
-	double mT, mL, bT, bL, mp, mm, bp, bm;
-	double ar, tr;
-	
-	nsecs = sorted_user_sections.size();
-	_span = 2.*sorted_user_sections[nsecs-1].y();
-	tr = sorted_user_sections[nsecs-1].chord()
-	   / sorted_user_sections[0].chord();
-	_splanform = 0.;
-	cenx = 0.;
-	ceny = 0.;
-	cenz = 0.;
-	_cbar = 0.;
-	cbarx = 0.;
-	ar = 0.;
-	for ( i = 0; i < nsecs-1; i++ )
-	{
-		xL1 = sorted_user_sections[i].xle();
-		xT1 = sorted_user_sections[i].xle() + sorted_user_sections[i].chord();
-		y1 = sorted_user_sections[i].y();
-		z1 = sorted_user_sections[i].zle();
-		xL2 = sorted_user_sections[i+1].xle();
-		xT2 = sorted_user_sections[i+1].xle()
-		    + sorted_user_sections[i+1].chord();
-		y2 = sorted_user_sections[i+1].y();
-		z2 = sorted_user_sections[i+1].zle();
-	
-		if (y2 - y1 < 1.E-12)
-			continue;
-	
-		// Slopes and intercepts of LE and TE edges
-		
-		mT = (xT2 - xT1) / (y2 - y1);
-		mL = (xL2 - xL1) / (y2 - y1);
-		bT = xT1 - mT*y1;
-		bL = xL1 - mL*y1;
-		
-		// Added and subtracted terms
-		
-		mp = mT + mL;
-		mm = mT - mL;
-		bp = bT + bL;
-		bm = bT - bL;
-		
-		// Area, centroid, and MAC increments. Note that the increments to cenx,
-		// ceny, and cbar here are weighted by area increment.
-		
-		_splanform += 0.5*(mT - mL)*(std::pow(y2,2.) - std::pow(y1,2.))
-		           +  (bT - bL)*(y2 - y1);  
-		cenx += 0.5 * (
-		        1./3.*mp*mm*(std::pow(y2,3.) - std::pow(y1,3.))
-		     +  0.5*(mp*bm + mm*bp)*(std::pow(y2,2.) - std::pow(y1,2.))
-		     +  bp*bm*(y2 - y1) );
-		dceny = 1./3.*mm*(std::pow(y2,3.) - std::pow(y1,3.))
-		      +  0.5*bm*(std::pow(y2,2.) - std::pow(y1,2.));
-		ceny += dceny;
-		cenz += (dceny - y1) / (y2 - y1) * (z2 - z1) + z1;
-		_cbar += 1./3.*std::pow(mm,2.)*(std::pow(y2,3.) - std::pow(y1,3.))
-		      +  mm*bm*(std::pow(y2,2.) - std::pow(y1,2.))
-		      +  std::pow(bm,2.)*(y2 - y1);
-	}
-	if (_splanform > 0.)
-	{
-		cenx /= _splanform;
-		ceny /= _splanform;
-		cenz /= _splanform;
-		_cbar /= _splanform;
-		cbarx = cenx - 0.25*_cbar;
-		ar = std::pow(0.5*_span,2.) / (0.5*_splanform);
-	}
-	_splanform *= 2.;	// Mirror image
-	
-	std::cout.setf(std::ios_base::scientific);
-	std::cout << "Geometric information for wing " << _name << ":" << std::endl;
-	std::cout << "  Span: "
-	          << std::setprecision(5) << _span << std::endl;
-	std::cout << "  Planform area: "
-	          << std::setprecision(5) << _splanform << std::endl;
-	std::cout << "  Mean aerodynamic chord: "
-	          << std::setprecision(5) << _cbar << std::endl;
-	std::cout << "  Halfspan MAC location: "
-	          << std::setprecision(5) << cbarx << ",  " << ceny << ", " 
-	          << cenz << std::endl;
-	std::cout << "  Aspect ratio: "
-	          << std::setprecision(5) << ar << std::endl;
-	std::cout << "  Taper ratio: "
-	          << std::setprecision(5) << tr << std::endl;
-	std::cout << "  Re based on MAC: "
-	          << std::setprecision(5) << rhoinf * uinf * _cbar / muinf
-	          << std::endl;
+    unsigned int i, nsecs;
+    double cenx, dceny, ceny, cenz, cbarx;
+    double xT1, xL1, y1, z1, xT2, xL2, y2, z2;
+    double mT, mL, bT, bL, mp, mm, bp, bm;
+    double ar, tr;
+    
+    nsecs = sorted_user_sections.size();
+    _span = 2.*sorted_user_sections[nsecs-1].y();
+    tr = sorted_user_sections[nsecs-1].chord()
+       / sorted_user_sections[0].chord();
+    _splanform = 0.;
+    cenx = 0.;
+    ceny = 0.;
+    cenz = 0.;
+    _cbar = 0.;
+    cbarx = 0.;
+    ar = 0.;
+    for ( i = 0; i < nsecs-1; i++ )
+    {
+        xL1 = sorted_user_sections[i].xle();
+        xT1 = sorted_user_sections[i].xle() + sorted_user_sections[i].chord();
+        y1 = sorted_user_sections[i].y();
+        z1 = sorted_user_sections[i].zle();
+        xL2 = sorted_user_sections[i+1].xle();
+        xT2 = sorted_user_sections[i+1].xle()
+            + sorted_user_sections[i+1].chord();
+        y2 = sorted_user_sections[i+1].y();
+        z2 = sorted_user_sections[i+1].zle();
+    
+        if (y2 - y1 < 1.E-12)
+            continue;
+    
+        // Slopes and intercepts of LE and TE edges
+        
+        mT = (xT2 - xT1) / (y2 - y1);
+        mL = (xL2 - xL1) / (y2 - y1);
+        bT = xT1 - mT*y1;
+        bL = xL1 - mL*y1;
+        
+        // Added and subtracted terms
+        
+        mp = mT + mL;
+        mm = mT - mL;
+        bp = bT + bL;
+        bm = bT - bL;
+        
+        // Area, centroid, and MAC increments. Note that the increments to cenx,
+        // ceny, and cbar here are weighted by area increment.
+        
+        _splanform += 0.5*(mT - mL)*(std::pow(y2,2.) - std::pow(y1,2.))
+                   +  (bT - bL)*(y2 - y1);  
+        cenx += 0.5 * (
+                1./3.*mp*mm*(std::pow(y2,3.) - std::pow(y1,3.))
+             +  0.5*(mp*bm + mm*bp)*(std::pow(y2,2.) - std::pow(y1,2.))
+             +  bp*bm*(y2 - y1) );
+        dceny = 1./3.*mm*(std::pow(y2,3.) - std::pow(y1,3.))
+              +  0.5*bm*(std::pow(y2,2.) - std::pow(y1,2.));
+        ceny += dceny;
+        cenz += (dceny - y1) / (y2 - y1) * (z2 - z1) + z1;
+        _cbar += 1./3.*std::pow(mm,2.)*(std::pow(y2,3.) - std::pow(y1,3.))
+              +  mm*bm*(std::pow(y2,2.) - std::pow(y1,2.))
+              +  std::pow(bm,2.)*(y2 - y1);
+    }
+    if (_splanform > 0.)
+    {
+        cenx /= _splanform;
+        ceny /= _splanform;
+        cenz /= _splanform;
+        _cbar /= _splanform;
+        cbarx = cenx - 0.25*_cbar;
+        ar = std::pow(0.5*_span,2.) / (0.5*_splanform);
+    }
+    _splanform *= 2.;   // Mirror image
+    
+    std::cout.setf(std::ios_base::scientific);
+    std::cout << "Geometric information for wing " << _name << ":" << std::endl;
+    std::cout << "  Span: "
+              << std::setprecision(5) << _span << std::endl;
+    std::cout << "  Planform area: "
+              << std::setprecision(5) << _splanform << std::endl;
+    std::cout << "  Mean aerodynamic chord: "
+              << std::setprecision(5) << _cbar << std::endl;
+    std::cout << "  Halfspan MAC location: "
+              << std::setprecision(5) << cbarx << ",  " << ceny << ", " 
+              << cenz << std::endl;
+    std::cout << "  Aspect ratio: "
+              << std::setprecision(5) << ar << std::endl;
+    std::cout << "  Taper ratio: "
+              << std::setprecision(5) << tr << std::endl;
+    std::cout << "  Re based on MAC: "
+              << std::setprecision(5) << rhoinf * uinf * _cbar / muinf
+              << std::endl;
 }
 
 /******************************************************************************/
@@ -354,32 +354,32 @@ void Wing::computeAreaMAC ( const std::vector<Section> & sorted_user_sections )
 /******************************************************************************/
 Wing::Wing ()
 {
-	_name = "";
-	_nchord = 0;
-	_nspan = 0;
-	_ntipcap = 3;
-	_lesprat = 1.;
-	_tesprat = 1.;
-	_rootsprat = 1.;
-	_tipsprat = 1.;
-	_sections.resize(0);
-	_stations.resize(0);
-	_foils.resize(0);
-	_verts.resize(0);
-	_tipverts.resize(0);
-	_quads.resize(0);
-	_tris.resize(0);
-	_panels.resize(0);
-	_wakestrips.resize(0);
-	_liftp = 0.;
-	_liftf = 0.;
-	_lifttr = 0.;
-	_dragp = 0.;
-	_dragf = 0.;
-	_dragv = 0.;
-	_dragtr = 0.;
-	_momentp = 0.;
-	_momentf = 0.;
+    _name = "";
+    _nchord = 0;
+    _nspan = 0;
+    _ntipcap = 3;
+    _lesprat = 1.;
+    _tesprat = 1.;
+    _rootsprat = 1.;
+    _tipsprat = 1.;
+    _sections.resize(0);
+    _stations.resize(0);
+    _foils.resize(0);
+    _verts.resize(0);
+    _tipverts.resize(0);
+    _quads.resize(0);
+    _tris.resize(0);
+    _panels.resize(0);
+    _wakestrips.resize(0);
+    _liftp = 0.;
+    _liftf = 0.;
+    _lifttr = 0.;
+    _dragp = 0.;
+    _dragf = 0.;
+    _dragv = 0.;
+    _dragtr = 0.;
+    _momentp = 0.;
+    _momentf = 0.;
 }
 
 /******************************************************************************/
@@ -459,264 +459,264 @@ void Wing::setAirfoils ( std::vector<Airfoil> & foils )
 /******************************************************************************/
 int Wing::setupSections ( std::vector<Section> & user_sections )
 {
-	SectionalObject *sorted_sections[user_sections.size()];
-	std::vector<Section> sorted_user_sections;
-	unsigned int i, j, nsecs, nfoils;
-	Eigen::Vector2d secvec;
-	double a4, a5, rootsp, tipsp, space, tipy, deltay, deltas, sfrac;
-	double xle, zle, y, chord, twist, roll;
-	std::vector<double> foil_positions;
-	
-	// Sort sections
-	
-	nsecs = user_sections.size();
-	for ( i = 0; i < nsecs; i++ )
-	{
-		sorted_sections[i] = &user_sections[i];
-	}
-	sort_sections(sorted_sections, nsecs);
-	for ( i = 0; i < nsecs; i++ )
-	{
-		for ( j = 0; j < nsecs; j++ )
-		{
-			if (user_sections[j].y() == sorted_sections[i]->y())
-			{
-				sorted_user_sections.push_back(user_sections[j]);
-				continue;
-			}
-		}
-	}
-	
+    SectionalObject *sorted_sections[user_sections.size()];
+    std::vector<Section> sorted_user_sections;
+    unsigned int i, j, nsecs, nfoils;
+    Eigen::Vector2d secvec;
+    double a4, a5, rootsp, tipsp, space, tipy, deltay, deltas, sfrac;
+    double xle, zle, y, chord, twist, roll;
+    std::vector<double> foil_positions;
+    
+    // Sort sections
+    
+    nsecs = user_sections.size();
+    for ( i = 0; i < nsecs; i++ )
+    {
+        sorted_sections[i] = &user_sections[i];
+    }
+    sort_sections(sorted_sections, nsecs);
+    for ( i = 0; i < nsecs; i++ )
+    {
+        for ( j = 0; j < nsecs; j++ )
+        {
+            if (user_sections[j].y() == sorted_sections[i]->y())
+            {
+                sorted_user_sections.push_back(user_sections[j]);
+                continue;
+            }
+        }
+    }
+    
 #ifdef DEBUG
-	if (sorted_user_sections.size() < nsecs)
-	{
-		conditional_stop(1, "Wing::setupSections", "Error sorting sections.");
-		return 1;
-	}
+    if (sorted_user_sections.size() < nsecs)
+    {
+        conditional_stop(1, "Wing::setupSections", "Error sorting sections.");
+        return 1;
+    }
 #endif
-	
-	s_wing.resize(nsecs);
-	s_wing[0] = 0.;
-	for ( i = 1; i < nsecs; i++ )
-	{
-		secvec[0] = sorted_user_sections[i].y()
-		          - sorted_user_sections[i-1].y();
-		secvec[1] = sorted_user_sections[i].zle()
-		          - sorted_user_sections[i-1].zle();
-		s_wing[i] = s_wing[i-1] + secvec.norm();
-		if (s_wing[i] == s_wing[i-1])
-		{
-			conditional_stop(1, "Wing::setupSections",
-			                 "Wing has duplicate Y sections.");
-			return 1;
-		}
-		sorted_user_sections[i].setRoll(atan(secvec[1]/secvec[0])*180./M_PI);
-	}
-	
-	// Compute and print wing geometric info
-	
-	computeAreaMAC(sorted_user_sections);
-	
-	// Compute nominal discretized section locations (stations) from spacing
-	
-	rootsp = _rootsprat * s_wing[nsecs-1] / double(_nspan-1);
-	tipsp = _tipsprat * s_wing[nsecs-1] / double(_nspan-1);
-	opt_tanh_spacing(_nspan, s_wing[nsecs-1], rootsp, tipsp, a4, a5);
-	nom_stations.resize(_nspan);
-	nom_stations[0] = 0.; 
-	for ( i = 1; i < _nspan; i++ )
-	{
-		space = tanh_spacing(i-1, a4, a5, _nspan, s_wing[nsecs-1], rootsp,
-		                     tipsp);
-		nom_stations[i] = nom_stations[i-1] + space;
-	}
-	
-	// Optimize stations to be as close as possible to nominal but lining up with
-	// user sections
-	
-	if (nsecs > 2)
-		_stations = adjustSpacing(nom_stations);
-	else
-		_stations = nom_stations;
-	
-	// Add airfoils as needed to ensure the entire span is covered
-	
-	nfoils = _foils.size();
-	tipy = sorted_user_sections[nsecs-1].y();
-	if (nfoils < 1)
-	{
-		conditional_stop(1, "Wing::setupSections",
-		                 "At least one airfoil is required.");
-		return 1;
-	}
-	else if (nfoils == 1)
-	{
-		// If a single airfoil is provided, modify _foils vector so it has
-		// identical airfoils at the root and tip
-	
-		_foils.push_back(_foils[0]);
-		_foils[0].setY(0.);
-		_foils[1].setY(tipy);
-		nfoils += 1;
-	} 
-	else
-	{
-		// Add foils at the root and tip if none were specified there
-		
-		if (_foils[0].y() > 0)
-		{
-			_foils.insert(_foils.begin(), _foils[0]);
-			nfoils += 1;
-			_foils[0].setY(0.);
-		}
-		if (_foils[nfoils-1].y() < tipy)
-		{
-			_foils.push_back(_foils[nfoils-1]);
-			nfoils += 1;
-			_foils[nfoils-1].setY(tipy);
-		}
-		else if (_foils[nfoils-1].y() > tipy)
-		{
-			conditional_stop(1, "Wing::setupSections",
-			                 "Airfoil is placed beyond the wingtip.");
-			return 1;
-		}
-	} 
-	
-	// Determine s_wing spanwise positions for airfoils
-	
-	foil_positions.resize(nfoils);
-	for ( i = 0; i < nfoils; i++ )
-	{
-		for ( j = 0; j < nsecs-1; j++ )
-		{
-			if ( (_foils[i].y() >= sorted_user_sections[j].y()) &&
-			     (_foils[i].y() <= sorted_user_sections[j+1].y()) )
-			{
-				deltay = sorted_user_sections[j+1].y()
-				       - sorted_user_sections[j].y(); 
-				sfrac = (_foils[i].y() - sorted_user_sections[j].y()) / deltay;
-				deltas = s_wing[j+1] - s_wing[j];
-				foil_positions[i] = s_wing[j] + sfrac*deltas;
-				break;
-			}
-		}
-	}
-	
-	// Create sections
-	
-	_sections.resize(_nspan);
-	for ( i = 0; i < _nspan; i++ )
-	{
-		// Set airfoil coordinates
-		
-		for ( j = 0; j < nfoils-1; j++ )
-		{
-			if (std::abs(_stations[i]-foil_positions[j]) < 1e-12)
-			{
-				_sections[i].airfoil().interpCoordinates(_foils[j], _foils[j],
-				                                         0.);
-				break;
-			}
-			else if ( (_stations[i] > foil_positions[j]) &&
-			          (_stations[i] < foil_positions[j+1]) )
-			{
-				sfrac = (_stations[i] - foil_positions[j]) / 
-				        (foil_positions[j+1] - foil_positions[j]);
-				_sections[i].airfoil().interpCoordinates(_foils[j], _foils[j+1],
-				                                         sfrac);  
-				break;
-			}
-			else if ( (j == nfoils-2) &&
-			          (std::abs(_stations[i]-foil_positions[j+1]) < 1e-12) )
-			{
-				_sections[i].airfoil().interpCoordinates(_foils[j+1],
-				                                         _foils[j+1], 0.);
-				break;
-			}
-			else if (j == nfoils-2)
-			{
-				conditional_stop(1, "Wing::setupSections",
-				                 "Could not find interpolant airfoils.");
-				return 1;
-			}
-		}
-		_sections[i].airfoil().ccwOrderCoordinates();
-		_sections[i].airfoil().splineFit();
-		_sections[i].airfoil().unitTransform();
-		_sections[i].airfoil().setXfoilOptions(xfoil_run_opts, xfoil_geom_opts);
-		_sections[i].airfoil().smoothPaneling();
-		
-		// Set section position, orientation, and scale
-		
-		for ( j = 0; j < nsecs-1; j++ )
-		{
-			if (std::abs(_stations[i]-s_wing[j]) < 1e-12)
-			{
-				xle = sorted_user_sections[j].xle();
-				zle = sorted_user_sections[j].zle();
-				y = sorted_user_sections[j].y();
-				chord = sorted_user_sections[j].chord();
-				twist = sorted_user_sections[j].twist();
-				roll = sorted_user_sections[j].roll();
-				break;
-			}
-			else if ( (_stations[i] > s_wing[j]) &&
-			          (_stations[i] < s_wing[j+1]) )
-			{
-				sfrac = (_stations[i] - s_wing[j]) /
-				        (s_wing[j+1] - s_wing[j]);
-				  xle = (1.-sfrac)*sorted_user_sections[j].xle() +
-				            sfrac*sorted_user_sections[j+1].xle();
-				    y = (1.-sfrac)*sorted_user_sections[j].y() +
-				            sfrac*sorted_user_sections[j+1].y();
-				  zle = (1.-sfrac)*sorted_user_sections[j].zle() +
-				            sfrac*sorted_user_sections[j+1].zle();
-				chord = (1.-sfrac)*sorted_user_sections[j].chord() +
-				            sfrac*sorted_user_sections[j+1].chord();
-				twist = (1.-sfrac)*sorted_user_sections[j].twist() +
-				            sfrac*sorted_user_sections[j+1].twist();
-				 roll = sorted_user_sections[j+1].roll();
-				break;
-			}
-			else if ( (j == nsecs-2) &&
-			          (std::abs(_stations[i]-s_wing[j+1]) < 1e-12) )
-			{
-				xle = sorted_user_sections[j+1].xle();
-				zle = sorted_user_sections[j+1].zle();
-				y = sorted_user_sections[j+1].y();
-				chord = sorted_user_sections[j+1].chord();
-				twist = sorted_user_sections[j+1].twist();
-				roll = sorted_user_sections[j+1].roll();
-				break;
-			}
-			else if (j == nsecs-2)
-			{
-				conditional_stop(1, "Wing::setupSections",
-				                 "Could not find interpolant sections.");
-				return 1;
-			}
-		}
-		_sections[i].setGeometry(xle, y, zle, chord, twist, roll);
-		
-		// Set vertices from spacing distribution
-		
-		_sections[i].setVertices(_nchord, _lesprat, _tesprat);
+    
+    s_wing.resize(nsecs);
+    s_wing[0] = 0.;
+    for ( i = 1; i < nsecs; i++ )
+    {
+        secvec[0] = sorted_user_sections[i].y()
+                  - sorted_user_sections[i-1].y();
+        secvec[1] = sorted_user_sections[i].zle()
+                  - sorted_user_sections[i-1].zle();
+        s_wing[i] = s_wing[i-1] + secvec.norm();
+        if (s_wing[i] == s_wing[i-1])
+        {
+            conditional_stop(1, "Wing::setupSections",
+                             "Wing has duplicate Y sections.");
+            return 1;
+        }
+        sorted_user_sections[i].setRoll(atan(secvec[1]/secvec[0])*180./M_PI);
+    }
+    
+    // Compute and print wing geometric info
+    
+    computeAreaMAC(sorted_user_sections);
+    
+    // Compute nominal discretized section locations (stations) from spacing
+    
+    rootsp = _rootsprat * s_wing[nsecs-1] / double(_nspan-1);
+    tipsp = _tipsprat * s_wing[nsecs-1] / double(_nspan-1);
+    opt_tanh_spacing(_nspan, s_wing[nsecs-1], rootsp, tipsp, a4, a5);
+    nom_stations.resize(_nspan);
+    nom_stations[0] = 0.; 
+    for ( i = 1; i < _nspan; i++ )
+    {
+        space = tanh_spacing(i-1, a4, a5, _nspan, s_wing[nsecs-1], rootsp,
+                             tipsp);
+        nom_stations[i] = nom_stations[i-1] + space;
+    }
+    
+    // Optimize stations to be as close as possible to nominal but lining up with
+    // user sections
+    
+    if (nsecs > 2)
+        _stations = adjustSpacing(nom_stations);
+    else
+        _stations = nom_stations;
+    
+    // Add airfoils as needed to ensure the entire span is covered
+    
+    nfoils = _foils.size();
+    tipy = sorted_user_sections[nsecs-1].y();
+    if (nfoils < 1)
+    {
+        conditional_stop(1, "Wing::setupSections",
+                         "At least one airfoil is required.");
+        return 1;
+    }
+    else if (nfoils == 1)
+    {
+        // If a single airfoil is provided, modify _foils vector so it has
+        // identical airfoils at the root and tip
+    
+        _foils.push_back(_foils[0]);
+        _foils[0].setY(0.);
+        _foils[1].setY(tipy);
+        nfoils += 1;
+    } 
+    else
+    {
+        // Add foils at the root and tip if none were specified there
+        
+        if (_foils[0].y() > 0)
+        {
+            _foils.insert(_foils.begin(), _foils[0]);
+            nfoils += 1;
+            _foils[0].setY(0.);
+        }
+        if (_foils[nfoils-1].y() < tipy)
+        {
+            _foils.push_back(_foils[nfoils-1]);
+            nfoils += 1;
+            _foils[nfoils-1].setY(tipy);
+        }
+        else if (_foils[nfoils-1].y() > tipy)
+        {
+            conditional_stop(1, "Wing::setupSections",
+                             "Airfoil is placed beyond the wingtip.");
+            return 1;
+        }
+    } 
+    
+    // Determine s_wing spanwise positions for airfoils
+    
+    foil_positions.resize(nfoils);
+    for ( i = 0; i < nfoils; i++ )
+    {
+        for ( j = 0; j < nsecs-1; j++ )
+        {
+            if ( (_foils[i].y() >= sorted_user_sections[j].y()) &&
+                 (_foils[i].y() <= sorted_user_sections[j+1].y()) )
+            {
+                deltay = sorted_user_sections[j+1].y()
+                       - sorted_user_sections[j].y(); 
+                sfrac = (_foils[i].y() - sorted_user_sections[j].y()) / deltay;
+                deltas = s_wing[j+1] - s_wing[j];
+                foil_positions[i] = s_wing[j] + sfrac*deltas;
+                break;
+            }
+        }
+    }
+    
+    // Create sections
+    
+    _sections.resize(_nspan);
+    for ( i = 0; i < _nspan; i++ )
+    {
+        // Set airfoil coordinates
+        
+        for ( j = 0; j < nfoils-1; j++ )
+        {
+            if (std::abs(_stations[i]-foil_positions[j]) < 1e-12)
+            {
+                _sections[i].airfoil().interpCoordinates(_foils[j], _foils[j],
+                                                         0.);
+                break;
+            }
+            else if ( (_stations[i] > foil_positions[j]) &&
+                      (_stations[i] < foil_positions[j+1]) )
+            {
+                sfrac = (_stations[i] - foil_positions[j]) / 
+                        (foil_positions[j+1] - foil_positions[j]);
+                _sections[i].airfoil().interpCoordinates(_foils[j], _foils[j+1],
+                                                         sfrac);  
+                break;
+            }
+            else if ( (j == nfoils-2) &&
+                      (std::abs(_stations[i]-foil_positions[j+1]) < 1e-12) )
+            {
+                _sections[i].airfoil().interpCoordinates(_foils[j+1],
+                                                         _foils[j+1], 0.);
+                break;
+            }
+            else if (j == nfoils-2)
+            {
+                conditional_stop(1, "Wing::setupSections",
+                                 "Could not find interpolant airfoils.");
+                return 1;
+            }
+        }
+        _sections[i].airfoil().ccwOrderCoordinates();
+        _sections[i].airfoil().splineFit();
+        _sections[i].airfoil().unitTransform();
+        _sections[i].airfoil().setXfoilOptions(xfoil_run_opts, xfoil_geom_opts);
+        _sections[i].airfoil().smoothPaneling();
+        
+        // Set section position, orientation, and scale
+        
+        for ( j = 0; j < nsecs-1; j++ )
+        {
+            if (std::abs(_stations[i]-s_wing[j]) < 1e-12)
+            {
+                xle = sorted_user_sections[j].xle();
+                zle = sorted_user_sections[j].zle();
+                y = sorted_user_sections[j].y();
+                chord = sorted_user_sections[j].chord();
+                twist = sorted_user_sections[j].twist();
+                roll = sorted_user_sections[j].roll();
+                break;
+            }
+            else if ( (_stations[i] > s_wing[j]) &&
+                      (_stations[i] < s_wing[j+1]) )
+            {
+                sfrac = (_stations[i] - s_wing[j]) /
+                        (s_wing[j+1] - s_wing[j]);
+                  xle = (1.-sfrac)*sorted_user_sections[j].xle() +
+                            sfrac*sorted_user_sections[j+1].xle();
+                    y = (1.-sfrac)*sorted_user_sections[j].y() +
+                            sfrac*sorted_user_sections[j+1].y();
+                  zle = (1.-sfrac)*sorted_user_sections[j].zle() +
+                            sfrac*sorted_user_sections[j+1].zle();
+                chord = (1.-sfrac)*sorted_user_sections[j].chord() +
+                            sfrac*sorted_user_sections[j+1].chord();
+                twist = (1.-sfrac)*sorted_user_sections[j].twist() +
+                            sfrac*sorted_user_sections[j+1].twist();
+                 roll = sorted_user_sections[j+1].roll();
+                break;
+            }
+            else if ( (j == nsecs-2) &&
+                      (std::abs(_stations[i]-s_wing[j+1]) < 1e-12) )
+            {
+                xle = sorted_user_sections[j+1].xle();
+                zle = sorted_user_sections[j+1].zle();
+                y = sorted_user_sections[j+1].y();
+                chord = sorted_user_sections[j+1].chord();
+                twist = sorted_user_sections[j+1].twist();
+                roll = sorted_user_sections[j+1].roll();
+                break;
+            }
+            else if (j == nsecs-2)
+            {
+                conditional_stop(1, "Wing::setupSections",
+                                 "Could not find interpolant sections.");
+                return 1;
+            }
+        }
+        _sections[i].setGeometry(xle, y, zle, chord, twist, roll);
+        
+        // Set vertices from spacing distribution
+        
+        _sections[i].setVertices(_nchord, _lesprat, _tesprat);
 
-		// Prandtl-Glauert transformation to equivalent incompressible geometry
+        // Prandtl-Glauert transformation to equivalent incompressible geometry
 
-		_sections[i].transformPrandtlGlauert(minf);
+        _sections[i].transformPrandtlGlauert(minf);
 
-		// Set Reynolds number and Mach number if viscous
-		
-		if (viscous) 
-		{
-			_sections[i].computeReynoldsNumber(rhoinf, uinf, muinf);
-			_sections[i].setMachNumber(minf);
-		}
-	}
+        // Set Reynolds number and Mach number if viscous
+        
+        if (viscous) 
+        {
+            _sections[i].computeReynoldsNumber(rhoinf, uinf, muinf);
+            _sections[i].setMachNumber(minf);
+        }
+    }
 
-	return 0; 
+    return 0; 
 }
 
 /******************************************************************************/
@@ -744,419 +744,419 @@ const double & Wing::planformArea () const { return _splanform; }
 /******************************************************************************/
 void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 {
-	unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, right;
-	double phin, phi, r, beta;
-	Eigen::Matrix3d trans, T1;
-	Eigen::Vector3d cen, r0, rb, ri, point, norm, tang, tangb;
-	Eigen::Vector3d tanl, tanr, tanf, tanb, tan;
-	double x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4;
-	
-	// Set vertex pointers on top and bottom surfaces
-	
-	_verts.resize(_nspan*(2*_nchord-1) + (_ntipcap-2)*(_nchord-2));
-	vcounter = 0;
-	for ( i = 0; i < _nspan; i++ )
-	{
-		for ( j = 0; j < 2*_nchord-1; j++ )
-		{
-			_sections[i].vert(j).setIdx(next_global_vertidx);
-			_verts[vcounter] = &_sections[i].vert(j);
-			vcounter += 1;
-			next_global_vertidx += 1;
-		}
-	}
-	
-	// Determine number of tris and quads
-	
-	ntri = 2*(_ntipcap-1);
-	nquad = (_nspan-1)*(2*_nchord-2) + (_ntipcap-1)*(_nchord-3);
-	
-	// Create quad panels on top/bottom surfaces
-	
-	_quads.resize(nquad);
-	qcounter = 0;
-	_panels.resize(_nspan-1 + (_ntipcap-1)/2);
-	for ( i = 0; i < _nspan-1; i++ )
-	{
-		_panels[i].resize(2*_nchord-2);
-		for ( j = 0; j < 2*_nchord-2; j++ )
-		{
-			_quads[qcounter].setIdx(next_global_elemidx);
-			_quads[qcounter].addVertex(&_sections[i].vert(j));
-			_quads[qcounter].addVertex(&_sections[i+1].vert(j));
-			_quads[qcounter].addVertex(&_sections[i+1].vert(j+1));
-			_quads[qcounter].addVertex(&_sections[i].vert(j+1));
-			
-			// Compute surface tangent vector at centroid
-			
-			tanl << _sections[i].vert(j+1).x() - _sections[i].vert(j).x(),
-			        _sections[i].vert(j+1).y() - _sections[i].vert(j).y(),
-			        _sections[i].vert(j+1).z() - _sections[i].vert(j).z();
-			tanr << _sections[i+1].vert(j+1).x() - _sections[i+1].vert(j).x(),
-			        _sections[i+1].vert(j+1).y() - _sections[i+1].vert(j).y(),
-			        _sections[i+1].vert(j+1).z() - _sections[i+1].vert(j).z();
-			tan = 0.5*(tanl + tanr);
-			tan /= tan.norm();
-			_quads[qcounter].setTangentComp(tan);
-			
-			_panels[i][j] = &_quads[qcounter];
-			qcounter += 1;
-			next_global_elemidx += 1;
-		}
-	}
+    unsigned int i, j, vcounter, qcounter, tcounter, ntri, nquad, right;
+    double phin, phi, r, beta;
+    Eigen::Matrix3d trans, T1;
+    Eigen::Vector3d cen, r0, rb, ri, point, norm, tang, tangb;
+    Eigen::Vector3d tanl, tanr, tanf, tanb, tan;
+    double x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4;
+    
+    // Set vertex pointers on top and bottom surfaces
+    
+    _verts.resize(_nspan*(2*_nchord-1) + (_ntipcap-2)*(_nchord-2));
+    vcounter = 0;
+    for ( i = 0; i < _nspan; i++ )
+    {
+        for ( j = 0; j < 2*_nchord-1; j++ )
+        {
+            _sections[i].vert(j).setIdx(next_global_vertidx);
+            _verts[vcounter] = &_sections[i].vert(j);
+            vcounter += 1;
+            next_global_vertidx += 1;
+        }
+    }
+    
+    // Determine number of tris and quads
+    
+    ntri = 2*(_ntipcap-1);
+    nquad = (_nspan-1)*(2*_nchord-2) + (_ntipcap-1)*(_nchord-3);
+    
+    // Create quad panels on top/bottom surfaces
+    
+    _quads.resize(nquad);
+    qcounter = 0;
+    _panels.resize(_nspan-1 + (_ntipcap-1)/2);
+    for ( i = 0; i < _nspan-1; i++ )
+    {
+        _panels[i].resize(2*_nchord-2);
+        for ( j = 0; j < 2*_nchord-2; j++ )
+        {
+            _quads[qcounter].setIdx(next_global_elemidx);
+            _quads[qcounter].addVertex(&_sections[i].vert(j));
+            _quads[qcounter].addVertex(&_sections[i+1].vert(j));
+            _quads[qcounter].addVertex(&_sections[i+1].vert(j+1));
+            _quads[qcounter].addVertex(&_sections[i].vert(j+1));
+            
+            // Compute surface tangent vector at centroid
+            
+            tanl << _sections[i].vert(j+1).x() - _sections[i].vert(j).x(),
+                    _sections[i].vert(j+1).y() - _sections[i].vert(j).y(),
+                    _sections[i].vert(j+1).z() - _sections[i].vert(j).z();
+            tanr << _sections[i+1].vert(j+1).x() - _sections[i+1].vert(j).x(),
+                    _sections[i+1].vert(j+1).y() - _sections[i+1].vert(j).y(),
+                    _sections[i+1].vert(j+1).z() - _sections[i+1].vert(j).z();
+            tan = 0.5*(tanl + tanr);
+            tan /= tan.norm();
+            _quads[qcounter].setTangentComp(tan);
+            
+            _panels[i][j] = &_quads[qcounter];
+            qcounter += 1;
+            next_global_elemidx += 1;
+        }
+    }
 
-	// Create tip cap vertices. Currently, there's a lot of stuff in here that
-	// does nothing useful, because I switched back to flat tips. The code is
-	// kept here in case I want to go back to revolved tip caps again.
-	
-	beta = std::sqrt(1. - std::pow(minf,2.));
-	_tipverts.resize(_ntipcap-2);
-	for ( i = 1; i < _ntipcap-1; i++ )
-	{
-		_tipverts[i-1].resize(_nchord-2);
-		for ( j = 1; j < _nchord-1; j++ )
-		{
-			// Arc angle
-			
-			phi = double(i)/double(_ntipcap-1)*180.;
-			
-			// Get normal vector from last spanwise section
-			
-			x1 = _sections[_nspan-2].vert(j).x();
-			y1 = _sections[_nspan-2].vert(j).y();
-			z1 = _sections[_nspan-2].vert(j).z();
-			x2 = _sections[_nspan-1].vert(j).x();
-			y2 = _sections[_nspan-1].vert(j).y();
-			z2 = _sections[_nspan-1].vert(j).z();
-			x3 = _sections[_nspan-1].vert(2*_nchord-2-j).x();
-			y3 = _sections[_nspan-1].vert(2*_nchord-2-j).y();
-			z3 = _sections[_nspan-1].vert(2*_nchord-2-j).z();
-			x4 = _sections[_nspan-2].vert(2*_nchord-2-j).x();
-			y4 = _sections[_nspan-2].vert(2*_nchord-2-j).y();
-			z4 = _sections[_nspan-2].vert(2*_nchord-2-j).z();
-			norm = quad_normal(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
-			
-			// Transform from normal vector
-			
-			trans = transform_from_normal(norm(0), norm(1), norm(2));
-			
-			// Tangential vector is the projection of the tip section's normal
-			// vector on this plane
-			
-			tang(0) = 0.;
-			tang(1) = cos(_sections[_nspan-1].roll()*M_PI/180.);
-			tang(2) = sin(_sections[_nspan-1].roll()*M_PI/180.);
-			
-			// Account for local swept dihedral angle
-			
-			tangb = trans*tang;
-			phin = atan(tangb(0)/tangb(1))*180./M_PI; 
-			T1 = euler_rotation(0., 0., -phin);
-			
-			// Center of revolution and radial vector in x-y plane
-			
-			cen(0) = 0.5*(_sections[_nspan-1].vert(j).x() + 
-			              _sections[_nspan-1].vert(2*_nchord-2-j).x());
-			cen(1) = 0.5*(_sections[_nspan-1].vert(j).y() + 
-			              _sections[_nspan-1].vert(2*_nchord-2-j).y());
-			cen(2) = 0.5*(_sections[_nspan-1].vert(j).z() + 
-			              _sections[_nspan-1].vert(2*_nchord-2-j).z());
-			r0(0) = _sections[_nspan-1].vert(j).x() - cen(0);
-			r0(1) = _sections[_nspan-1].vert(j).y() - cen(1);
-			r0(2) = _sections[_nspan-1].vert(j).z() - cen(2);
-			/* Use this to enable rounded tip caps. Also would need to make
-			   _ntipcap an input again in that case.
-			r = r0.norm();
-			*/
-			r = 0.;
-			
-			// Radial vector in y-z plane
-			
-			rb << r*cos(phi*M_PI/180.), r*sin(phi*M_PI/180.), 0.;
-			
-			// Compute vertex location and create vertex
-			
-			ri = (T1*trans).transpose()*rb;
-			point = cen + ri;
-			_tipverts[i-1][j-1].setIdx(next_global_vertidx);
-			_tipverts[i-1][j-1].setCoordinates(point(0), point(1), point(2));
-			_tipverts[i-1][j-1].setIncompressibleCoordinates(point(0)/beta,
-			                                                point(1), point(2));
-			_verts[vcounter] = &_tipverts[i-1][j-1];
-			vcounter += 1;
-			next_global_vertidx += 1;
-		}
-	} 
+    // Create tip cap vertices. Currently, there's a lot of stuff in here that
+    // does nothing useful, because I switched back to flat tips. The code is
+    // kept here in case I want to go back to revolved tip caps again.
+    
+    beta = std::sqrt(1. - std::pow(minf,2.));
+    _tipverts.resize(_ntipcap-2);
+    for ( i = 1; i < _ntipcap-1; i++ )
+    {
+        _tipverts[i-1].resize(_nchord-2);
+        for ( j = 1; j < _nchord-1; j++ )
+        {
+            // Arc angle
+            
+            phi = double(i)/double(_ntipcap-1)*180.;
+            
+            // Get normal vector from last spanwise section
+            
+            x1 = _sections[_nspan-2].vert(j).x();
+            y1 = _sections[_nspan-2].vert(j).y();
+            z1 = _sections[_nspan-2].vert(j).z();
+            x2 = _sections[_nspan-1].vert(j).x();
+            y2 = _sections[_nspan-1].vert(j).y();
+            z2 = _sections[_nspan-1].vert(j).z();
+            x3 = _sections[_nspan-1].vert(2*_nchord-2-j).x();
+            y3 = _sections[_nspan-1].vert(2*_nchord-2-j).y();
+            z3 = _sections[_nspan-1].vert(2*_nchord-2-j).z();
+            x4 = _sections[_nspan-2].vert(2*_nchord-2-j).x();
+            y4 = _sections[_nspan-2].vert(2*_nchord-2-j).y();
+            z4 = _sections[_nspan-2].vert(2*_nchord-2-j).z();
+            norm = quad_normal(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+            
+            // Transform from normal vector
+            
+            trans = transform_from_normal(norm(0), norm(1), norm(2));
+            
+            // Tangential vector is the projection of the tip section's normal
+            // vector on this plane
+            
+            tang(0) = 0.;
+            tang(1) = cos(_sections[_nspan-1].roll()*M_PI/180.);
+            tang(2) = sin(_sections[_nspan-1].roll()*M_PI/180.);
+            
+            // Account for local swept dihedral angle
+            
+            tangb = trans*tang;
+            phin = atan(tangb(0)/tangb(1))*180./M_PI; 
+            T1 = euler_rotation(0., 0., -phin);
+            
+            // Center of revolution and radial vector in x-y plane
+            
+            cen(0) = 0.5*(_sections[_nspan-1].vert(j).x() + 
+                          _sections[_nspan-1].vert(2*_nchord-2-j).x());
+            cen(1) = 0.5*(_sections[_nspan-1].vert(j).y() + 
+                          _sections[_nspan-1].vert(2*_nchord-2-j).y());
+            cen(2) = 0.5*(_sections[_nspan-1].vert(j).z() + 
+                          _sections[_nspan-1].vert(2*_nchord-2-j).z());
+            r0(0) = _sections[_nspan-1].vert(j).x() - cen(0);
+            r0(1) = _sections[_nspan-1].vert(j).y() - cen(1);
+            r0(2) = _sections[_nspan-1].vert(j).z() - cen(2);
+            /* Use this to enable rounded tip caps. Also would need to make
+               _ntipcap an input again in that case.
+            r = r0.norm();
+            */
+            r = 0.;
+            
+            // Radial vector in y-z plane
+            
+            rb << r*cos(phi*M_PI/180.), r*sin(phi*M_PI/180.), 0.;
+            
+            // Compute vertex location and create vertex
+            
+            ri = (T1*trans).transpose()*rb;
+            point = cen + ri;
+            _tipverts[i-1][j-1].setIdx(next_global_vertidx);
+            _tipverts[i-1][j-1].setCoordinates(point(0), point(1), point(2));
+            _tipverts[i-1][j-1].setIncompressibleCoordinates(point(0)/beta,
+                                                            point(1), point(2));
+            _verts[vcounter] = &_tipverts[i-1][j-1];
+            vcounter += 1;
+            next_global_vertidx += 1;
+        }
+    } 
 
-	// Create tip panels wrapping around the tip from top TE to bottom TE.
-	// First loop connects to existing vertices on last section. Note: don't
-	// "connect" to vertices on top and bottom surfaces, because we don't want
-	// the tip panels to be included in averaging to those vertices.
+    // Create tip panels wrapping around the tip from top TE to bottom TE.
+    // First loop connects to existing vertices on last section. Note: don't
+    // "connect" to vertices on top and bottom surfaces, because we don't want
+    // the tip panels to be included in averaging to those vertices.
 
-	_tris.resize(ntri);
-	tcounter = 0;
-	_panels[_nspan-1].resize(2*_nchord-2);
-	for ( j = 0; j < 2*_nchord-2; j++ )
-	{
-		// Tri panels at TE and LE
+    _tris.resize(ntri);
+    tcounter = 0;
+    _panels[_nspan-1].resize(2*_nchord-2);
+    for ( j = 0; j < 2*_nchord-2; j++ )
+    {
+        // Tri panels at TE and LE
 
-		if (j == 0)
-		{
-			_tris[tcounter].setIdx(next_global_elemidx);
-			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(0),false);
-			_tris[tcounter].addVertex(&_tipverts[0][0]);
-			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(1),false);
-			_panels[_nspan-1][j] = &_tris[tcounter];
-			tcounter += 1;
-			next_global_elemidx += 1;
-		}
-		else if (j == _nchord-2)
-		{
-			_tris[tcounter].setIdx(next_global_elemidx);
-			_tris[tcounter].addVertex(&_tipverts[0][_nchord-3]);
-			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
-			                          false);
-			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2),
-			                          false);
-			_panels[_nspan-1][j] = &_tris[tcounter];
-			tcounter += 1;
-			next_global_elemidx += 1;
-		}
-		else if (j == _nchord-1)
-		{
-			_tris[tcounter].setIdx(next_global_elemidx);
-			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
-			                          false);
-			_tris[tcounter].addVertex(&_tipverts[_ntipcap-3][_nchord-3]);
-			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord),
-			                          false);
-			_panels[_nspan-1][j] = &_tris[tcounter];
-			tcounter += 1;
-			next_global_elemidx += 1;
-		}
-		else if (j == 2*_nchord-3)
-		{
-			_tris[tcounter].setIdx(next_global_elemidx);
-			_tris[tcounter].addVertex(&_tipverts[_ntipcap-3][0]);
-			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2),
-			                          false);
-			_tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3),
-			                          false);
-			_panels[_nspan-1][j] = &_tris[tcounter];
-			tcounter += 1;
-			next_global_elemidx += 1;
-		}
+        if (j == 0)
+        {
+            _tris[tcounter].setIdx(next_global_elemidx);
+            _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0),false);
+            _tris[tcounter].addVertex(&_tipverts[0][0]);
+            _tris[tcounter].addVertex(&_sections[_nspan-1].vert(1),false);
+            _panels[_nspan-1][j] = &_tris[tcounter];
+            tcounter += 1;
+            next_global_elemidx += 1;
+        }
+        else if (j == _nchord-2)
+        {
+            _tris[tcounter].setIdx(next_global_elemidx);
+            _tris[tcounter].addVertex(&_tipverts[0][_nchord-3]);
+            _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
+                                      false);
+            _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-2),
+                                      false);
+            _panels[_nspan-1][j] = &_tris[tcounter];
+            tcounter += 1;
+            next_global_elemidx += 1;
+        }
+        else if (j == _nchord-1)
+        {
+            _tris[tcounter].setIdx(next_global_elemidx);
+            _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
+                                      false);
+            _tris[tcounter].addVertex(&_tipverts[_ntipcap-3][_nchord-3]);
+            _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord),
+                                      false);
+            _panels[_nspan-1][j] = &_tris[tcounter];
+            tcounter += 1;
+            next_global_elemidx += 1;
+        }
+        else if (j == 2*_nchord-3)
+        {
+            _tris[tcounter].setIdx(next_global_elemidx);
+            _tris[tcounter].addVertex(&_tipverts[_ntipcap-3][0]);
+            _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-2),
+                                      false);
+            _tris[tcounter].addVertex(&_sections[_nspan-1].vert(2*_nchord-3),
+                                      false);
+            _panels[_nspan-1][j] = &_tris[tcounter];
+            tcounter += 1;
+            next_global_elemidx += 1;
+        }
 
-		// Quad panels in between
-		
-		else if (j < _nchord-2)
-		{
-			_quads[qcounter].setIdx(next_global_elemidx);
-			_quads[qcounter].addVertex(&_tipverts[0][j-1]);
-			_quads[qcounter].addVertex(&_tipverts[0][j]);
-			_quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1),false);
-			_quads[qcounter].addVertex(&_sections[_nspan-1].vert(j),false);
-			_panels[_nspan-1][j] = &_quads[qcounter];
-			qcounter += 1;
-			next_global_elemidx += 1;
-		}
-		else
-		{
-			_quads[qcounter].setIdx(next_global_elemidx);
-			_quads[qcounter].addVertex(&_tipverts[_ntipcap-3][2*_nchord-3-j]);
-			_quads[qcounter].addVertex(&_tipverts[_ntipcap-3][2*_nchord-3-j-1]);
-			_quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1),false);
-			_quads[qcounter].addVertex(&_sections[_nspan-1].vert(j),false);
-			_panels[_nspan-1][j] = &_quads[qcounter];
-			qcounter += 1;
-			next_global_elemidx += 1;
-		}
-	}
+        // Quad panels in between
+        
+        else if (j < _nchord-2)
+        {
+            _quads[qcounter].setIdx(next_global_elemidx);
+            _quads[qcounter].addVertex(&_tipverts[0][j-1]);
+            _quads[qcounter].addVertex(&_tipverts[0][j]);
+            _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1),false);
+            _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j),false);
+            _panels[_nspan-1][j] = &_quads[qcounter];
+            qcounter += 1;
+            next_global_elemidx += 1;
+        }
+        else
+        {
+            _quads[qcounter].setIdx(next_global_elemidx);
+            _quads[qcounter].addVertex(&_tipverts[_ntipcap-3][2*_nchord-3-j]);
+            _quads[qcounter].addVertex(&_tipverts[_ntipcap-3][2*_nchord-3-j-1]);
+            _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j+1),false);
+            _quads[qcounter].addVertex(&_sections[_nspan-1].vert(j),false);
+            _panels[_nspan-1][j] = &_quads[qcounter];
+            qcounter += 1;
+            next_global_elemidx += 1;
+        }
+    }
 
-	// Next layers involve only _tipverts except at TE and LE points.
-	// As before, don't connect to top/bottom surfaces vertices.
-	
-	for ( i = 1; i < (_ntipcap-1)/2; i++ )
-	{
-		_panels[_nspan-1+i].resize(2*_nchord-2);
-		for ( j = 0; j < 2*_nchord-2; j++ )
-		{
-			// Tri panels at TE and LE
-			
-			if (j == 0)
-			{
-				_tris[tcounter].setIdx(next_global_elemidx);
-				_tris[tcounter].addVertex(&_sections[_nspan-1].vert(0),false);
-				_tris[tcounter].addVertex(&_tipverts[i][0]);
-				_tris[tcounter].addVertex(&_tipverts[i-1][0]);
-				_panels[_nspan-1+i][j] = &_tris[tcounter];
-				tcounter += 1;
-				next_global_elemidx += 1;
-			}
-			else if (j == _nchord-2)
-			{
-				_tris[tcounter].setIdx(next_global_elemidx);
-				_tris[tcounter].addVertex(&_tipverts[i][_nchord-3]);
-				_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
-				                          false);
-				_tris[tcounter].addVertex(&_tipverts[i-1][_nchord-3]);
-				_panels[_nspan-1+i][j] = &_tris[tcounter];
-				tcounter += 1;
-				next_global_elemidx += 1;
-			}
-			else if (j == _nchord-1)
-			{
-				_tris[tcounter].setIdx(next_global_elemidx);
-				_tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
-				                          false);
-				_tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i][_nchord-3]);
-				_tris[tcounter].addVertex(
-				                         &_tipverts[_ntipcap-3-i+1][_nchord-3]);
-				_panels[_nspan-1+i][j] = &_tris[tcounter];
-				tcounter += 1;
-				next_global_elemidx += 1;
-			}
-			else if (j == 2*_nchord-3)
-			{
-				_tris[tcounter].setIdx(next_global_elemidx);
-				_tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i][0]);
-				_tris[tcounter].addVertex(
-				                  &_sections[_nspan-1].vert(2*_nchord-2),false);
-				_tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i+1][0]);
-				_panels[_nspan-1+i][j] = &_tris[tcounter];
-				tcounter += 1;
-				next_global_elemidx += 1;
-			}
-			
-			// Quad panels in between
-			
-			else if (j < _nchord-2)
-			{
-				_quads[qcounter].setIdx(next_global_elemidx);
-				_quads[qcounter].addVertex(&_tipverts[i][j-1]);
-				_quads[qcounter].addVertex(&_tipverts[i][j]);
-				_quads[qcounter].addVertex(&_tipverts[i-1][j]);
-				_quads[qcounter].addVertex(&_tipverts[i-1][j-1]);
-				_panels[_nspan-1+i][j] = &_quads[qcounter];
-				qcounter += 1;
-				next_global_elemidx += 1;
-			}
-			else
-			{
-				_quads[qcounter].setIdx(next_global_elemidx);
-				_quads[qcounter].addVertex(
-				                       &_tipverts[_ntipcap-3-i][2*_nchord-3-j]);
-				_quads[qcounter].addVertex(
-				                     &_tipverts[_ntipcap-3-i][2*_nchord-3-j-1]);
-				_quads[qcounter].addVertex(
-				                   &_tipverts[_ntipcap-3-i+1][2*_nchord-3-j-1]);
-				_quads[qcounter].addVertex(
-				                     &_tipverts[_ntipcap-3-i+1][2*_nchord-3-j]);
-				_panels[_nspan-1+i][j] = &_quads[qcounter];
-				qcounter += 1;
-				next_global_elemidx += 1;
-			}
-		}
-	}
+    // Next layers involve only _tipverts except at TE and LE points.
+    // As before, don't connect to top/bottom surfaces vertices.
+    
+    for ( i = 1; i < (_ntipcap-1)/2; i++ )
+    {
+        _panels[_nspan-1+i].resize(2*_nchord-2);
+        for ( j = 0; j < 2*_nchord-2; j++ )
+        {
+            // Tri panels at TE and LE
+            
+            if (j == 0)
+            {
+                _tris[tcounter].setIdx(next_global_elemidx);
+                _tris[tcounter].addVertex(&_sections[_nspan-1].vert(0),false);
+                _tris[tcounter].addVertex(&_tipverts[i][0]);
+                _tris[tcounter].addVertex(&_tipverts[i-1][0]);
+                _panels[_nspan-1+i][j] = &_tris[tcounter];
+                tcounter += 1;
+                next_global_elemidx += 1;
+            }
+            else if (j == _nchord-2)
+            {
+                _tris[tcounter].setIdx(next_global_elemidx);
+                _tris[tcounter].addVertex(&_tipverts[i][_nchord-3]);
+                _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
+                                          false);
+                _tris[tcounter].addVertex(&_tipverts[i-1][_nchord-3]);
+                _panels[_nspan-1+i][j] = &_tris[tcounter];
+                tcounter += 1;
+                next_global_elemidx += 1;
+            }
+            else if (j == _nchord-1)
+            {
+                _tris[tcounter].setIdx(next_global_elemidx);
+                _tris[tcounter].addVertex(&_sections[_nspan-1].vert(_nchord-1),
+                                          false);
+                _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i][_nchord-3]);
+                _tris[tcounter].addVertex(
+                                         &_tipverts[_ntipcap-3-i+1][_nchord-3]);
+                _panels[_nspan-1+i][j] = &_tris[tcounter];
+                tcounter += 1;
+                next_global_elemidx += 1;
+            }
+            else if (j == 2*_nchord-3)
+            {
+                _tris[tcounter].setIdx(next_global_elemidx);
+                _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i][0]);
+                _tris[tcounter].addVertex(
+                                  &_sections[_nspan-1].vert(2*_nchord-2),false);
+                _tris[tcounter].addVertex(&_tipverts[_ntipcap-3-i+1][0]);
+                _panels[_nspan-1+i][j] = &_tris[tcounter];
+                tcounter += 1;
+                next_global_elemidx += 1;
+            }
+            
+            // Quad panels in between
+            
+            else if (j < _nchord-2)
+            {
+                _quads[qcounter].setIdx(next_global_elemidx);
+                _quads[qcounter].addVertex(&_tipverts[i][j-1]);
+                _quads[qcounter].addVertex(&_tipverts[i][j]);
+                _quads[qcounter].addVertex(&_tipverts[i-1][j]);
+                _quads[qcounter].addVertex(&_tipverts[i-1][j-1]);
+                _panels[_nspan-1+i][j] = &_quads[qcounter];
+                qcounter += 1;
+                next_global_elemidx += 1;
+            }
+            else
+            {
+                _quads[qcounter].setIdx(next_global_elemidx);
+                _quads[qcounter].addVertex(
+                                       &_tipverts[_ntipcap-3-i][2*_nchord-3-j]);
+                _quads[qcounter].addVertex(
+                                     &_tipverts[_ntipcap-3-i][2*_nchord-3-j-1]);
+                _quads[qcounter].addVertex(
+                                   &_tipverts[_ntipcap-3-i+1][2*_nchord-3-j-1]);
+                _quads[qcounter].addVertex(
+                                     &_tipverts[_ntipcap-3-i+1][2*_nchord-3-j]);
+                _panels[_nspan-1+i][j] = &_quads[qcounter];
+                qcounter += 1;
+                next_global_elemidx += 1;
+            }
+        }
+    }
 
-	// Surface tangent vectors on tip panels
-	
-	for ( i = 0; i < (_ntipcap-1)/2; i++ )
-	{
-		for ( j = 0; j < 2*_nchord-2; j++ )
-		{
-			// Tri panels at TE and LE
-			
-			if ( (j == 0) || (j == _nchord-1) )
-			{
-				tanf = _panels[_nspan-1+i][j+1]->centroidComp()
-				     - _panels[_nspan-1+i][j]->centroidComp();
-				tan = tanf / tanf.norm();
-			}
-			else if ( (j == _nchord-2) || (j == 2*_nchord-3) )
-			{
-				tanb = _panels[_nspan-1+i][j]->centroidComp()
-				     - _panels[_nspan-1+i][j-1]->centroidComp();
-				tan = tanb / tanb.norm();
-			}
-			
-			// Quad panels in between
-			
-			else if (j < _nchord-2)
-			{
-				tanf = _panels[_nspan-1+i][j+1]->centroidComp()
-				     - _panels[_nspan-1+i][j]->centroidComp();
-				tanb = _panels[_nspan-1+i][j]->centroidComp()
-				     - _panels[_nspan-1+i][j-1]->centroidComp();
-				tan = 0.5*(tanf + tanb);
-				tan /= tan.norm();
-			}
-			
-			_panels[_nspan-1+i][j]->setTangentComp(tan);
-		}
-	}
-	  
+    // Surface tangent vectors on tip panels
+    
+    for ( i = 0; i < (_ntipcap-1)/2; i++ )
+    {
+        for ( j = 0; j < 2*_nchord-2; j++ )
+        {
+            // Tri panels at TE and LE
+            
+            if ( (j == 0) || (j == _nchord-1) )
+            {
+                tanf = _panels[_nspan-1+i][j+1]->centroidComp()
+                     - _panels[_nspan-1+i][j]->centroidComp();
+                tan = tanf / tanf.norm();
+            }
+            else if ( (j == _nchord-2) || (j == 2*_nchord-3) )
+            {
+                tanb = _panels[_nspan-1+i][j]->centroidComp()
+                     - _panels[_nspan-1+i][j-1]->centroidComp();
+                tan = tanb / tanb.norm();
+            }
+            
+            // Quad panels in between
+            
+            else if (j < _nchord-2)
+            {
+                tanf = _panels[_nspan-1+i][j+1]->centroidComp()
+                     - _panels[_nspan-1+i][j]->centroidComp();
+                tanb = _panels[_nspan-1+i][j]->centroidComp()
+                     - _panels[_nspan-1+i][j-1]->centroidComp();
+                tan = 0.5*(tanf + tanb);
+                tan /= tan.norm();
+            }
+            
+            _panels[_nspan-1+i][j]->setTangentComp(tan);
+        }
+    }
+      
 
-	// Set panel neighbors (top and bottom surfaces only for now)
-	// We don't add panel neighbors from top/bottom to tip caps, because there
-	// can be very large changes in sizing across that boundary, which would
-	// produce error in gradient calculations.
+    // Set panel neighbors (top and bottom surfaces only for now)
+    // We don't add panel neighbors from top/bottom to tip caps, because there
+    // can be very large changes in sizing across that boundary, which would
+    // produce error in gradient calculations.
 
-	for ( i = 0; i < _nspan-1; i++ )
-	{
-		for ( j = 0; j < 2*_nchord-2; j++ )
-		{
-			if (i > 0)
-				_panels[i][j]->setLeftNeighbor(_panels[i-1][j]);
-			if (i < _nspan-2)
-				_panels[i][j]->setRightNeighbor(_panels[i+1][j]);
-			if (j > 0)
-				_panels[i][j]->setBackNeighbor(_panels[i][j-1]);
-			if (j < 2*_nchord-3)
-				_panels[i][j]->setFrontNeighbor(_panels[i][j+1]);
-		}
-	}
-	
-	// Neighbor panels on tip caps
-	
-	for ( i = 0; i < (_ntipcap-1)/2; i++ )
-	{
-		for ( j = 0; j < 2*_nchord-2; j++ )
-		{
-			if (i > 0)
-				_panels[_nspan-1+i][j]->setLeftNeighbor(
-				                                      _panels[_nspan-1+i-1][j]);
-			if (i < (_ntipcap-1)/2-1)
-				_panels[_nspan-1+i][j]->setRightNeighbor(
-				                                      _panels[_nspan-1+i+1][j]);
-			if ( (j > 0) && (j != _nchord-1) )
-				_panels[_nspan-1+i][j]->setBackNeighbor(
-				                                      _panels[_nspan-1+i][j-1]);
-			if ( (j < 2*_nchord-3) && (j != _nchord-2) )
-				_panels[_nspan-1+i][j]->setFrontNeighbor(
-				                                      _panels[_nspan-1+i][j+1]);
-			
-			// Add right neighbor across the tip cut
-			
-			if (i == (_ntipcap-1)/2-1)
-			{
-				right = 2*_nchord-3-j;
-				_panels[_nspan-1+i][j]->setRightNeighbor(
-				                                    _panels[_nspan-1+i][right]);
-			}
-		}
-	}
+    for ( i = 0; i < _nspan-1; i++ )
+    {
+        for ( j = 0; j < 2*_nchord-2; j++ )
+        {
+            if (i > 0)
+                _panels[i][j]->setLeftNeighbor(_panels[i-1][j]);
+            if (i < _nspan-2)
+                _panels[i][j]->setRightNeighbor(_panels[i+1][j]);
+            if (j > 0)
+                _panels[i][j]->setBackNeighbor(_panels[i][j-1]);
+            if (j < 2*_nchord-3)
+                _panels[i][j]->setFrontNeighbor(_panels[i][j+1]);
+        }
+    }
+    
+    // Neighbor panels on tip caps
+    
+    for ( i = 0; i < (_ntipcap-1)/2; i++ )
+    {
+        for ( j = 0; j < 2*_nchord-2; j++ )
+        {
+            if (i > 0)
+                _panels[_nspan-1+i][j]->setLeftNeighbor(
+                                                      _panels[_nspan-1+i-1][j]);
+            if (i < (_ntipcap-1)/2-1)
+                _panels[_nspan-1+i][j]->setRightNeighbor(
+                                                      _panels[_nspan-1+i+1][j]);
+            if ( (j > 0) && (j != _nchord-1) )
+                _panels[_nspan-1+i][j]->setBackNeighbor(
+                                                      _panels[_nspan-1+i][j-1]);
+            if ( (j < 2*_nchord-3) && (j != _nchord-2) )
+                _panels[_nspan-1+i][j]->setFrontNeighbor(
+                                                      _panels[_nspan-1+i][j+1]);
+            
+            // Add right neighbor across the tip cut
+            
+            if (i == (_ntipcap-1)/2-1)
+            {
+                right = 2*_nchord-3-j;
+                _panels[_nspan-1+i][j]->setRightNeighbor(
+                                                    _panels[_nspan-1+i][right]);
+            }
+        }
+    }
 
-	// Compute grid metrics
+    // Compute grid metrics
 
 #pragma omp parallel for private(i,j)
-	for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
-	{
-		for ( j = 0; j < 2*_nchord-2; j++ )
-		{
-			_panels[i][j]->computeGridTransformation();
-		}
-	}
+    for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
+    {
+        for ( j = 0; j < 2*_nchord-2; j++ )
+        {
+            _panels[i][j]->computeGridTransformation();
+        }
+    }
 }
 
 /******************************************************************************/
@@ -1167,42 +1167,42 @@ void Wing::createPanels ( int & next_global_vertidx, int & next_global_elemidx )
 void Wing::setupWake ( const double & maxspan, int & next_global_vertidx,
                        int & next_global_elemidx, int wakeidx )
 {
-	unsigned int i, j, nstream;
-	std::vector<Vertex *> topteverts, botteverts;
-	
-	// Create vertices along trailing edge
-	
-	topteverts.resize(_nspan);
-	botteverts.resize(_nspan);
-	for ( i = 0; i < _nspan; i++ )
-	{
-		topteverts[i] = &_sections[i].vert(0); 
-		botteverts[i] = &_sections[i].vert(2*_nchord-2); 
-	}
-	
-	// Initialize wake
-	
-	_wake.initialize(topteverts, botteverts, maxspan, next_global_vertidx,
-	                 next_global_elemidx, wakeidx);
-	
-	// Create wake strips
-	
-	nstream = wakeiters+1;
-	_wakestrips.resize(_nspan-1);
-	for ( i = 0; i < _nspan-1; i++ )
-	{
-		_wakestrips[i].setNPanels((nstream-1)*2+1);
-		_wakestrips[i].setTEPanels(&_quads[i*(2*_nchord-2)],
-		                           &_quads[(i+1)*(2*_nchord-2)-1]);
-		for ( j = 0; j < nstream-1; j++ )
-		{
-			_wakestrips[i].setPanelPointer(j*2,
-			                               _wake.triPanel(i*(nstream-1)*2+j*2));
-			_wakestrips[i].setPanelPointer(j*2+1,
-			                             _wake.triPanel(i*(nstream-1)*2+j*2+1));
-		}
-		_wakestrips[i].setPanelPointer((nstream-1)*2, _wake.quadPanel(i));
-	}
+    unsigned int i, j, nstream;
+    std::vector<Vertex *> topteverts, botteverts;
+    
+    // Create vertices along trailing edge
+    
+    topteverts.resize(_nspan);
+    botteverts.resize(_nspan);
+    for ( i = 0; i < _nspan; i++ )
+    {
+        topteverts[i] = &_sections[i].vert(0); 
+        botteverts[i] = &_sections[i].vert(2*_nchord-2); 
+    }
+    
+    // Initialize wake
+    
+    _wake.initialize(topteverts, botteverts, maxspan, next_global_vertidx,
+                     next_global_elemidx, wakeidx);
+    
+    // Create wake strips
+    
+    nstream = wakeiters+1;
+    _wakestrips.resize(_nspan-1);
+    for ( i = 0; i < _nspan-1; i++ )
+    {
+        _wakestrips[i].setNPanels((nstream-1)*2+1);
+        _wakestrips[i].setTEPanels(&_quads[i*(2*_nchord-2)],
+                                   &_quads[(i+1)*(2*_nchord-2)-1]);
+        for ( j = 0; j < nstream-1; j++ )
+        {
+            _wakestrips[i].setPanelPointer(j*2,
+                                           _wake.triPanel(i*(nstream-1)*2+j*2));
+            _wakestrips[i].setPanelPointer(j*2+1,
+                                         _wake.triPanel(i*(nstream-1)*2+j*2+1));
+        }
+        _wakestrips[i].setPanelPointer((nstream-1)*2, _wake.quadPanel(i));
+    }
 }
 
 /******************************************************************************/
@@ -1213,128 +1213,128 @@ void Wing::setupWake ( const double & maxspan, int & next_global_vertidx,
 /******************************************************************************/
 void Wing::computeSurfaceQuantities ()
 {
-	unsigned int i, j, nverts;
-	double s12, s1, s2;
-	Eigen::Matrix3d A;
-	Eigen::Vector3d x, b;
-	Eigen::PartialPivLU<Eigen::Matrix3d> lu;
-	Vertex * v0, * v1, * v2;
+    unsigned int i, j, nverts;
+    double s12, s1, s2;
+    Eigen::Matrix3d A;
+    Eigen::Vector3d x, b;
+    Eigen::PartialPivLU<Eigen::Matrix3d> lu;
+    Vertex * v0, * v1, * v2;
 
 #pragma omp parallel for private(i,j)
-	for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
-	{
-		for ( j = 0; j < 2*_nchord-2; j++ )
-		{
-			_panels[i][j]->computeVelocity(uinfvec);
-			_panels[i][j]->computePressure(uinf, rhoinf, pinf);
-		}
-	}
-	
-	// Interpolate to vertices
-	
-	nverts = _verts.size();
+    for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
+    {
+        for ( j = 0; j < 2*_nchord-2; j++ )
+        {
+            _panels[i][j]->computeVelocity(uinfvec);
+            _panels[i][j]->computePressure(uinf, rhoinf, pinf);
+        }
+    }
+    
+    // Interpolate to vertices
+    
+    nverts = _verts.size();
 #pragma omp parallel for private(i)
-	for ( i = 0; i < nverts; i++ )
-	{
-		_verts[i]->averageFromPanels();
-	}
+    for ( i = 0; i < nverts; i++ )
+    {
+        _verts[i]->averageFromPanels();
+    }
 
-	/* Extrapolate to vertices at edges using quadratic fit. Note that the
-	   originally calculated values at edge vertices actually apply to the
-	   midpoint of the boundary between adjacent panels, since it is averaged
-	   only from these two panels. */
+    /* Extrapolate to vertices at edges using quadratic fit. Note that the
+       originally calculated values at edge vertices actually apply to the
+       midpoint of the boundary between adjacent panels, since it is averaged
+       only from these two panels. */
 
-	// Top trailing edge
+    // Top trailing edge
 #pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
-	for ( i = 0; i < _nspan-1; i++ )
-	{
-		v0 = &_sections[i].vert(0);
-		v1 = &_sections[i].vert(1);
-		v2 = &_sections[i].vert(2);
-		s1 = v0->distance(*v1);
-		s12 = 0.5*s1;
-		s2 = s1 + v1->distance(*v2);
-		A << std::pow(s12,2.), s12, 1.,
-		     std::pow(s1,2.),  s1,  1.,
-		     std::pow(s2,2.),  s2,  1.;
-		lu.compute(A);
-		
-		for ( j = 0; j < Vertex::firstBLData; j++ )
-		{ 
-			b << v0->data(j), v1->data(j), v2->data(j);
-			x = lu.solve(b);
-			v0->setData(j, x(2));
-		}
-	}
-	
-	// Bottom trailing edge
+    for ( i = 0; i < _nspan-1; i++ )
+    {
+        v0 = &_sections[i].vert(0);
+        v1 = &_sections[i].vert(1);
+        v2 = &_sections[i].vert(2);
+        s1 = v0->distance(*v1);
+        s12 = 0.5*s1;
+        s2 = s1 + v1->distance(*v2);
+        A << std::pow(s12,2.), s12, 1.,
+             std::pow(s1,2.),  s1,  1.,
+             std::pow(s2,2.),  s2,  1.;
+        lu.compute(A);
+        
+        for ( j = 0; j < Vertex::firstBLData; j++ )
+        { 
+            b << v0->data(j), v1->data(j), v2->data(j);
+            x = lu.solve(b);
+            v0->setData(j, x(2));
+        }
+    }
+    
+    // Bottom trailing edge
 #pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
-	for ( i = 0; i < _nspan-1; i++ )
-	{
-		v0 = &_sections[i].vert(2*_nchord-2);
-		v1 = &_sections[i].vert(2*_nchord-3);
-		v2 = &_sections[i].vert(2*_nchord-4);
-		s1 = v0->distance(*v1);
-		s12 = 0.5*s1;
-		s2 = s1 + v1->distance(*v2);
-		A << std::pow(s12,2.), s12, 1.,
-		     std::pow(s1,2.),  s1,  1.,
-		     std::pow(s2,2.),  s2,  1.;
-		lu.compute(A);
-		
-		for ( j = 0; j < Vertex::firstBLData; j++ )
-		{ 
-			b << v0->data(j), v1->data(j), v2->data(j);
-			x = lu.solve(b);
-			v0->setData(j, x(2));
-		}
-	}
+    for ( i = 0; i < _nspan-1; i++ )
+    {
+        v0 = &_sections[i].vert(2*_nchord-2);
+        v1 = &_sections[i].vert(2*_nchord-3);
+        v2 = &_sections[i].vert(2*_nchord-4);
+        s1 = v0->distance(*v1);
+        s12 = 0.5*s1;
+        s2 = s1 + v1->distance(*v2);
+        A << std::pow(s12,2.), s12, 1.,
+             std::pow(s1,2.),  s1,  1.,
+             std::pow(s2,2.),  s2,  1.;
+        lu.compute(A);
+        
+        for ( j = 0; j < Vertex::firstBLData; j++ )
+        { 
+            b << v0->data(j), v1->data(j), v2->data(j);
+            x = lu.solve(b);
+            v0->setData(j, x(2));
+        }
+    }
 
-	// Centerline
+    // Centerline
 #pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
-	for ( i = 1; i < 2*_nchord-2; i++ )
-	{
-		v0 = &_sections[0].vert(i);
-		v1 = &_sections[1].vert(i);
-		v2 = &_sections[2].vert(i);
-		s1 = v0->distance(*v1);
-		s12 = 0.5*s1;
-		s2 = s1 + v1->distance(*v2);
-		A << std::pow(s12,2.), s12, 1.,
-		     std::pow(s1,2.),  s1,  1.,
-		     std::pow(s2,2.),  s2,  1.;
-		lu.compute(A);
-		
-		for ( j = 0; j < Vertex::firstBLData; j++ )
-		{ 
-			b << v0->data(j), v1->data(j), v2->data(j);
-			x = lu.solve(b);
-			v0->setData(j, x(2));
-		}
-	}
+    for ( i = 1; i < 2*_nchord-2; i++ )
+    {
+        v0 = &_sections[0].vert(i);
+        v1 = &_sections[1].vert(i);
+        v2 = &_sections[2].vert(i);
+        s1 = v0->distance(*v1);
+        s12 = 0.5*s1;
+        s2 = s1 + v1->distance(*v2);
+        A << std::pow(s12,2.), s12, 1.,
+             std::pow(s1,2.),  s1,  1.,
+             std::pow(s2,2.),  s2,  1.;
+        lu.compute(A);
+        
+        for ( j = 0; j < Vertex::firstBLData; j++ )
+        { 
+            b << v0->data(j), v1->data(j), v2->data(j);
+            x = lu.solve(b);
+            v0->setData(j, x(2));
+        }
+    }
 
-	// Tip
+    // Tip
 #pragma omp parallel for private(i,v0,v1,v2,s1,s12,s2,A,lu,j,b,x)
-	for ( i = 1; i < 2*_nchord-2; i++ )
-	{
-		v0 = &_sections[_nspan-1].vert(i);
-		v1 = &_sections[_nspan-2].vert(i);
-		v2 = &_sections[_nspan-3].vert(i);
-		s1 = v0->distance(*v1);
-		s12 = 0.5*s1;
-		s2 = s1 + v1->distance(*v2);
-		A << std::pow(s12,2.), s12, 1.,
-		     std::pow(s1,2.),  s1,  1.,
-		     std::pow(s2,2.),  s2,  1.;
-		lu.compute(A);
-		
-		for ( j = 0; j < Vertex::firstBLData; j++ )
-		{ 
-			b << v0->data(j), v1->data(j), v2->data(j);
-			x = lu.solve(b);
-			v0->setData(j, x(2));
-		}
-	}
+    for ( i = 1; i < 2*_nchord-2; i++ )
+    {
+        v0 = &_sections[_nspan-1].vert(i);
+        v1 = &_sections[_nspan-2].vert(i);
+        v2 = &_sections[_nspan-3].vert(i);
+        s1 = v0->distance(*v1);
+        s12 = 0.5*s1;
+        s2 = s1 + v1->distance(*v2);
+        A << std::pow(s12,2.), s12, 1.,
+             std::pow(s1,2.),  s1,  1.,
+             std::pow(s2,2.),  s2,  1.;
+        lu.compute(A);
+        
+        for ( j = 0; j < Vertex::firstBLData; j++ )
+        { 
+            b << v0->data(j), v1->data(j), v2->data(j);
+            x = lu.solve(b);
+            v0->setData(j, x(2));
+        }
+    }
 }
 
 /******************************************************************************/
@@ -1348,18 +1348,18 @@ unsigned int Wing::nTris () const { return _tris.size(); }
 Vertex * Wing::vert ( unsigned int vidx )
 {
 #ifdef DEBUG
-	if (vidx >= _verts.size())
-		conditional_stop(1, "Wing::vert", "Index out of range.");
+    if (vidx >= _verts.size())
+        conditional_stop(1, "Wing::vert", "Index out of range.");
 #endif
 
-	return _verts[vidx];
+    return _verts[vidx];
 }
 
 QuadPanel * Wing::quadPanel ( unsigned int qidx )
 {
 #ifdef DEBUG
-	if (qidx >= _quads.size())
-		conditional_stop(1, "Wing::quadPanel", "Index out of range.");
+    if (qidx >= _quads.size())
+        conditional_stop(1, "Wing::quadPanel", "Index out of range.");
 #endif
 
   return &_quads[qidx];
@@ -1368,11 +1368,11 @@ QuadPanel * Wing::quadPanel ( unsigned int qidx )
 TriPanel * Wing::triPanel ( unsigned int tidx )
 {
 #ifdef DEBUG
-	if (tidx >= _tris.size())
-		conditional_stop(1, "Wing::triPanel", "Index out of range.");
+    if (tidx >= _tris.size())
+        conditional_stop(1, "Wing::triPanel", "Index out of range.");
 #endif
 
-	return &_tris[tidx];
+    return &_tris[tidx];
 }
 
 /******************************************************************************/
@@ -1385,11 +1385,11 @@ unsigned int Wing::nWStrips () const { return _wakestrips.size(); }
 WakeStrip * Wing::wStrip ( unsigned int wsidx )
 {
 #ifdef DEBUG
-	if (wsidx >= _wakestrips.size())
-		conditional_stop(1, "Wing::wStrip", "Index out of range.");
+    if (wsidx >= _wakestrips.size())
+        conditional_stop(1, "Wing::wStrip", "Index out of range.");
 #endif
 
-	return &_wakestrips[wsidx];
+    return &_wakestrips[wsidx];
 }
 
 ViscousWake & Wing::viscousWake () { return _vwake; }
@@ -1401,160 +1401,160 @@ ViscousWake & Wing::viscousWake () { return _vwake; }
 /******************************************************************************/
 void Wing::computeBL ()
 {
-	unsigned int i, j, k;
-	int l, linterp, rinterp;
-	double weighttop, weightbot, var;
-	double weightl, weightr;
-	std::string warning;
-	bool extrapolate;
+    unsigned int i, j, k;
+    int l, linterp, rinterp;
+    double weighttop, weightbot, var;
+    double weightl, weightr;
+    std::string warning;
+    bool extrapolate;
 
 #pragma omp parallel for private(i,warning)
-	for ( i = 0; i < _nspan; i++ )
-	{
-		_sections[i].computeBL(uinfvec, rhoinf, pinf, alpha, reinit_freq);
+    for ( i = 0; i < _nspan; i++ )
+    {
+        _sections[i].computeBL(uinfvec, rhoinf, pinf, alpha, reinit_freq);
 
-		if (not _sections[i].blConverged())
-		{
-			warning = "Xfoil BL calculations did not converge for section "
-			        + int2string(i+1) + std::string(".");
-			print_warning("Wing::computeBL", warning);
-			if (_sections[i].blReinitialized())
-			{
-				std::cout << "Reinitializing BL for section "
-				          << int2string(i+1) << "." << std::endl;
-			}
-		}
-	}
+        if (not _sections[i].blConverged())
+        {
+            warning = "Xfoil BL calculations did not converge for section "
+                    + int2string(i+1) + std::string(".");
+            print_warning("Wing::computeBL", warning);
+            if (_sections[i].blReinitialized())
+            {
+                std::cout << "Reinitializing BL for section "
+                          << int2string(i+1) << "." << std::endl;
+            }
+        }
+    }
 
-	// Interpolate/extrapolate any unconverged sections
+    // Interpolate/extrapolate any unconverged sections
 #pragma omp parallel for private(i,warning,l,linterp,rinterp,extrapolate,\
                                  weightl,weightr)
-	for ( i = 0; i < _nspan; i++ )
-	{
-		if (not _sections[i].blConverged())
-		{
-			// Warning message if interpolants/extrapolants cannot be found.
-			// It is very possible that the solution is going unstable if this
-			// warning appears.
+    for ( i = 0; i < _nspan; i++ )
+    {
+        if (not _sections[i].blConverged())
+        {
+            // Warning message if interpolants/extrapolants cannot be found.
+            // It is very possible that the solution is going unstable if this
+            // warning appears.
 
-			warning = "Unable to interpolate/extrapolate unconverged section "
-			        + int2string(i+1) + ".";
+            warning = "Unable to interpolate/extrapolate unconverged section "
+                    + int2string(i+1) + ".";
 
-			// Try to get left and right interpolants
+            // Try to get left and right interpolants
 
-			linterp = -1;
-			rinterp = -1;
-			extrapolate = false;
-			for ( l = i-1; l >= 0; l-- )
-			{
-				if (_sections[l].blConverged())
-				{
-					linterp = l;
-					break;
-				}
-			}
-			for ( l = i+1; l < int(_nspan); l++ )
-			{
-				if (_sections[l].blConverged())
-				{
-					rinterp = l;
-					break;
-				}
-			}
+            linterp = -1;
+            rinterp = -1;
+            extrapolate = false;
+            for ( l = i-1; l >= 0; l-- )
+            {
+                if (_sections[l].blConverged())
+                {
+                    linterp = l;
+                    break;
+                }
+            }
+            for ( l = i+1; l < int(_nspan); l++ )
+            {
+                if (_sections[l].blConverged())
+                {
+                    rinterp = l;
+                    break;
+                }
+            }
 
-			// Get extrapolants if interpolating is not possible
+            // Get extrapolants if interpolating is not possible
 
-			if ( (linterp == -1) && (rinterp != -1) )
-			{
-				extrapolate = true;
-				linterp = rinterp;
-				rinterp = -1;
-				for ( l = linterp+1; l < int(_nspan); l++ )
-				{
-					if (_sections[l].blConverged())
-					{
-						rinterp = l;
-						break;
-					}
-				}
-				if (rinterp == -1)
-				{
+            if ( (linterp == -1) && (rinterp != -1) )
+            {
+                extrapolate = true;
+                linterp = rinterp;
+                rinterp = -1;
+                for ( l = linterp+1; l < int(_nspan); l++ )
+                {
+                    if (_sections[l].blConverged())
+                    {
+                        rinterp = l;
+                        break;
+                    }
+                }
+                if (rinterp == -1)
+                {
 #pragma omp critical
-					{
-						print_warning("Wing::computeBL", warning);
-					}
-					continue;
-				}
-			}
-			else if ( (linterp != -1) && (rinterp == -1) )
-			{
-				extrapolate = true;
-				rinterp = linterp;
-				linterp = -1;
-				for ( l = rinterp-1; l >= 0; l-- )
-				{
-					if (_sections[l].blConverged())
-					{
-						linterp = l;
-						break;
-					}
-				}
-				if (linterp == -1)
-				{
+                    {
+                        print_warning("Wing::computeBL", warning);
+                    }
+                    continue;
+                }
+            }
+            else if ( (linterp != -1) && (rinterp == -1) )
+            {
+                extrapolate = true;
+                rinterp = linterp;
+                linterp = -1;
+                for ( l = rinterp-1; l >= 0; l-- )
+                {
+                    if (_sections[l].blConverged())
+                    {
+                        linterp = l;
+                        break;
+                    }
+                }
+                if (linterp == -1)
+                {
 #pragma omp critical
-					{
-						print_warning("Wing::computeBL", warning);
-					}
-					continue;
-				}
-			}
-			else if ( (linterp == -1) && (rinterp == -1) )
-			{
+                    {
+                        print_warning("Wing::computeBL", warning);
+                    }
+                    continue;
+                }
+            }
+            else if ( (linterp == -1) && (rinterp == -1) )
+            {
 #pragma omp critical
-				{
-					print_warning("Wing::computeBL", warning);
-				}
-				continue;
-			}
+                {
+                    print_warning("Wing::computeBL", warning);
+                }
+                continue;
+            }
 
-			// Linear interpolation/extrapolation to unconverged sections.
-			// Weightings come from linear curve fit between left and right
-			// sections.
+            // Linear interpolation/extrapolation to unconverged sections.
+            // Weightings come from linear curve fit between left and right
+            // sections.
 
 #pragma omp critical
-			{
-				if (extrapolate)
-					std::cout << "Extrapolating ";
-				else
-					std::cout << "Interpolating ";
-				std::cout << "to section " << i+1 << " from sections "
-				          << linterp+1 << " and " << rinterp+1 << "."
-				          << std::endl;
-			}
-			weightr = (_stations[i] - _stations[linterp])
-			        / (_stations[rinterp] - _stations[linterp]);
-			weightl = 1. - weightr;
-			_sections[i].interpolateBL(_sections[linterp], _sections[rinterp],
-			                           weightl, weightr);
-		}
-	}
+            {
+                if (extrapolate)
+                    std::cout << "Extrapolating ";
+                else
+                    std::cout << "Interpolating ";
+                std::cout << "to section " << i+1 << " from sections "
+                          << linterp+1 << " and " << rinterp+1 << "."
+                          << std::endl;
+            }
+            weightr = (_stations[i] - _stations[linterp])
+                    / (_stations[rinterp] - _stations[linterp]);
+            weightl = 1. - weightr;
+            _sections[i].interpolateBL(_sections[linterp], _sections[rinterp],
+                                       weightl, weightr);
+        }
+    }
 
-	// Inteprolate BL quantities to tip vertices
-	
-	for ( i = 1; i < _ntipcap-1; i++ )
-	{
-		weightbot = double(i) / double(_ntipcap-1);
-		weighttop = 1. - weightbot;
-		for ( j = 1; j < _nchord-1; j++ )
-		{
-			for ( k = Vertex::firstBLData; k < Vertex::dataSize; k++ )
-			{
-				var = weighttop*_sections[_nspan-1].vert(j).data(k)
-				    + weightbot*_sections[_nspan-1].vert(2*_nchord-2-j).data(k);
-				_tipverts[i-1][j-1].setData(k, var);
-			}
-		}
-	}
+    // Inteprolate BL quantities to tip vertices
+    
+    for ( i = 1; i < _ntipcap-1; i++ )
+    {
+        weightbot = double(i) / double(_ntipcap-1);
+        weighttop = 1. - weightbot;
+        for ( j = 1; j < _nchord-1; j++ )
+        {
+            for ( k = Vertex::firstBLData; k < Vertex::dataSize; k++ )
+            {
+                var = weighttop*_sections[_nspan-1].vert(j).data(k)
+                    + weightbot*_sections[_nspan-1].vert(2*_nchord-2-j).data(k);
+                _tipverts[i-1][j-1].setData(k, var);
+            }
+        }
+    }
 }
 
 /******************************************************************************/
@@ -1565,7 +1565,7 @@ void Wing::computeBL ()
 void Wing::setupViscousWake ( int & next_global_vertidx,
                               int & next_global_elemidx )
 {
-	_vwake.initialize(_sections, next_global_vertidx, next_global_elemidx);
+    _vwake.initialize(_sections, next_global_vertidx, next_global_elemidx);
 }
 
 /******************************************************************************/
@@ -1578,79 +1578,79 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
                                const double & xtrefftz, const double & ztrefftz,
                                const std::vector<Wake *> & allwake )
 {
-	unsigned int i, j;
-	double ds, chord1, chord2, qinf;
-	Eigen::Vector3d dfp, dff, dmp, dmf, fp, ff, mp, mf;
-	
-	fp << 0., 0., 0.;
-	ff << 0., 0., 0.;
-	mp << 0., 0., 0.;
-	mf << 0., 0., 0.;
+    unsigned int i, j;
+    double ds, chord1, chord2, qinf;
+    Eigen::Vector3d dfp, dff, dmp, dmf, fp, ff, mp, mf;
+    
+    fp << 0., 0., 0.;
+    ff << 0., 0., 0.;
+    mp << 0., 0., 0.;
+    mf << 0., 0., 0.;
 
-	// Forces and moments via surface integration
+    // Forces and moments via surface integration
 
-	for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
-	{
-		for ( j = 0; j < 2*_nchord-2; j++ )
-		{ 
-			_panels[i][j]->computeForceMoment(uinf, rhoinf, pinf, momcen,
-			                                  viscous, dfp, dff, dmp, dmf);
-			fp += dfp;
-			ff += dff;
-			mp += dmp;
-			mf += dmf;
-		}
-	}
-	
-	// Account for mirror image
-	
-	fp(0)  *= 2.;
-	fp(1)  =  0.;
-	fp(2)  *= 2.;
-	ff(0)  *= 2.;
-	ff(1)  =  0.;
-	ff(2)  *= 2.;
-	mp(0) =  0.;
-	mp(1) *= 2.;
-	mp(2) =  0.;
-	mf(0) =  0.;
-	mf(1) *= 2.;
-	mf(2) =  0.;
-	
-	// Convert to wind frame
-	
-	_liftp = -fp(0)*sin(alpha*M_PI/180.) + fp(2)*cos(alpha*M_PI/180.);
-	_liftf = -ff(0)*sin(alpha*M_PI/180.) + ff(2)*cos(alpha*M_PI/180.);
-	_dragp =  fp(0)*cos(alpha*M_PI/180.) + fp(2)*sin(alpha*M_PI/180.);
-	_dragf =  ff(0)*cos(alpha*M_PI/180.) + ff(2)*sin(alpha*M_PI/180.);
-	_momentp = mp(1);
-	_momentf = mf(1);
+    for ( i = 0; i < _nspan-1+(_ntipcap-1)/2; i++ )
+    {
+        for ( j = 0; j < 2*_nchord-2; j++ )
+        { 
+            _panels[i][j]->computeForceMoment(uinf, rhoinf, pinf, momcen,
+                                              viscous, dfp, dff, dmp, dmf);
+            fp += dfp;
+            ff += dff;
+            mp += dmp;
+            mf += dmf;
+        }
+    }
+    
+    // Account for mirror image
+    
+    fp(0)  *= 2.;
+    fp(1)  =  0.;
+    fp(2)  *= 2.;
+    ff(0)  *= 2.;
+    ff(1)  =  0.;
+    ff(2)  *= 2.;
+    mp(0) =  0.;
+    mp(1) *= 2.;
+    mp(2) =  0.;
+    mf(0) =  0.;
+    mf(1) *= 2.;
+    mf(2) =  0.;
+    
+    // Convert to wind frame
+    
+    _liftp = -fp(0)*sin(alpha*M_PI/180.) + fp(2)*cos(alpha*M_PI/180.);
+    _liftf = -ff(0)*sin(alpha*M_PI/180.) + ff(2)*cos(alpha*M_PI/180.);
+    _dragp =  fp(0)*cos(alpha*M_PI/180.) + fp(2)*sin(alpha*M_PI/180.);
+    _dragf =  ff(0)*cos(alpha*M_PI/180.) + ff(2)*sin(alpha*M_PI/180.);
+    _momentp = mp(1);
+    _momentf = mf(1);
 
-	// Compute section forces and moments
-	
+    // Compute section forces and moments
+    
 #pragma omp parallel for private(i)
-	for ( i = 0; i < _nspan; i++ )
-	{
-		_sections[i].computeForceMoment(alpha, uinf, rhoinf, pinf, viscous);
-	}
+    for ( i = 0; i < _nspan; i++ )
+    {
+        _sections[i].computeForceMoment(alpha, uinf, rhoinf, pinf, viscous);
+    }
 
-	// Integrate pressure drag over the span
+    // Integrate pressure drag over the span
 
-	_dragv = 0.;
-	qinf = 0.5*rhoinf*std::pow(uinf,2.);
-	for ( i = 0; i < _nspan-1; i++ )
-	{
-		ds = _stations[i+1] - _stations[i];
-		chord1 = _sections[i].chord();
-		chord2 = _sections[i+1].chord();
-		_dragv += 0.5*(_sections[i].dragCoefficient() * chord1
-		        +      _sections[i+1].dragCoefficient() * chord2) * ds;
-	}
-	_dragv *= 2.*qinf;		// Includes symmetry factor
+    _dragv = 0.;
+    qinf = 0.5*rhoinf*std::pow(uinf,2.);
+    for ( i = 0; i < _nspan-1; i++ )
+    {
+        ds = _stations[i+1] - _stations[i];
+        chord1 = _sections[i].chord();
+        chord2 = _sections[i+1].chord();
+        _dragv += 0.5*(_sections[i].dragCoefficient() * chord1
+                +      _sections[i+1].dragCoefficient() * chord2) * ds;
+    }
+    _dragv *= 2.*qinf;      // Includes symmetry factor
 
-	// Trefftz plane forces
+    // Trefftz plane forces
 
-	_wake.farfieldForces(xtrefftz, ztrefftz, allwake, _lifttr, _dragtr);
+    _wake.farfieldForces(xtrefftz, ztrefftz, allwake, _lifttr, _dragtr);
 }
 
 double Wing::lift () const { return _lifttr + _liftf; }
@@ -1670,89 +1670,89 @@ const double & Wing::skinFrictionPitchingMoment () const { return _momentf; }
 
 double Wing::liftCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return lift() / (qinf*_splanform);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return lift() / (qinf*_splanform);
 }
 double Wing::trefftzLiftCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return trefftzLift() / (qinf*_splanform);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return trefftzLift() / (qinf*_splanform);
 }
 double Wing::skinFrictionLiftCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return skinFrictionLift() / (qinf*_splanform);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return skinFrictionLift() / (qinf*_splanform);
 }
 double Wing::integratedLiftCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return integratedLift() / (qinf*_splanform);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return integratedLift() / (qinf*_splanform);
 }
 
 double Wing::dragCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return drag() / (qinf*_splanform);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return drag() / (qinf*_splanform);
 }
 double Wing::inducedDragCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return inducedDrag() / (qinf*_splanform);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return inducedDrag() / (qinf*_splanform);
 }
 double Wing::parasiticDragCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return parasiticDrag() / (qinf*_splanform);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return parasiticDrag() / (qinf*_splanform);
 }
 double Wing::skinFrictionDragCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return skinFrictionDrag() / (qinf*_splanform);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return skinFrictionDrag() / (qinf*_splanform);
 }
 double Wing::integratedDragCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return integratedDrag() / (qinf*_splanform);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return integratedDrag() / (qinf*_splanform);
 }
 
 double Wing::pitchingMomentCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return pitchingMoment() / (qinf*_splanform*_cbar);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return pitchingMoment() / (qinf*_splanform*_cbar);
 }
 double Wing::pressurePitchingMomentCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return pressurePitchingMoment() / (qinf*_splanform*_cbar);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return pressurePitchingMoment() / (qinf*_splanform*_cbar);
 }
 double Wing::skinFrictionPitchingMomentCoefficient () const
 {
-	double qinf;
+    double qinf;
 
-	qinf = 0.5*rhoinf*std::pow(uinf, 2.);
-	return skinFrictionPitchingMoment() / (qinf*_splanform*_cbar);
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    return skinFrictionPitchingMoment() / (qinf*_splanform*_cbar);
 }
 
 /******************************************************************************/
@@ -1762,91 +1762,91 @@ double Wing::skinFrictionPitchingMomentCoefficient () const
 /******************************************************************************/
 int Wing::writeForceMoment ( int iter ) const
 {
-	std::ofstream f;
-	std::string fname;
-	
-	fname = "forcemoment/" + _name + "_forcemoment.csv";
-	
-	// Write header during first iteration
-	
-	if (iter == 1)
-	{
-		f.open(fname.c_str(), std::fstream::out);
-		if (! f.is_open())
-		{
-			print_warning("Wing::writeForceMoment",
-			              "Unable to open " + fname + " for writing.");
-			return 1;
-		}
-		if (viscous)
-		{
-			f << "\"Iter\",\"Lift\",\"Lift_trefftz\",\"Lift_skinfric\","
-			  <<            "\"Drag\",\"Drag_induced\",\"Drag_parasitic\","
-			  <<"\"Moment\",\"Moment_pressure\",\"Moment_skinfric\","
-			  <<"\"CL\",\"CL_trefftz\",\"CL_skinfric\","
-			  <<"\"CD\",\"CD_induced\",\"CD_parasitic\","
-			  <<"\"Cm\",\"Cm_pressure\",\"Cm_skinfric\"" << std::endl;
-		}
-		else
-		{
-			f << "\"Iter\",\"Lift\",\"Lift_integrated\","
-			  <<          "\"Drag\",\"Drag_integrated\","
-			  << "\"Moment\","
-			  << "\"CL\",\"CL_integrated\","
-			  << "\"CD\",\"CD_integrated\","
-			  << "\"Cm\"" << std::endl;
-		}
-	}
-	else
-	{
-		f.open(fname.c_str(), std::fstream::app);
-		if (! f.is_open())
-		{
-			print_warning("Wing::writeForceMoment",
-			              "Unable to open " + fname + " for writing.");
-			return 1;
-		}
-	}
-	f << iter << ",";
-	f.setf(std::ios_base::scientific);
-	f << std::setprecision(7);
-	if (viscous)
-	{
-		f << lift() << ",";
-		f << trefftzLift() << ",";
-		f << skinFrictionLift() << ",";
-		f << drag() << ",";
-		f << inducedDrag() << ",";
-		f << parasiticDrag() << ",";
-		f << pitchingMoment() << ",";
-		f << pressurePitchingMoment() << ",";
-		f << skinFrictionPitchingMoment() << ",";
-		f << liftCoefficient() << ",";
-		f << trefftzLiftCoefficient() << ",";
-		f << skinFrictionLiftCoefficient() << ",";
-		f << dragCoefficient() << ",";
-		f << inducedDragCoefficient() << ",";
-		f << parasiticDragCoefficient() << ",";
-		f << pitchingMomentCoefficient() << ",";
-		f << pressurePitchingMomentCoefficient() << ",";
-		f << skinFrictionPitchingMomentCoefficient() << std::endl;
-	}
-	else
-	{
-		f << lift() << ",";
-		f << integratedLift() << ",";
-		f << drag() << ",";
-		f << integratedDrag() << ",";
-		f << pitchingMoment() << ",";
-		f << liftCoefficient() << ",";
-		f << integratedLiftCoefficient() << ",";
-		f << dragCoefficient() << ",";
-		f << integratedDragCoefficient() << ",";
-		f << pitchingMomentCoefficient() << std::endl;
-	}
-	f.close();
-	
-	return 0;
+    std::ofstream f;
+    std::string fname;
+    
+    fname = "forcemoment/" + _name + "_forcemoment.csv";
+    
+    // Write header during first iteration
+    
+    if (iter == 1)
+    {
+        f.open(fname.c_str(), std::fstream::out);
+        if (! f.is_open())
+        {
+            print_warning("Wing::writeForceMoment",
+                          "Unable to open " + fname + " for writing.");
+            return 1;
+        }
+        if (viscous)
+        {
+            f << "\"Iter\",\"Lift\",\"Lift_trefftz\",\"Lift_skinfric\","
+              <<            "\"Drag\",\"Drag_induced\",\"Drag_parasitic\","
+              <<"\"Moment\",\"Moment_pressure\",\"Moment_skinfric\","
+              <<"\"CL\",\"CL_trefftz\",\"CL_skinfric\","
+              <<"\"CD\",\"CD_induced\",\"CD_parasitic\","
+              <<"\"Cm\",\"Cm_pressure\",\"Cm_skinfric\"" << std::endl;
+        }
+        else
+        {
+            f << "\"Iter\",\"Lift\",\"Lift_integrated\","
+              <<          "\"Drag\",\"Drag_integrated\","
+              << "\"Moment\","
+              << "\"CL\",\"CL_integrated\","
+              << "\"CD\",\"CD_integrated\","
+              << "\"Cm\"" << std::endl;
+        }
+    }
+    else
+    {
+        f.open(fname.c_str(), std::fstream::app);
+        if (! f.is_open())
+        {
+            print_warning("Wing::writeForceMoment",
+                          "Unable to open " + fname + " for writing.");
+            return 1;
+        }
+    }
+    f << iter << ",";
+    f.setf(std::ios_base::scientific);
+    f << std::setprecision(7);
+    if (viscous)
+    {
+        f << lift() << ",";
+        f << trefftzLift() << ",";
+        f << skinFrictionLift() << ",";
+        f << drag() << ",";
+        f << inducedDrag() << ",";
+        f << parasiticDrag() << ",";
+        f << pitchingMoment() << ",";
+        f << pressurePitchingMoment() << ",";
+        f << skinFrictionPitchingMoment() << ",";
+        f << liftCoefficient() << ",";
+        f << trefftzLiftCoefficient() << ",";
+        f << skinFrictionLiftCoefficient() << ",";
+        f << dragCoefficient() << ",";
+        f << inducedDragCoefficient() << ",";
+        f << parasiticDragCoefficient() << ",";
+        f << pitchingMomentCoefficient() << ",";
+        f << pressurePitchingMomentCoefficient() << ",";
+        f << skinFrictionPitchingMomentCoefficient() << std::endl;
+    }
+    else
+    {
+        f << lift() << ",";
+        f << integratedLift() << ",";
+        f << drag() << ",";
+        f << integratedDrag() << ",";
+        f << pitchingMoment() << ",";
+        f << liftCoefficient() << ",";
+        f << integratedLiftCoefficient() << ",";
+        f << dragCoefficient() << ",";
+        f << integratedDragCoefficient() << ",";
+        f << pitchingMomentCoefficient() << std::endl;
+    }
+    f.close();
+    
+    return 0;
 }
 
 /******************************************************************************/
@@ -1856,118 +1856,118 @@ int Wing::writeForceMoment ( int iter ) const
 /******************************************************************************/
 int Wing::writeSectionForceMoment ( int iter ) const
 {
-	std::ofstream f;
-	std::string fname;
-	std::vector<double> y_flat;
-	int i;
-	double dy, dz, ds;
-	
-	// Compute "flattened" spanwise locations
-	
-	y_flat.resize(_nspan);
-	y_flat[0] = 0.;
-	for ( i = 1; i < int(_nspan); i++ )
-	{
-		dy = _sections[i].y() - _sections[i-1].y();
-		dz = _sections[i].zle() - _sections[i-1].zle();
-		ds = std::sqrt(dy*dy + dz*dz);
-		y_flat[i] = y_flat[i-1] + ds;
-	}
-	
-	fname = "sectional/" + _name + "_sectional_iter" + int2string(iter)
-	      + ".csv";
-	
-	// Write header
-	
-	f.open(fname.c_str(), std::fstream::out);
-	if (! f.is_open())
-	{
-		print_warning("Wing::writeSectionForces",
-		              "Unable to open " + fname + " for writing.");
-		return 1;
-	}
-	f << "\"xle\",\"y\",\"y_flat\",\"zle\",\"c\",";
-	if (viscous)
-	{
-		f << "\"Re\",\"Cl\",\"Clp\",\"Clv\",\"Cd\",\"Cdp\",\"Cdv\","
-		  <<        "\"Cm\",\"Cmp\",\"Cmv\",\"cCl\",\"cCd\"" << std::endl;
-	}
-	else
-	{
-		f << "\"Cl\",\"Cd\",\"Cm\",\"cCl\",\"cCd\"" << std::endl;
-	}
-	
-	// Write data for sections and mirror image
-	
-	f.setf(std::ios_base::scientific);
-	f << std::setprecision(7);
-	for ( i = _nspan-1; i >= 0; i-- )
-	{
-		f << _sections[i].xle() << ",";
-		f << _sections[i].y() << ",";
-		f << y_flat[i] << ",";
-		f << _sections[i].zle() << ",";
-		f << _sections[i].chord() << ",";
-		if (viscous)
-		{
-			f << _sections[i].reynoldsNumber() << ",";
-			f << _sections[i].liftCoefficient() << ",";
-			f << _sections[i].pressureLiftCoefficient() << ",";
-			f << _sections[i].viscousLiftCoefficient() << ",";
-			f << _sections[i].dragCoefficient() << ",";
-			f << _sections[i].pressureDragCoefficient() << ",";
-			f << _sections[i].viscousDragCoefficient() << ",";
-			f << _sections[i].pitchingMomentCoefficient() << ",";
-			f << _sections[i].pressurePitchingMomentCoefficient() << ",";
-			f << _sections[i].viscousPitchingMomentCoefficient() << ",";
-			f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
-			f << _sections[i].chord() * _sections[i].dragCoefficient()
-			  << std::endl;
-		}
-		else
-		{
-			f << _sections[i].liftCoefficient() << ",";
-			f << _sections[i].dragCoefficient() << ",";
-			f << _sections[i].pitchingMomentCoefficient() << ",";
-			f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
-			f << _sections[i].chord() * _sections[i].dragCoefficient()
-			  << std::endl;
-		}
-	}
-	for ( i = 1; i < int(_nspan); i++ )
-	{
-		f << _sections[i].xle() << ",";
-		f << -_sections[i].y() << ",";
-		f << -y_flat[i] << ",";
-		f << _sections[i].zle() << ",";
-		f << _sections[i].chord() << ",";
-		if (viscous)
-		{
-			f << _sections[i].reynoldsNumber() << ",";
-			f << _sections[i].liftCoefficient() << ",";
-			f << _sections[i].pressureLiftCoefficient() << ",";
-			f << _sections[i].viscousLiftCoefficient() << ",";
-			f << _sections[i].dragCoefficient() << ",";
-			f << _sections[i].pressureDragCoefficient() << ",";
-			f << _sections[i].viscousDragCoefficient() << ",";
-			f << _sections[i].pitchingMomentCoefficient() << ",";
-			f << _sections[i].pressurePitchingMomentCoefficient() << ",";
-			f << _sections[i].viscousPitchingMomentCoefficient() << ",";
-			f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
-			f << _sections[i].chord() * _sections[i].dragCoefficient()
-			  << std::endl;
-		}
-		else
-		{
-			f << _sections[i].liftCoefficient() << ",";
-			f << _sections[i].dragCoefficient() << ",";
-			f << _sections[i].pitchingMomentCoefficient() << ",";
-			f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
-			f << _sections[i].chord() * _sections[i].dragCoefficient()
-			  << std::endl;
-		}
-	}
-	f.close();
-	
-	return 0;
+    std::ofstream f;
+    std::string fname;
+    std::vector<double> y_flat;
+    int i;
+    double dy, dz, ds;
+    
+    // Compute "flattened" spanwise locations
+    
+    y_flat.resize(_nspan);
+    y_flat[0] = 0.;
+    for ( i = 1; i < int(_nspan); i++ )
+    {
+        dy = _sections[i].y() - _sections[i-1].y();
+        dz = _sections[i].zle() - _sections[i-1].zle();
+        ds = std::sqrt(dy*dy + dz*dz);
+        y_flat[i] = y_flat[i-1] + ds;
+    }
+    
+    fname = "sectional/" + _name + "_sectional_iter" + int2string(iter)
+          + ".csv";
+    
+    // Write header
+    
+    f.open(fname.c_str(), std::fstream::out);
+    if (! f.is_open())
+    {
+        print_warning("Wing::writeSectionForces",
+                      "Unable to open " + fname + " for writing.");
+        return 1;
+    }
+    f << "\"xle\",\"y\",\"y_flat\",\"zle\",\"c\",";
+    if (viscous)
+    {
+        f << "\"Re\",\"Cl\",\"Clp\",\"Clv\",\"Cd\",\"Cdp\",\"Cdv\","
+          <<        "\"Cm\",\"Cmp\",\"Cmv\",\"cCl\",\"cCd\"" << std::endl;
+    }
+    else
+    {
+        f << "\"Cl\",\"Cd\",\"Cm\",\"cCl\",\"cCd\"" << std::endl;
+    }
+    
+    // Write data for sections and mirror image
+    
+    f.setf(std::ios_base::scientific);
+    f << std::setprecision(7);
+    for ( i = _nspan-1; i >= 0; i-- )
+    {
+        f << _sections[i].xle() << ",";
+        f << _sections[i].y() << ",";
+        f << y_flat[i] << ",";
+        f << _sections[i].zle() << ",";
+        f << _sections[i].chord() << ",";
+        if (viscous)
+        {
+            f << _sections[i].reynoldsNumber() << ",";
+            f << _sections[i].liftCoefficient() << ",";
+            f << _sections[i].pressureLiftCoefficient() << ",";
+            f << _sections[i].viscousLiftCoefficient() << ",";
+            f << _sections[i].dragCoefficient() << ",";
+            f << _sections[i].pressureDragCoefficient() << ",";
+            f << _sections[i].viscousDragCoefficient() << ",";
+            f << _sections[i].pitchingMomentCoefficient() << ",";
+            f << _sections[i].pressurePitchingMomentCoefficient() << ",";
+            f << _sections[i].viscousPitchingMomentCoefficient() << ",";
+            f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+            f << _sections[i].chord() * _sections[i].dragCoefficient()
+              << std::endl;
+        }
+        else
+        {
+            f << _sections[i].liftCoefficient() << ",";
+            f << _sections[i].dragCoefficient() << ",";
+            f << _sections[i].pitchingMomentCoefficient() << ",";
+            f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+            f << _sections[i].chord() * _sections[i].dragCoefficient()
+              << std::endl;
+        }
+    }
+    for ( i = 1; i < int(_nspan); i++ )
+    {
+        f << _sections[i].xle() << ",";
+        f << -_sections[i].y() << ",";
+        f << -y_flat[i] << ",";
+        f << _sections[i].zle() << ",";
+        f << _sections[i].chord() << ",";
+        if (viscous)
+        {
+            f << _sections[i].reynoldsNumber() << ",";
+            f << _sections[i].liftCoefficient() << ",";
+            f << _sections[i].pressureLiftCoefficient() << ",";
+            f << _sections[i].viscousLiftCoefficient() << ",";
+            f << _sections[i].dragCoefficient() << ",";
+            f << _sections[i].pressureDragCoefficient() << ",";
+            f << _sections[i].viscousDragCoefficient() << ",";
+            f << _sections[i].pitchingMomentCoefficient() << ",";
+            f << _sections[i].pressurePitchingMomentCoefficient() << ",";
+            f << _sections[i].viscousPitchingMomentCoefficient() << ",";
+            f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+            f << _sections[i].chord() * _sections[i].dragCoefficient()
+              << std::endl;
+        }
+        else
+        {
+            f << _sections[i].liftCoefficient() << ",";
+            f << _sections[i].dragCoefficient() << ",";
+            f << _sections[i].pitchingMomentCoefficient() << ",";
+            f << _sections[i].chord() * _sections[i].liftCoefficient() << ",";
+            f << _sections[i].chord() * _sections[i].dragCoefficient()
+              << std::endl;
+        }
+    }
+    f.close();
+    
+    return 0;
 }
