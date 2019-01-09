@@ -14,6 +14,7 @@
 #include "element.h"
 #include "panel.h"
 #include "wing.h"
+#include "farfield.h"
 #include "aircraft.h"
 
 using namespace tinyxml2;
@@ -811,6 +812,11 @@ int Aircraft::readXML ( const std::string & geom_file )
                          "At least one wing is required.");
         return 2;
     }
+
+    // Farfield box
+
+    _farfield.initialize(100, 100, 100, 200., 200., 200., next_global_vertidx,
+                         next_global_elemidx);
     
     // Set pointers to vertices, panels, and wake elements
     

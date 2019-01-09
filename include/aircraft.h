@@ -8,6 +8,7 @@
 #include <Eigen/Dense>
 #include <fstream>
 #include "wing.h"
+#include "farfield.h"
 
 class Vertex;
 class Panel;
@@ -37,6 +38,8 @@ class Aircraft {
     std::vector<Vertex *> _wakeverts;   // Pointers to wake vertices
     std::vector<Panel *> _wakepanels;   // Pointers to wake doublet panels
     std::vector<Wake *> _allwake;       // Pointers to wakes
+
+    Farfield _farfield;                 // Farfield (for post calculations only)
     
     Eigen::MatrixXd _sourceic, _doubletic;
                                         // Aero influence coefficients due to
