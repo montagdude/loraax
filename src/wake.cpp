@@ -335,7 +335,7 @@ void Wake::update ()
     // convected position of vertex (i,j-1).
 
 #pragma omp parallel for private(i,j,x,y,z,xinc,yinc,zinc,xviz,yviz,zviz)
-    for ( i = 0; i < _nspan; i++ )
+    for ( i = 0; int(i) < _nspan; i++ )
     {
         _verts[i*(_nstream+1)].incrementWakeTime(dt);
         for ( j = 1; int(j) < _nstream; j++ )
