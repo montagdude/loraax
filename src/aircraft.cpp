@@ -815,8 +815,8 @@ int Aircraft::readXML ( const std::string & geom_file )
 
     // Farfield box
 
-    _farfield.initialize(100, 100, 100, 200., 200., 200., next_global_vertidx,
-                         next_global_elemidx);
+    _farfield.initialize(100, 100, 100, 200., 200., 200., minf,
+                         next_global_vertidx, next_global_elemidx);
     
     // Set pointers to vertices, panels, and wake elements
     

@@ -36,11 +36,12 @@ Farfield::Farfield ()
 /******************************************************************************/
 void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
                             const double & lenx, const double & leny,
-                            const double & lenz, int & next_global_vertidx,
+                            const double & lenz, const double & minf,
+                            int & next_global_vertidx,
                             int & next_global_elemidx )
 {
     unsigned int i, j;
-    double x, y, z, dx, dy, dz;
+    double beta, x, y, z, dx, dy, dz;
 
     _nx = nx;
     _ny = ny;
@@ -48,6 +49,7 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
     dx = _lenx / double(_nx-1);
     dy = _leny / double(_ny-1);
     dz = _lenz / double(_nz-1);
+    beta = std::sqrt(1. - std::pow(minf, 2.));
 
     // Set up arrays. Each array has indices face, i, j. There are 6 faces, and
     // i and j go from 0 to _nx, _ny, or _nz.
@@ -68,6 +70,7 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             z = _lenz/2. - double(j)*dz;
             _vertarray[0][i][j].setIdx(next_global_vertidx);
             _vertarray[0][i][j].setCoordinates(x, y, z);
+            _vertarray[0][i][j].setIncompressibleCoordinates(x/beta, y, z);
             _verts.push_back(&_vertarray[0][i][j]);
             next_global_vertidx += 1;
         }
@@ -101,6 +104,7 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             z = _lenz/2. - double(j)*dz;
             _vertarray[1][i][j].setIdx(next_global_vertidx);
             _vertarray[1][i][j].setCoordinates(x, y, z);
+            _vertarray[1][i][j].setIncompressibleCoordinates(x/beta, y, z);
             _verts.push_back(&_vertarray[1][i][j]);
             next_global_vertidx += 1;
         }
@@ -134,6 +138,7 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             z = _lenz/2. - double(j)*dz;
             _vertarray[2][i][j].setIdx(next_global_vertidx);
             _vertarray[2][i][j].setCoordinates(x, y, z);
+            _vertarray[2][i][j].setIncompressibleCoordinates(x/beta, y, z);
             _verts.push_back(&_vertarray[2][i][j]);
             next_global_vertidx += 1;
         }
@@ -167,6 +172,7 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             z = _lenz/2. - double(j)*dz;
             _vertarray[3][i][j].setIdx(next_global_vertidx);
             _vertarray[3][i][j].setCoordinates(x, y, z);
+            _vertarray[3][i][j].setIncompressibleCoordinates(x/beta, y, z);
             _verts.push_back(&_vertarray[3][i][j]);
             next_global_vertidx += 1;
         }
@@ -200,6 +206,7 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             y = -_leny/2. + double(j)*dy;
             _vertarray[4][i][j].setIdx(next_global_vertidx);
             _vertarray[4][i][j].setCoordinates(x, y, z);
+            _vertarray[4][i][j].setIncompressibleCoordinates(x/beta, y, z);
             _verts.push_back(&_vertarray[4][i][j]);
             next_global_vertidx += 1;
         }
@@ -233,6 +240,7 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
             y = -_leny/2. + double(j)*dy;
             _vertarray[5][i][j].setIdx(next_global_vertidx);
             _vertarray[5][i][j].setCoordinates(x, y, z);
+            _vertarray[5][i][j].setIncompressibleCoordinates(x/beta, y, z);
             _verts.push_back(&_vertarray[5][i][j]);
             next_global_vertidx += 1;
         }

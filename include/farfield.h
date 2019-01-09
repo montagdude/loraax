@@ -34,7 +34,8 @@ class Farfield {
     
     void initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
                       const double & lenx, const double & leny,
-                      const double & lenz, int & next_global_vertidx,
+                      const double & lenz, const double & minf,
+                      int & next_global_vertidx,
                       int & next_global_elemidx );
 
     // Access vertices and panels
