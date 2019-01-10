@@ -63,6 +63,9 @@ class Aircraft {
     int writeWakeViz ( const std::string & fname ) const;
     void writeWakeData ( std::ofstream & f ) const;
     int writeWakeStripViz ( const std::string & prefix );
+    void writeFarfieldData ( std::ofstream & f );
+    void writeFarfieldScalar ( std::ofstream & f, const std::string & varname,
+                               unsigned int varidx );
 
     public:
 
@@ -147,6 +150,10 @@ class Aircraft {
     // Convects and updates wake panels
     
     void moveWake ();
+
+    // Performs farfield computations
+
+    void computeFarfield ();
     
     // Write VTK viz
     

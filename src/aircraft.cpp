@@ -561,9 +561,62 @@ int Aircraft::writeFarfieldViz ( const std::string & prefix )
       f << 5 << std::endl;
   }
 
+  writeFarfieldData(f);
   f.close();
 
   return 0;
+}
+
+/******************************************************************************/
+//
+// Writes farfield data to VTK viz file
+//
+/******************************************************************************/
+void Aircraft::writeFarfieldData ( std::ofstream & f )
+{
+    unsigned int i, nverts;
+    
+    nverts = _farfield.nVerts();
+    
+    // Vertex data
+    
+    f << "POINT_DATA " << nverts << std::endl;
+    f << "Vectors velocity double" << std::endl;
+    f.setf(std::ios_base::scientific);
+    for ( i = 0; i < nverts; i++ )
+    {
+        f << std::setprecision(7) << std::setw(16) << std::left
+          << _farfield.vert(i)->data(2);
+        f << std::setprecision(7) << std::setw(16) << std::left
+          << _farfield.vert(i)->data(3);
+        f << std::setprecision(7) << std::setw(16) << std::left
+          << _farfield.vert(i)->data(4) << std::endl;
+    }
+    writeFarfieldScalar(f, "pressure", 5);
+    writeFarfieldScalar(f, "pressure_coefficient", 6);
+    writeFarfieldScalar(f, "mach", 7);
+}
+
+/******************************************************************************/
+//
+// Writes farfield scalar to VTK viz file
+//
+/******************************************************************************/
+void Aircraft::writeFarfieldScalar ( std::ofstream & f,
+                                     const std::string & varname,
+                                     unsigned int varidx )
+{
+  unsigned int i, nverts;
+
+  nverts = _farfield.nVerts();
+
+  f << "SCALARS " << varname << " double 1" << std::endl;
+  f << "LOOKUP_TABLE default" << std::endl;
+  f.setf(std::ios_base::scientific);
+  for ( i = 0; i < nverts; i++ )
+  {
+    f << std::setprecision(7) << _farfield.vert(i)->data(varidx) << std::endl;
+  }
 }
 
 /******************************************************************************/
@@ -1617,6 +1670,17 @@ void Aircraft::moveWake ()
     {
         _wings[i].wake().update();
     }
+}
+
+/*******************************************************************************
+
+Computes farfield data
+
+*******************************************************************************/
+void Aircraft::computeFarfield ()
+{
+  _farfield.computeVelocity(uinfvec, minf, _panels, _wakepanels);
+  _farfield.computePressure(uinf, rhoinf, pinf);
 }
 
 /******************************************************************************/

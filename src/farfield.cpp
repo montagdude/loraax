@@ -1,5 +1,6 @@
 #include <vector>
 #include <cmath>
+#include <Eigen/Core>
 #include "util.h"
 #include "vertex.h"
 #include "quadpanel.h"
@@ -302,4 +303,109 @@ QuadPanel * Farfield::quadPanel ( unsigned int qidx )
 #endif
 
     return _quads[qidx];
+}
+
+/******************************************************************************
+
+Velocity and pressure computation. Induced velocities are computed in
+incompressible coordinates. Compressible velocity is: V_c = (U_i/beta, V_i, W_i)
+
+*******************************************************************************/
+void Farfield::computeVelocity ( const Eigen::Vector3d & uinfvec,
+                                 const double & minf,
+                                 const std::vector<Panel *> & allsurf,
+                                 const std::vector<Panel *> & allwake )
+{
+    unsigned int i, k, nverts, nsurfpan, nwakepan;
+    double beta, xinc, yinc, zinc;
+    Eigen::Vector3d vel, dvel, dvelcomp;
+
+    beta = std::sqrt(1. - std::pow(minf, 2.));
+    nsurfpan = allsurf.size();
+    nwakepan = allwake.size();
+
+    nverts = nVerts();
+#pragma omp parallel for private(i,xinc,yinc,zinc,vel,k,dvel,dvelcomp)
+    for ( i = 0; i < nverts; i++ )
+    {
+        xinc = _verts[i]->xInc();
+        yinc = _verts[i]->yInc();
+        zinc = _verts[i]->zInc();
+        vel = uinfvec;
+        for ( k = 0; k < nsurfpan; k++ )
+        {
+            dvel = allsurf[k]->inducedVelocity(xinc, yinc, zinc, false, "top",
+                                               true);
+            dvelcomp << dvel(0)/beta, dvel(1), dvel(2);
+            vel += dvelcomp;
+        }
+        for ( k = 0; k < nwakepan; k++ )
+        {
+            dvel = allwake[k]->vortexVelocity(xinc, yinc, zinc, 1e-08, true);
+            dvelcomp << dvel(0)/beta, dvel(1), dvel(2);
+            vel += dvelcomp;
+        }
+        _verts[i]->setData(2, vel(0));
+        _verts[i]->setData(3, vel(1));
+        _verts[i]->setData(4, vel(2));
+    }
+}
+
+int Farfield::computePressure ( const double & uinf, const double & rhoinf,
+                                const double & pinf )
+{
+    int retval;
+    unsigned int i, nverts;
+    double uinf2, vel2, ainf2, qinf, cpinc, minf2, beta, p0, cp, p, m2, gamm1,
+           gamma, mach;
+    Eigen::Vector3d vel;
+
+    uinf2 = std::pow(uinf, 2.);
+    qinf = 0.5*rhoinf*uinf2;
+    ainf2 = 1.4*pinf/rhoinf;
+    minf2 = uinf2/ainf2;
+    beta = std::sqrt(1. - minf2);
+    gamma = 1.4;
+    gamm1 = gamma - 1.;
+    retval = 0;
+
+    nverts = nVerts();
+#pragma omp parallel for private(i,vel,vel2,cpinc,cp,p,p0,m2,mach)
+    for ( i = 0; i < nverts; i++ )
+    {
+        vel << _verts[i]->data(2), _verts[i]->data(3), _verts[i]->data(4);
+        vel2 = vel.squaredNorm();
+        cpinc = 1. - vel2 / uinf2;
+
+        // Prandtl-Glauert compressibility correction for pressure
+  
+        cp = cpinc / beta;
+        p = cp*qinf + pinf;
+  
+        // Physical limits on pressure
+  
+        p0 = pinf * std::pow(1. + 0.5*gamm1*minf2, gamma/gamm1);
+        if (p > p0)
+        {
+            p = p0;
+            cp = (p - pinf) / qinf;
+        }
+  
+        // Use isentropic relations to get local Mach number
+  
+        m2 = 2./gamm1 * (std::pow(p0/p, gamm1/gamma) - 1.);
+        if (m2 > 1.0)
+        {
+            conditional_stop(1, "Farfield::computePressure",
+                             "Locally supersonic flow detected.");
+            retval = 1;
+        }
+        mach = std::sqrt(m2);
+
+        _verts[i]->setData(5, p);
+        _verts[i]->setData(6, cp);
+        _verts[i]->setData(7, mach);
+    }
+  
+    return retval;
 }

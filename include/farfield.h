@@ -4,8 +4,11 @@
 #define FARFIELD_H
 
 #include <vector>
+#include <Eigen/Core>
 #include "vertex.h"
 #include "quadpanel.h"
+
+class Panel;
 
 /******************************************************************************/
 //
@@ -44,6 +47,14 @@ class Farfield {
     unsigned int nQuads () const;
     Vertex * vert ( unsigned int vidx );
     QuadPanel * quadPanel ( unsigned int qidx );
+
+    // Velocity and pressure calculation
+
+    void computeVelocity ( const Eigen::Vector3d & uinfvec, const double & minf,
+                           const std::vector<Panel *> & allsurf,
+                           const std::vector<Panel *> & allwake );
+    int computePressure ( const double & uinf, const double & rhoinf,
+                          const double & pinf );
 
 };
 

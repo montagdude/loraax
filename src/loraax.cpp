@@ -222,6 +222,11 @@ int main (int argc, char* argv[])
 
     if (! converged)
         print_warning("main", "Solution did not converge.");
+
+    // Compute farfield data
+
+    std::cout << "Computing farfield data ..." << std::endl;
+    ac.computeFarfield();
     
     // Write final visualization
     

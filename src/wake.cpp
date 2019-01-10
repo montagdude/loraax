@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cmath>
+#include <Eigen/Core>
 #include "util.h"
 #include "settings.h"
 #include "vertex.h"
