@@ -62,7 +62,8 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
     _vertarray.resize(6);
     _quadarray.resize(6);
 
-    // Left face
+    // Left face. Note faces are set up with normals pointing out of the volume,
+    // as needed for the fluid rate of change of momentum calculation.
 
     _vertarray[0].resize(_nx);
     y = -_leny/2.;
@@ -87,9 +88,9 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
         {
             _quadarray[0][i][j].setIdx(next_global_elemidx);
             _quadarray[0][i][j].addVertex(&_vertarray[0][i][j]);
-            _quadarray[0][i][j].addVertex(&_vertarray[0][i+1][j]);
-            _quadarray[0][i][j].addVertex(&_vertarray[0][i+1][j+1]);
             _quadarray[0][i][j].addVertex(&_vertarray[0][i][j+1]);
+            _quadarray[0][i][j].addVertex(&_vertarray[0][i+1][j+1]);
+            _quadarray[0][i][j].addVertex(&_vertarray[0][i+1][j]);
             next_global_elemidx += 1;
         }
     }
@@ -119,9 +120,9 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
         {
             _quadarray[1][i][j].setIdx(next_global_elemidx);
             _quadarray[1][i][j].addVertex(&_vertarray[1][i][j]);
-            _quadarray[1][i][j].addVertex(&_vertarray[1][i][j+1]);
-            _quadarray[1][i][j].addVertex(&_vertarray[1][i+1][j+1]);
             _quadarray[1][i][j].addVertex(&_vertarray[1][i+1][j]);
+            _quadarray[1][i][j].addVertex(&_vertarray[1][i+1][j+1]);
+            _quadarray[1][i][j].addVertex(&_vertarray[1][i][j+1]);
             next_global_elemidx += 1;
         }
     }
@@ -151,9 +152,9 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
         {
             _quadarray[2][i][j].setIdx(next_global_elemidx);
             _quadarray[2][i][j].addVertex(&_vertarray[2][i][j]);
-            _quadarray[2][i][j].addVertex(&_vertarray[2][i][j+1]);
-            _quadarray[2][i][j].addVertex(&_vertarray[2][i+1][j+1]);
             _quadarray[2][i][j].addVertex(&_vertarray[2][i+1][j]);
+            _quadarray[2][i][j].addVertex(&_vertarray[2][i+1][j+1]);
+            _quadarray[2][i][j].addVertex(&_vertarray[2][i][j+1]);
             next_global_elemidx += 1;
         }
     }
@@ -183,9 +184,9 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
         {
             _quadarray[3][i][j].setIdx(next_global_elemidx);
             _quadarray[3][i][j].addVertex(&_vertarray[3][i][j]);
-            _quadarray[3][i][j].addVertex(&_vertarray[3][i+1][j]);
-            _quadarray[3][i][j].addVertex(&_vertarray[3][i+1][j+1]);
             _quadarray[3][i][j].addVertex(&_vertarray[3][i][j+1]);
+            _quadarray[3][i][j].addVertex(&_vertarray[3][i+1][j+1]);
+            _quadarray[3][i][j].addVertex(&_vertarray[3][i+1][j]);
             next_global_elemidx += 1;
         }
     }
@@ -215,9 +216,9 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
         {
             _quadarray[4][i][j].setIdx(next_global_elemidx);
             _quadarray[4][i][j].addVertex(&_vertarray[4][i][j]);
-            _quadarray[4][i][j].addVertex(&_vertarray[4][i][j+1]);
-            _quadarray[4][i][j].addVertex(&_vertarray[4][i+1][j+1]);
             _quadarray[4][i][j].addVertex(&_vertarray[4][i+1][j]);
+            _quadarray[4][i][j].addVertex(&_vertarray[4][i+1][j+1]);
+            _quadarray[4][i][j].addVertex(&_vertarray[4][i][j+1]);
             next_global_elemidx += 1;
         }
     }
@@ -247,9 +248,9 @@ void Farfield::initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
         {
             _quadarray[5][i][j].setIdx(next_global_elemidx);
             _quadarray[5][i][j].addVertex(&_vertarray[5][i][j]);
-            _quadarray[5][i][j].addVertex(&_vertarray[5][i+1][j]);
-            _quadarray[5][i][j].addVertex(&_vertarray[5][i+1][j+1]);
             _quadarray[5][i][j].addVertex(&_vertarray[5][i][j+1]);
+            _quadarray[5][i][j].addVertex(&_vertarray[5][i+1][j+1]);
+            _quadarray[5][i][j].addVertex(&_vertarray[5][i+1][j]);
             next_global_elemidx += 1;
         }
     }
