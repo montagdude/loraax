@@ -29,7 +29,6 @@ class Panel: public Element {
     Eigen::Vector3d _norm;          // Outward-facing normal
     Eigen::Vector3d _cen;           // Face centroid
     Eigen::Vector3d _colloc;        // Collocation point (defaults to centroid)
-  const double & density () const;
     bool _colloc_is_centroid;       // Whether collocation point is centroid
     Eigen::Matrix3d _trans, _invtrans;
                                     // Transform from inertial frame to panel
@@ -47,6 +46,7 @@ class Panel: public Element {
                                     //   at centroid
     double _mach;                   // Local mach number
     double _cp, _p;                 // Pressure coefficient and pressure
+    double _rho;                    // Density
     double _cf, _mdefect, _dmdefect;// Skin friction coefficient, mass defect,
                                     //   and d/ds(mass defect)
 
@@ -175,11 +175,12 @@ class Panel: public Element {
 
     const double & mach () const;
     
-    // Compute or access pressure and pressure coefficient
+    // Compute or access pressure, density, and pressure coefficient
     
     int computePressure ( const double & uinf, const double & rhoinf,
                           const double & pinf );
     const double & pressure () const;
+    const double & density () const;
     const double & pressureCoefficient () const;
     
     // Mass defect: uedge*deltastar and derivative d/ds

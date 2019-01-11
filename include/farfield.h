@@ -48,7 +48,7 @@ class Farfield {
     Vertex * vert ( unsigned int vidx );
     QuadPanel * quadPanel ( unsigned int qidx );
 
-    // Velocity and pressure calculation
+    // Velocity and pressure (and cp, mach, and density) calculation
 
     void computeVelocity ( const Eigen::Vector3d & uinfvec, const double & minf,
                            const std::vector<Panel *> & allsurf,

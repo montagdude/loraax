@@ -272,13 +272,14 @@ void Aircraft::writeSurfaceData ( std::ofstream & f ) const
     writeSurfaceScalar(f, "pressure", 5);
     writeSurfaceScalar(f, "pressure_coefficient", 6);
     writeSurfaceScalar(f, "mach", 7);
+    writeSurfaceScalar(f, "density", 8);
     if (viscous)
     {
-        writeSurfaceScalar(f, "skin_friction_coefficient", 8);
-        writeSurfaceScalar(f, "displacement_thickness", 9);
-        writeSurfaceScalar(f, "log_amplification_ratio", 10);
-        writeSurfaceScalar(f, "uedge", 11);
-        writeSurfaceScalar(f, "cp2d", 12);
+        writeSurfaceScalar(f, "skin_friction_coefficient", 9);
+        writeSurfaceScalar(f, "displacement_thickness", 10);
+        writeSurfaceScalar(f, "log_amplification_ratio", 11);
+        writeSurfaceScalar(f, "uedge", 12);
+        writeSurfaceScalar(f, "cp2d", 13);
     }
 
     int j, npanels;
@@ -595,6 +596,7 @@ void Aircraft::writeFarfieldData ( std::ofstream & f )
     writeFarfieldScalar(f, "pressure", 5);
     writeFarfieldScalar(f, "pressure_coefficient", 6);
     writeFarfieldScalar(f, "mach", 7);
+    writeFarfieldScalar(f, "density", 8);
 }
 
 /******************************************************************************/
@@ -957,7 +959,7 @@ int Aircraft::readXML ( const std::string & geom_file )
 
     // Farfield box
 
-    _farfield.initialize(100, 100, 100, 200., 200., 200., minf,
+    _farfield.initialize(50, 50, 50, 100., 100., 100., minf,
                          next_global_vertidx, next_global_elemidx);
     
     // Set pointers to vertices, panels, and wake elements

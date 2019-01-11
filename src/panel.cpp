@@ -38,6 +38,7 @@ Panel::Panel ()
     _cencomp << 0., 0., 0.;
     _p = 0.;
     _cp = 0.;
+    _rho = 0.;
     _cf = 0.;
     _mdefect = 0.;
     _dmdefect = 0.;
@@ -355,14 +356,14 @@ const Eigen::Vector3d & Panel::velocityComp () const { return _velcomp; }
 /******************************************************************************/
 //
 // Compute / access pressure and pressure coefficient. Uses Prandtl-Glauert
-// compressibility correction. Also computes compressible velocity.
+// compressibility correction. Also computes density and compressible velocity.
 //
 /******************************************************************************/
 int Panel::computePressure ( const double & uinf, const double & rhoinf,
                              const double & pinf )
 {
     double uinf2, vel2, ainf2, qinf, cpinc, minf2, beta, p0, m2, gamma, gamm1,
-           rho0, rho, a2, velcomp2;
+           rho0, a2, velcomp2;
     
     gamma = 1.4;
     gamm1 = gamma - 1.;
@@ -389,8 +390,8 @@ int Panel::computePressure ( const double & uinf, const double & rhoinf,
         _cp = (_p - pinf) / qinf;
     }
 
-    // Use isentropic relations to get local Mach number and compressible
-    // velocity
+    // Use isentropic relations to get local Mach number, density, and
+    // compressible velocity
 
     m2 = 2./gamm1 * (std::pow(p0/_p, gamm1/gamma) - 1.);
     if (m2 > 1.0)
@@ -402,8 +403,8 @@ int Panel::computePressure ( const double & uinf, const double & rhoinf,
     _mach = std::sqrt(m2);
 
     rho0 = rhoinf * std::pow(1. + 0.5*gamm1*minf2, 1./gamm1);
-    rho = rho0 / std::pow(1. + 0.5*gamm1*m2, 1./gamm1);
-    a2 = gamma*_p/rho;
+    _rho = rho0 / std::pow(1. + 0.5*gamm1*m2, 1./gamm1);
+    a2 = gamma*_p/_rho;
     velcomp2 = m2*a2;
     _velcomp = std::sqrt(velcomp2/vel2)*_vel;
 
@@ -411,6 +412,7 @@ int Panel::computePressure ( const double & uinf, const double & rhoinf,
 }
 
 const double & Panel::pressure () const { return _p; }
+const double & Panel::density () const { return _rho; }
 const double & Panel::pressureCoefficient () const { return _cp; }
 
 /******************************************************************************/
@@ -449,8 +451,8 @@ void Panel::averageFromVertices ()
         dz = _verts[i]->z() - _cen(2);
         dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.) +
                          std::pow(dz,2.));
-        _cf += _verts[i]->data(8)/dist;
-        _mdefect += (_verts[i]->data(9)*_verts[i]->data(11))/dist;
+        _cf += _verts[i]->data(9)/dist;
+        _mdefect += (_verts[i]->data(10)*_verts[i]->data(12))/dist;
         weightsum += 1./dist;
     }
     _cf /= weightsum;

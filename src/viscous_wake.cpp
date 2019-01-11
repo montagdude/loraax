@@ -127,15 +127,15 @@ void ViscousWake::update ()
             tlvert = _verts[i*_nwake+j];
             blvert = _verts[i*_nwake+j+1];
             dsl = tlvert->distance(*blvert);
-            mdefl1 = tlvert->data(9)*tlvert->data(11);
-            mdefl2 = blvert->data(9)*blvert->data(11);
+            mdefl1 = tlvert->data(10)*tlvert->data(12);
+            mdefl2 = blvert->data(10)*blvert->data(12);
             dmdefl = (mdefl2 - mdefl1) / dsl;
 
             trvert = _verts[(i+1)*_nwake+j];
             brvert = _verts[(i+1)*_nwake+j+1];
             dsr = trvert->distance(*brvert);
-            mdefr1 = trvert->data(9)*trvert->data(11);
-            mdefr2 = brvert->data(9)*brvert->data(11);
+            mdefr1 = trvert->data(10)*trvert->data(12);
+            mdefr2 = brvert->data(10)*brvert->data(12);
             dmdefr = (mdefr2 - mdefr1) / dsr;
 
             _tris[i*(_nwake-1)*2+j*2].setSourceStrength(0.67*dmdefl +

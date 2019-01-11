@@ -291,6 +291,7 @@ void Vertex::averageFromPanels ()
         _data[5] += _panels[i]->pressure()/dist;
         _data[6] += _panels[i]->pressureCoefficient()/dist;
         _data[7] += _panels[i]->mach()/dist;
+        _data[8] += _panels[i]->density()/dist;
         weightsum += 1./dist;
     }
     for ( i = 0; i < Vertex::firstBLData; i++ )

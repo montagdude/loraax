@@ -382,15 +382,15 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
     // scaling as needed.
 
     bldata = _foil.blData("cf", stat);
-    setVertexBLData(bldata, 8);
+    setVertexBLData(bldata, 9);
     bldata = _foil.blData("deltastar", stat);
-    setVertexBLData(bldata, 9, _chord);
+    setVertexBLData(bldata, 10, _chord);
     bldata = _foil.blData("ampl", stat);
-    setVertexBLData(bldata, 10);
+    setVertexBLData(bldata, 11);
     bldata = _foil.blData("uedge", stat);
-    setVertexBLData(bldata, 11, uinf);
+    setVertexBLData(bldata, 12, uinf);
     bldata = _foil.blData("cp2d", stat);
-    setVertexBLData(bldata, 12);
+    setVertexBLData(bldata, 13);
 
     // Get BL wake data
 
@@ -416,8 +416,8 @@ void Section::computeBL ( const Eigen::Vector3d & uinfvec,
         _wverts[i].translate(0.25, 0., 0.);
         _wverts[i].scale(_chord);
         _wverts[i].translate(_xle, _y, _zle);
-        _wverts[i].setData(9, dstarw[i]*_chord);
-        _wverts[i].setData(11, uedgew[i]*uinf);
+        _wverts[i].setData(10, dstarw[i]*_chord);
+        _wverts[i].setData(12, uedgew[i]*uinf);
 
         // Prandtl-Glauert transformation
 
@@ -490,7 +490,7 @@ void Section::computeForceMoment ( const double & alpha, const double & uinf,
                 tz *= -1.;
             }
 
-            cfave = 0.5*(_verts[i].data(8) + _verts[i-1].data(8));
+            cfave = 0.5*(_verts[i].data(9) + _verts[i-1].data(9));
             dfnv = cfave*qinf*tz;
             dfav = cfave*qinf*tx;
             fnv += dfnv;
@@ -604,25 +604,25 @@ void Section::interpolateBL ( Section & sec1, Section & sec2,
 
     for ( i = 0; i < _nverts; i++ )
     {
-        cf = sec1.vert(i).data(8)*weight1 + sec2.vert(i).data(8)*weight2;
-        dstar = sec1.vert(i).data(9)*weight1 + sec2.vert(i).data(9)*weight2;
-        ampl = sec1.vert(i).data(10)*weight1 + sec2.vert(i).data(10)*weight2;
-        uedge = sec1.vert(i).data(11)*weight1 + sec2.vert(i).data(11)*weight2;
-        cp2d = sec1.vert(i).data(12)*weight1 + sec2.vert(i).data(12)*weight2;
-        _verts[i].setData(8, cf);
-        _verts[i].setData(9, dstar);
-        _verts[i].setData(10, ampl);
-        _verts[i].setData(11, uedge);
-        _verts[i].setData(12, cp2d);
+        cf = sec1.vert(i).data(9)*weight1 + sec2.vert(i).data(9)*weight2;
+        dstar = sec1.vert(i).data(10)*weight1 + sec2.vert(i).data(10)*weight2;
+        ampl = sec1.vert(i).data(11)*weight1 + sec2.vert(i).data(11)*weight2;
+        uedge = sec1.vert(i).data(12)*weight1 + sec2.vert(i).data(12)*weight2;
+        cp2d = sec1.vert(i).data(13)*weight1 + sec2.vert(i).data(13)*weight2;
+        _verts[i].setData(9, cf);
+        _verts[i].setData(10, dstar);
+        _verts[i].setData(11, ampl);
+        _verts[i].setData(12, uedge);
+        _verts[i].setData(13, cp2d);
     }
 
     for ( i = 0; i < _nwake; i++ )
     {
-        dstar = sec1.wakeVert(i).data(9)*weight1
-              + sec2.wakeVert(i).data(9)*weight2;
-        uedge = sec1.wakeVert(i).data(11)*weight1
-              + sec2.wakeVert(i).data(11)*weight2;
-        _wverts[i].setData(9, dstar);
-        _wverts[i].setData(11, uedge);
+        dstar = sec1.wakeVert(i).data(10)*weight1
+              + sec2.wakeVert(i).data(10)*weight2;
+        uedge = sec1.wakeVert(i).data(12)*weight1
+              + sec2.wakeVert(i).data(12)*weight2;
+        _wverts[i].setData(10, dstar);
+        _wverts[i].setData(12, uedge);
     }
 }

@@ -357,7 +357,7 @@ int Farfield::computePressure ( const double & uinf, const double & rhoinf,
     int retval;
     unsigned int i, nverts;
     double uinf2, vel2, ainf2, qinf, cpinc, minf2, beta, p0, cp, p, m2, gamm1,
-           gamma, mach;
+           gamma, mach, rho0, rho;
     Eigen::Vector3d vel;
 
     uinf2 = std::pow(uinf, 2.);
@@ -401,10 +401,13 @@ int Farfield::computePressure ( const double & uinf, const double & rhoinf,
             retval = 1;
         }
         mach = std::sqrt(m2);
+        rho0 = rhoinf * std::pow(1. + 0.5*gamm1*minf2, 1./gamm1);
+        rho = rho0 / std::pow(1. + 0.5*gamm1*m2, 1./gamm1);
 
         _verts[i]->setData(5, p);
         _verts[i]->setData(6, cp);
         _verts[i]->setData(7, mach);
+        _verts[i]->setData(8, rho);
     }
   
     return retval;
