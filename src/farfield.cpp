@@ -6,6 +6,8 @@
 #include "quadpanel.h"
 #include "farfield.h"
 
+#include <iostream>
+
 /******************************************************************************/
 //
 // Farfield class.
@@ -29,6 +31,8 @@ Farfield::Farfield ()
     _quadarray.resize(0);
     _verts.resize(0);
     _quads.resize(0);
+    _momrate << 0., 0., 0.;
+    _pforce << 0., 0., 0.;
 }
 
 /******************************************************************************/
@@ -412,4 +416,61 @@ int Farfield::computePressure ( const double & uinf, const double & rhoinf,
     }
   
     return retval;
+}
+
+/*******************************************************************************
+
+Computes force on fluid inside control volume (rate of change of momentum).
+Also computes pressure force on fluid due to outer boundary. Inviscid aero force
+acting on aircraft is _pforce - _momrate.
+
+*******************************************************************************/
+void Farfield::computeForce ()
+{
+    unsigned int i, j, nquads, nverts;
+    Eigen::Vector3d vel, cen;
+    double dx, dy, dz, dist, p, rho, weightsum;
+
+    _momrate << 0., 0., 0.;
+    _pforce << 0., 0., 0.;
+
+    nquads = _quads.size();
+#pragma omp parallel for private(i,cen,vel,p,rho,weightsum,nverts,j,dx,dy,dz,\
+                                 dist)
+    for ( i = 0; i < nquads; i++ )
+    {
+        cen = _quads[i]->centroid();
+        vel << 0., 0., 0.;
+        p = 0.;
+        rho = 0.;
+        weightsum = 0.;
+        nverts = _quads[i]->nVertices();
+        for ( j = 0; j < nverts; j++ )
+        {
+            dx = _quads[i]->vertex(j).xInc() - cen(0);
+            dy = _quads[i]->vertex(j).yInc() - cen(1);
+            dz = _quads[i]->vertex(j).zInc() - cen(2);
+            dist = std::sqrt(std::pow(dx,2.) + std::pow(dy,2.)
+                 +           std::pow(dz,2.));
+            vel(0) += _quads[i]->vertex(j).data(2)/dist;
+            vel(1) += _quads[i]->vertex(j).data(3)/dist;
+            vel(2) += _quads[i]->vertex(j).data(4)/dist;
+            p += _quads[i]->vertex(j).data(5)/dist;
+            rho += _quads[i]->vertex(j).data(8)/dist;
+            weightsum += 1./dist;
+        }
+        vel /= weightsum;
+        p /= weightsum;
+        rho /= weightsum;
+#pragma omp critical
+        {
+            _momrate += rho*vel.dot(_quads[i]->normalComp())*vel
+                     *  _quads[i]->areaComp();
+            _pforce -= p*_quads[i]->normalComp()*_quads[i]->areaComp();
+        }
+    }
+    std::cout << "Rate of change of fluid momentum: " << _momrate << std::endl;
+    std::cout << "Farfield pressure force: " << _pforce << std::endl;
+    std::cout << "Inviscid force on aircraft: " << _pforce - _momrate
+              << std::endl;
 }
