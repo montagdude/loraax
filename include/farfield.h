@@ -26,7 +26,8 @@ class Farfield {
     std::vector< std::vector< std::vector<QuadPanel> > > _quadarray;
     std::vector<Vertex *> _verts;
     std::vector<QuadPanel *> _quads;
-    Eigen::Vector3d _momrate, _pforce;
+    Eigen::Vector3d _momrate, _pforce, _aeroforce;
+    double _lift, _induced_drag, _cl, _cdi;
 
     public:
 
@@ -61,7 +62,8 @@ class Farfield {
     // volume. Also computes pressure force on fluid due to outer boundary.
     // Inviscid aero force acting on aircraft is pressureForce - force.
 
-    void computeForce ();
+    void computeForce ( const double & alpha, const double & rhoinf,
+                        const double & uinf, const double & sref );
     const Eigen::Vector3d & force () const;
     const Eigen::Vector3d & pressureForce () const;
 };

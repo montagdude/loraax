@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+
 #include <vector>
 #include <cmath>
 #include <Eigen/Core>
@@ -425,11 +427,12 @@ Also computes pressure force on fluid due to outer boundary. Inviscid aero force
 acting on aircraft is _pforce - _momrate.
 
 *******************************************************************************/
-void Farfield::computeForce ()
+void Farfield::computeForce ( const double & alpha, const double & rhoinf,
+                              const double & uinf, const double & sref )
 {
     unsigned int i, j, nquads, nverts;
-    Eigen::Vector3d vel, cen;
-    double dx, dy, dz, dist, p, rho, weightsum;
+    Eigen::Vector3d vel, cen, liftdir, dragdir;
+    double dx, dy, dz, dist, p, rho, weightsum, qinf;
 
     _momrate << 0., 0., 0.;
     _pforce << 0., 0., 0.;
@@ -469,8 +472,19 @@ void Farfield::computeForce ()
             _pforce -= p*_quads[i]->normalComp()*_quads[i]->areaComp();
         }
     }
-    std::cout << "Rate of change of fluid momentum: " << _momrate << std::endl;
-    std::cout << "Farfield pressure force: " << _pforce << std::endl;
-    std::cout << "Inviscid force on aircraft: " << _pforce - _momrate
-              << std::endl;
+
+    // Compute aero forces
+
+    qinf = 0.5*rhoinf*std::pow(uinf, 2.);
+    liftdir << -sin(alpha*M_PI/180.), 0., cos(alpha*M_PI/180.);
+    dragdir << cos(alpha*M_PI/180.), 0., sin(alpha*M_PI/180.);
+
+    _aeroforce = _pforce - _momrate;
+    _lift = _aeroforce.dot(liftdir);
+    _induced_drag = _aeroforce.dot(dragdir);
+    _cl = _lift / (qinf*sref);
+    _cdi = _induced_drag / (qinf*sref);
+
+    std::cout << "CL: " << _cl << std::endl;
+    std::cout << "CDi: " << _cdi << std::endl;
 }
