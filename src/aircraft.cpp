@@ -959,8 +959,11 @@ int Aircraft::readXML ( const std::string & geom_file )
 
     // Farfield box
 
-    _farfield.initialize(250, 250, 250, 100., 100., 100., minf,
-                         next_global_vertidx, next_global_elemidx);
+    if (enable_farfield)
+        _farfield.initialize(farfield_nx, farfield_ny, farfield_nz,
+                             farfield_cenx, farfield_ceny, farfield_cenz,
+                             farfield_lenx, farfield_leny, farfield_lenz, minf,
+                             next_global_vertidx, next_global_elemidx);
     
     // Set pointers to vertices, panels, and wake elements
     
@@ -1705,4 +1708,14 @@ int Aircraft::writeViz ( const std::string & prefix, int iter ) const
     return 1;
 
   return 0;
+}
+
+/*******************************************************************************
+
+Writes farfield data
+
+*******************************************************************************/
+int Aircraft::writeFarfieldData ( const std::string & prefix ) const
+{
+    return _farfield.writeForceAccel(prefix);
 }

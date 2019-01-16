@@ -40,6 +40,13 @@ extern int viz_freq;
 extern xfoil_geom_options_type xfoil_geom_opts;
 extern xfoil_options_type xfoil_run_opts;
 
+// Farfield settings
+
+extern bool enable_farfield;
+extern double farfield_cenx, farfield_ceny, farfield_cenz;
+extern double farfield_lenx, farfield_leny, farfield_lenz;
+extern int farfield_nx, farfield_ny, farfield_nz;
+
 // Functions
 
 int read_setting ( const XMLElement *elem, const std::string & setting,

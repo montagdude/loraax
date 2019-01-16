@@ -20,8 +20,7 @@ class Farfield {
 
     private:
 
-    unsigned int _nx, _ny, _nz;         // Number of panels in each direction
-    double _lenx, _leny, _lenz;         // Dimensions
+    double _rcore;
     std::vector< std::vector< std::vector<Vertex> > > _vertarray;
     std::vector< std::vector< std::vector<QuadPanel> > > _quadarray;
     std::vector<Vertex *> _verts;
@@ -38,9 +37,10 @@ class Farfield {
     // Initialize
     
     void initialize ( unsigned int nx, unsigned int ny, unsigned int nz,
-                      const double & lenx, const double & leny,
-                      const double & lenz, const double & minf,
-                      int & next_global_vertidx,
+                      const double & cenx, const double & ceny,
+                      const double & cenz, const double & lenx,
+                      const double & leny, const double & lenz,
+                      const double & minf, int & next_global_vertidx,
                       int & next_global_elemidx );
 
     // Access vertices and panels
@@ -64,8 +64,10 @@ class Farfield {
 
     void computeForce ( const double & alpha, const double & rhoinf,
                         const double & uinf, const double & sref );
-    const Eigen::Vector3d & force () const;
-    const Eigen::Vector3d & pressureForce () const;
+
+    // Write data to CSV file
+
+    int writeForceAccel ( const std::string & casename ) const;
 };
 
 #endif

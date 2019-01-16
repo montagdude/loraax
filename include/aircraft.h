@@ -159,6 +159,10 @@ class Aircraft {
     
     int writeViz ( const std::string & prefix, int iter ) const;
     int writeFarfieldViz ( const std::string & prefix );
+
+    // Write farfield data
+
+    int writeFarfieldData ( const std::string & prefix ) const;
 };
 
 #endif

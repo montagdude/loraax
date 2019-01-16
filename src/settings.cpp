@@ -40,6 +40,11 @@ int viz_freq;
 xfoil_geom_options_type xfoil_geom_opts;
 xfoil_options_type xfoil_run_opts;
 
+bool enable_farfield;
+double farfield_cenx, farfield_ceny, farfield_cenz;
+double farfield_lenx, farfield_leny, farfield_lenz;
+int farfield_nx, farfield_ny, farfield_nz;
+
 /******************************************************************************/
 //
 // Reads a single setting from XMLElement
@@ -220,6 +225,41 @@ int read_settings ( const std::string & inputfile, std::string & geom_file )
     xfoil_geom_opts.xsref2 = 1.0;
     xfoil_geom_opts.xpref1 = 1.0;
     xfoil_geom_opts.xpref2 = 1.0;
+
+    // Postprocessing settings
+
+    enable_farfield = false;
+    XMLElement *post = main->FirstChildElement("Postprocessing");
+    if (post)
+    {
+        XMLElement *farfield = post->FirstChildElement("Farfield");
+        if (farfield)
+        {
+            if (read_setting(farfield, "Enable", enable_farfield) != 0)
+                return 2;
+            if (enable_farfield)
+            {
+              if (read_setting(farfield, "CenX", farfield_cenx) != 0)
+                  return 2;
+              if (read_setting(farfield, "CenY", farfield_ceny) != 0)
+                  return 2;
+              if (read_setting(farfield, "CenZ", farfield_cenz) != 0)
+                  return 2;
+              if (read_setting(farfield, "LenX", farfield_lenx) != 0)
+                  return 2;
+              if (read_setting(farfield, "LenY", farfield_leny) != 0)
+                  return 2;
+              if (read_setting(farfield, "LenZ", farfield_lenz) != 0)
+                  return 2;
+              if (read_setting(farfield, "NPointsX", farfield_nx) != 0)
+                  return 2;
+              if (read_setting(farfield, "NPointsY", farfield_ny) != 0)
+                  return 2;
+              if (read_setting(farfield, "NPointsZ", farfield_nz) != 0)
+                  return 2;
+            }
+        }
+    }
     
     // Set freestream vector, mach number, and time step size
     

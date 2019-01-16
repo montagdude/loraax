@@ -90,6 +90,7 @@ int main (int argc, char* argv[])
     create_or_backup_dir("visualization");
     create_or_backup_dir("sectional");
     create_or_backup_dir("forcemoment");
+    create_or_backup_dir("postprocessing");
     
     // Iterate
     
@@ -223,11 +224,6 @@ int main (int argc, char* argv[])
     if (! converged)
         print_warning("main", "Solution did not converge.");
 
-    // Compute farfield data
-
-    std::cout << "Computing farfield data ..." << std::endl;
-    ac.computeFarfield();
-    
     // Write final visualization
     
     if (int(viz_iter) != viz_freq)
@@ -236,7 +232,16 @@ int main (int argc, char* argv[])
         ac.writeViz(casename, iter);
         ac.writeSectionForceMoment(iter);
     }
-    ac.writeFarfieldViz(casename);
+
+    // Compute farfield data
+
+    if (enable_farfield)
+    {
+        std::cout << "Computing farfield data ..." << std::endl;
+        ac.computeFarfield();
+        ac.writeFarfieldViz(casename);
+        ac.writeFarfieldData(casename);
+    }
     
     return 0;
 }
