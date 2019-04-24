@@ -661,6 +661,7 @@ int Aircraft::readXML ( const std::string & geom_file )
     std::vector<Section> user_sections;
     std::vector<Airfoil> foils;
     double xle, y, zle, chord, twist, ymax;
+    double camber, xcamber, thick;
     std::string source, des, path;
     const int npointside = 100;
     int next_global_elemidx = 0;
@@ -854,9 +855,14 @@ int Aircraft::readXML ( const std::string & geom_file )
                 return 2;
             if (source == "4 digit")
             {
-                if (read_setting(foilelem, "Designation", des) != 0)
+                if (read_setting(foilelem, "Camber", camber) != 0)
                     return 2;
-                if (newfoil.naca4Coordinates(des, npointside) != 0)
+                if (read_setting(foilelem, "XCamber", xcamber) != 0)
+                    return 2;
+                if (read_setting(foilelem, "Thickness", thick) != 0)
+                    return 2;
+                if (newfoil.naca4Coordinates(camber, xcamber, thick,
+                                             npointside) != 0)
                 {
                     conditional_stop(1, "Aircraft::readXML",
                                      "Invalid 4-digit NACA designation.");

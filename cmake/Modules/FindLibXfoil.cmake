@@ -1,4 +1,4 @@
-find_path(LIBXFOIL_INCLUDE_DIR xfoil_interface.h)
+find_path(LIBXFOIL_INCLUDE_DIR libxfoil.h)
 find_library(LIBXFOIL_LIBRARY NAMES xfoil)
 
 if (LIBXFOIL_INCLUDE_DIR AND LIBXFOIL_LIBRARY)

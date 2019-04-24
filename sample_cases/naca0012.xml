@@ -35,7 +35,9 @@
     <Airfoils>
       <Airfoil name="Root">
         <Source>4 digit</Source>
-        <Designation>0012</Designation>
+        <Camber>0.0</Camber>
+        <XCamber>0.0</XCamber>
+        <Thickness>12.0</Thickness>
       </Airfoil>
     </Airfoils>
   </Wing>

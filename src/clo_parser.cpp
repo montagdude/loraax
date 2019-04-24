@@ -87,7 +87,7 @@ void CLOParser::printVersion ( const std::string & version ) const
 {
 	std::cout << "LOw Reynolds number Aircraft Analysis with Xfoil, version "
 	          << version << std::endl;
-	std::cout << "Copyright (C) 2018 Daniel Prosser" << std::endl;
+	std::cout << "Copyright (C) 2019 Daniel Prosser" << std::endl;
 	std::cout << "License GPLv2: GNU GPL version 2:\n"
 	          << "<https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>"
 	          << std::endl;

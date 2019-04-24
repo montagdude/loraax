@@ -8,7 +8,7 @@
 #include "sectional_object.h"
 extern "C"
 {
-	#include <xfoil_interface.h>
+	#include <libxfoil.h>
 }
 
 /******************************************************************************/
@@ -51,7 +51,8 @@ class Airfoil: public SectionalObject {
 	// Setting airfoil coordinates
 	
 	int readCoordinates ( const std::string & fname );
-	int naca4Coordinates ( const std::string & des, const int & npointside );
+	int naca4Coordinates ( const double & camber, const double & xcamber,
+                         const double & thick, const int & npointside );
 	int naca5Coordinates ( const std::string & des, const int & npointside );
 	int setCoordinates ( const std::vector<double> & x,
 	                     const std::vector<double> & z );

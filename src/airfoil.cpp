@@ -5,7 +5,7 @@
 #include "sectional_object.h"
 extern "C"
 {
-  #include <xfoil_interface.h>
+  #include <libxfoil.h>
 }
 #include "util.h"
 #include "algorithms.h"
@@ -161,16 +161,13 @@ int Airfoil::readCoordinates ( const std::string & fname )
 // Sets coordinates based on 4-digit NACA designation
 //
 /******************************************************************************/
-int Airfoil::naca4Coordinates ( const std::string & des,
-                                const int & npointside )
+int Airfoil::naca4Coordinates ( const double & camber, const double & xcamber,
+                                const double & thick, const int & npointside )
 {
   double x[2*npointside], z[2*npointside];
   int i;
 
-  if (des.size() != 4)
-    return 1;
-
-  naca_4_digit(des.c_str(), &npointside, x, z, &_nb);
+  naca_4_digit(&camber, &xcamber, &thick, &npointside, x, z, &_nb);
   double xba[_nb], zba[_nb];
   for ( i = 0; i < _nb; i++ )
   {

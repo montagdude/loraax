@@ -8,7 +8,7 @@
 #include <tinyxml2.h>
 extern "C"
 {
-  #include <xfoil_interface.h>
+  #include <libxfoil.h>
 }
 
 using namespace tinyxml2;

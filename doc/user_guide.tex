@@ -331,8 +331,15 @@ otherwise noted.
 			attribute is set. Description: The y position of the airfoil.
 		\item Source: String. Description: Specifies how the airfoil coordinates
 			will be created. Either ``4 digit,'' ``5 digit,'' or ``File.'' 
-		\item Designation: String. Required: Only if Source is ``4 digit'' or
-			``5 digit.'' This is the code defining a 4- or 5-digit NACA airfoil.
+		\item Camber: Float. Required: Only if Source is ``4 digit''. Description:
+			Maximum camber of the mean camber line, as a percent, for a NACA 4 digit
+			airfoil.
+		\item XCamber: Float. Required: Only if Source is ``4 digit''. Description:
+			Location of the max camber point, as x/c, for a NACA 4 digit airfoil.
+		\item Thickness: Float. Required: Only if Source is ``4 digit''.
+			Description: Maximum thickness, as a percent, for a NACA 4 digit airfoil.
+		\item Designation: String. Required: Only if Source is ``5 digit''. This is
+			the code defining a 5-digit NACA airfoil.
 		\item Path: String. Required: Only if Source is ``File.'' This is the
 			relative or absolute path to the airfoil coordinates file.
 			Coordinates should be formatted in a single loop starting from the

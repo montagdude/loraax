@@ -71,7 +71,9 @@
         <!-- Note: since we named this airfoil "Tip", we do not need to provide
              a Y value. The same applies with "Root". -->
         <Source>4 digit</Source>
-        <Designation>0006</Designation>
+        <Camber>0.0</Camber>
+        <XCamber>0.0</XCamber>
+        <Thickness>6.0</Thickness>
       </Airfoil>
       <Airfoil>
         <!-- Y is needed for non-root / non-tip airfoils -->
@@ -110,7 +112,9 @@
       <!-- If airfoil is constant, only need to supply root or tip -->
       <Airfoil name="Root">
         <Source>4 digit</Source>
-        <Designation>0005</Designation>
+        <Camber>0.0</Camber>
+        <XCamber>0.0</XCamber>
+        <Thickness>5.0</Thickness>
       </Airfoil>
     </Airfoils>
   </Wing>
