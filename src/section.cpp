@@ -528,7 +528,10 @@ void Section::computeForceMoment ( const double & alpha, const double & uinf,
     uinfvec_p = section2inertial * uinfvec;
     uinfp = uinfvec_p.norm();
     qinfp = 0.5*rhoinf*std::pow(uinfp, 2.);
-    fdrag << _foil.dragCoefficient()*qinfp*_chord, 0., 0.;  // Section frame
+    if (viscous)
+        fdrag << _foil.dragCoefficient()*qinfp*_chord, 0., 0.;  // Section frame
+    else
+        fdrag << 0., 0., 0.;
     fdrag = section2inertial * fdrag;                       // Inertial frame
     dragp = fdrag(0)*cos(alpha*M_PI/180.) + fdrag(2)*sin(alpha*M_PI/180.)
           - dragv;

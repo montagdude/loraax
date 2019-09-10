@@ -1634,7 +1634,7 @@ void Wing::computeForceMoment ( const Eigen::Vector3d & momcen,
         _sections[i].computeForceMoment(alpha, uinf, rhoinf, pinf, viscous);
     }
 
-    // Integrate pressure drag over the span
+    // Integrate viscous drag over the span
 
     _dragv = 0.;
     qinf = 0.5*rhoinf*std::pow(uinf,2.);
