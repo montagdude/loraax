@@ -773,7 +773,7 @@ void conjgrad_search ( std::vector<double> & xopt, double & fmin,
 {
   std::vector<double> x, grad, prevgrad, sn, prevsn;
   unsigned int n, i, updatecount;
-  double alpha, beta, dx, newfmin, dfmin, maxdx;
+  double alpha, beta, num, den, dx, newfmin, dfmin, maxdx;
   double bounds[2];
 
   // Initialize
@@ -805,12 +805,16 @@ void conjgrad_search ( std::vector<double> & xopt, double & fmin,
 
     if (updatecount > 1)
     {
+      num = 0.;
+      den = 0.;
       beta = 0.;
       for ( i = 0; i < n; i++ )
       { 
-        if (std::abs(prevgrad[i]) > 1.e-12)
-          beta += grad[i]*grad[i] / (prevgrad[i]*prevgrad[i]);
+        num += grad[i]*grad[i];
+        den += prevgrad[i]*prevgrad[i];
       }
+      if (std::abs(den) > 1.e-12)
+        beta = num/den;
       for ( i = 0; i < n; i++ )
       {
         sn[i] = -grad[i] + beta*prevsn[i];
